@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:ui';
 
 import 'package:freeli/controller/stateBloc/LoginBloc.dart';
 import 'package:freeli/controller/stateBloc/LoginEven.dart';
@@ -37,45 +38,34 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _input({
     required TextEditingController controller,
     required String hint,
-    required IconData icon, // Keep as required, as it's always provided
-    Color? iconColor, // Added for custom icon color
+    required IconData icon,
+    Color? iconColor,
     TextInputType? keyboardType,
     bool isPassword = false,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(
-          0.1,
-        ), // Professional glass effect: translucent background
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: Colors.white30,
-          width: 1,
-        ), // Subtle border for glass effect
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
       ),
       child: TextField(
         controller: controller,
         obscureText: isPassword ? obscurePassword : false,
         keyboardType: keyboardType,
-        style: const TextStyle(
-          color: Colors.white,
-        ), // Text color for better visibility on dark translucent background
+        style: const TextStyle(color: Colors.white, fontSize: 15),
         decoration: InputDecoration(
-          prefixIcon: Icon(
-            icon,
-            color: iconColor ?? Colors.white70,
-          ), // Icon color for glass effect
+          prefixIcon: Icon(icon, color: iconColor ?? Colors.white60, size: 22),
           hintText: hint,
-          hintStyle: const TextStyle(
-            color: Colors.white54,
-          ), // Hint text color for glass effect
+          hintStyle: const TextStyle(color: Colors.white38, fontSize: 15),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.white70, // Suffix icon color for glass effect
+                    color: Colors.white60,
+                    size: 20,
                   ),
                   onPressed: () {
                     setState(() {
@@ -136,23 +126,40 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 80),
+                const SizedBox(height: 60),
 
-                Image.asset('assets/logo.webp', height: 50),
-
-                const SizedBox(height: 40),
-
-                const Text(
-                  "Hello! Welcome back",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Hero(
+                  tag: 'logo',
+                  child: Image.asset('assets/logo.webp', height: 60),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 50),
+
+                Column(
+                  children: [
+                    const Text(
+                      "Hello ! Welcome back",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      "Sign into your account here",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 45),
 
                 _input(
                   controller: emailController,
@@ -172,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   isPassword: true,
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
                 /// ================= REMEMBER ME & PASSWORD LINKS =================
                 Row(
@@ -191,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(width: 8),
                     const Text(
                       "Remember me ?",
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                      style: TextStyle(color: Colors.white60, fontSize: 14),
                     ),
                   ],
                 ),
@@ -206,6 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           color: AppColors.accentColor,
                           fontSize: 13,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -213,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {}, // TODO: Implement Forgot Password logic
                       child: const Text(
                         "Forgot your password ?",
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                        style: TextStyle(color: Colors.white60, fontSize: 13),
                       ),
                     ),
                   ],
@@ -225,11 +233,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 52,
                   child: InkWell(
-                    highlightColor:
-                        Colors.transparent, // Remove highlight border on tap
-                    splashColor:
-                        Colors.transparent, // Remove splash border on tap
+                    highlightColor: Colors.transparent,
+                    splashColor: Colors.transparent,
                     onTap: () {
+                      FocusScope.of(context).unfocus();
                       final state = context.read<LoginBloc>().state;
                       if (state is! LoginLoading) {
                         if (emailController.text.trim().isEmpty ||
@@ -254,7 +261,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF1E3C72).withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: BlocBuilder<LoginBloc, LoginState>(
@@ -274,6 +288,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             );
                           },
@@ -283,7 +298,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
 
                 /// ================= SIGN UP PROMPT =================
                 Row(
@@ -291,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Text(
                       "Don't have an account ? ",
-                      style: TextStyle(color: Colors.white70),
+                      style: TextStyle(color: Colors.white54, fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () {}, // TODO: Navigate to Sign Up
@@ -299,7 +314,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         "Sign up",
                         style: TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
                         ),
                       ),
                     ),
