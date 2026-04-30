@@ -1,0 +1,264 @@
+import 'package:flutter/material.dart';
+import 'package:freeli/controller/api/api_service.dart';
+import 'AppColors.dart';
+import 'connect/ChatsTab.dart';
+import 'connect/CallsTab.dart';
+import 'connect/DashboardTab.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class HomePage extends StatefulWidget {
+  final bool isDark;
+  final Function(bool) onThemeChange;
+
+  const HomePage({
+    super.key,
+    required this.isDark,
+    required this.onThemeChange,
+  });
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  Map<String, dynamic>? userData;
+  List<dynamic>? conversationRooms;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    getMeData();
+  }
+
+  Future<void> getMeData() async {
+    try {
+      setState(() => isLoading = true);
+      final data = await ApiServer().fetchMe();
+      print(data);
+      setState(() {
+        userData = data;
+        isLoading = false;
+      });
+      if (data['id'] != null) {
+        getRooms(data['id']);
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
+      print("Error fetching user data: $e");
+    }
+  }
+
+  Future<void> getRooms(String userId) async {
+    try {
+      final data = await ApiServer().fetchRooms(userId);
+      print("Rooms data fetched: $data");
+      setState(() {
+        conversationRooms = data['rooms'];
+      });
+    } catch (e) {
+      print("Error fetching rooms: $e");
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    await ApiServer.clearAuthToken();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    if (mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, "/login", (route) => false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = AppColors.getBackgroundColor(widget.isDark);
+
+    String displayName = "Loading...";
+    String displayEmail = "...";
+
+    if (userData != null) {
+      displayName =
+          "${userData!['firstname'] ?? ''} ${userData!['lastname'] ?? ''}"
+              .trim();
+      if (displayName.isEmpty) displayName = "User";
+      displayEmail = userData!['email'] ?? "";
+    } else if (!isLoading) {
+      displayName = "Guest";
+      displayEmail = "Not logged in";
+    }
+
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: bgColor,
+        endDrawer: Drawer(
+          backgroundColor: bgColor,
+          child: Column(
+            children: [
+              /// ================= PROFILE HEADER =================
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                decoration: const BoxDecoration(color: Color(0xFF1565C0)),
+                child: Column(
+                  children: [
+                    const CircleAvatar(
+                      radius: 35,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.person, size: 40, color: Colors.blue),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      displayName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      displayEmail,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              /// ================= MENU ITEMS =================
+              ListTile(
+                leading: const Icon(Icons.settings, color: Colors.white),
+                title: const Text(
+                  "Settings",
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  getMeData();
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.person, color: Colors.white),
+                title: const Text(
+                  "Profile",
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {},
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.notifications, color: Colors.white),
+                title: const Text(
+                  "Notifications",
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {},
+              ),
+
+              /// ================= LOGOUT BUTTON =================
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 45,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () async {
+                      await _handleLogout();
+                    },
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    label: const Text(
+                      "Logout",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        /// ================= APP BAR =================
+        appBar: AppBar(
+          backgroundColor: const Color.fromARGB(
+            255,
+            12,
+            31,
+            94,
+          ), // Darker background for app bar
+          elevation: 0,
+          centerTitle: false,
+          automaticallyImplyLeading: false,
+          titleSpacing: 5,
+          title: Image.asset('assets/logo.webp', height: 45),
+
+          actions: [
+            IconButton(
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              onPressed: () {},
+              icon: const Icon(Icons.search, color: Colors.white),
+              tooltip: 'Search',
+            ),
+            IconButton(
+              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              onPressed: () {},
+              icon: const Icon(Icons.filter_alt_sharp, color: Colors.white),
+              tooltip: 'Filter',
+            ),
+            Builder(
+              builder: (context) {
+                return IconButton(
+                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  onPressed: () => Scaffold.of(context).openEndDrawer(),
+                  icon: const Icon(Icons.menu, color: Colors.white),
+                  tooltip: 'Toggle menu',
+                );
+              },
+            ),
+            const SizedBox(width: 3),
+          ],
+
+          /// ================= TAB BAR =================
+          bottom: const TabBar(
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            dividerColor: Colors.transparent,
+            indicator: UnderlineTabIndicator(
+              borderSide: BorderSide(color: Colors.white, width: 2),
+            ),
+
+            tabs: [
+              Tab(icon: Icon(Icons.chat), text: "Chats"),
+              Tab(icon: Icon(Icons.call), text: "Calls"),
+              Tab(icon: Icon(Icons.dashboard), text: "Dashboard"),
+            ],
+          ),
+        ),
+
+        /// ================= BODY =================
+        body: TabBarView(
+          children: [
+            ChatsTab(conversationRooms: conversationRooms),
+            const CallsTab(),
+            const DashboardTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
