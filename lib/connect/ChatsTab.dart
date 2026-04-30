@@ -50,6 +50,16 @@ class ChatsTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
+            onTap: () {
+              Navigator.pushNamed(
+                context,
+                '/chat',
+                arguments: {
+                  'conversation_id': room['conversation_id'],
+                  'title': room['title'] ?? 'No Title',
+                },
+              );
+            },
             leading: CircleAvatar(
               backgroundColor: AppColors.accentColor,
               backgroundImage: imageUrl.isNotEmpty

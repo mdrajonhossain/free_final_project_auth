@@ -147,3 +147,99 @@ const String roomsQuery = """
     }
   }
 """;
+
+const String messagesQuery = """
+query Messages(\$conversationId: String!, \$page: Int!) {
+    messages(conversation_id: \$conversationId, page: \$page) {
+        msgs {
+            conversation_id
+            msg_id
+            sender
+            senderemail
+            senderimg
+            fnln
+            sendername
+            msg_body
+            unread_reply
+            call_duration
+            call_msg
+            call_type
+            call_status
+            call_sender_ip
+            call_sender_device
+            call_receiver_ip
+            call_receiver_device
+            call_server_addr
+            msg_type
+            reply_for_msgid
+            last_reply_name
+            is_reply_msg
+            root_msg_id
+            activity_id
+            url_favicon
+            url_base_title
+            url_title
+            url_body
+            url_image
+            has_timer
+            edit_status
+            last_update_user
+            conference_id
+            forward_by
+            msg_text
+            img_url
+            edit_history
+            root_conv_id
+            user_tag_string
+            company_id
+            task_id
+            referenceId
+            reference_type
+            file_group
+            cost_id
+            sender_is_active
+            task_start_date
+            task_due_date
+            updatedmsgid
+            old_created_time
+            has_delivered
+            has_reply
+            has_reply_attach
+            call_running
+            call_server_switch
+            is_secret
+            participants
+            call_participants
+            has_flagged
+            msg_status
+            attch_imgfile
+            attch_audiofile
+            attch_videofile
+            attch_otherfile
+            edit_seen
+            has_delete
+            has_hide
+            has_tag_text
+            tag_list
+            issue_accept_user
+            secret_user
+            mention_user
+            has_star
+            assign_to
+            task_observers
+            created_at
+            last_reply_time
+            last_update_time
+            forward_at
+            conv_title
+            conv_img
+            short_id
+        }
+        pagination {
+            page
+            totalPages
+            total
+        }
+    }
+}
+""";

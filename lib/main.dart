@@ -9,6 +9,7 @@ import 'OtpScreen.dart';
 import 'TrastedScreen.dart';
 import 'HomePage.dart';
 import 'controller/api/api_service.dart';
+import 'connect/ChatScreen.dart';
 import 'controller/stateBloc/LoginBloc.dart';
 
 void main() {
@@ -48,6 +49,7 @@ class _MyAppState extends State<MyApp> {
               CompanyListScreen(isDark: isDark, onThemeChange: toggleTheme),
           '/home': (context) =>
               HomePage(isDark: isDark, onThemeChange: toggleTheme),
+          '/chat': (context) => ChatScreen(isDark: isDark),
         },
       ),
     );

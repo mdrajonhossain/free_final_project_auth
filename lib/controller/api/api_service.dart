@@ -203,4 +203,28 @@ class ApiServer {
       throw GqlException("Network error: Please check your connection.");
     }
   }
+
+  Future<Map<String, dynamic>> fetchMessages(
+    String conversationId, {
+    int page = 1,
+  }) async {
+    try {
+      final data = await ApiServer.call(
+        messagesQuery,
+        variables: {"conversationId": conversationId, "page": page},
+      );
+      final messages = data['messages'];
+      if (messages != null) {
+        return Map<String, dynamic>.from(messages);
+      }
+      throw const GqlException("Messages data not found");
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      throw GqlException("Network error: Please check your connection.");
+    }
+  }
 }
