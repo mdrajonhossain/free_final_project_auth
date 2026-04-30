@@ -22,6 +22,8 @@ class CompanyListScreen extends StatefulWidget {
 }
 
 class _CompanyListScreenState extends State<CompanyListScreen> {
+  String? _selectedCompanyId;
+
   void _showError(String message) {
     ScaffoldMessenger.of(
       context,
@@ -105,6 +107,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                 child: BlocBuilder<LoginBloc, LoginState>(
                   builder: (context, state) {
                     bool isLoading = state is LoginLoading;
+
                     return ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: companiesData.length,
@@ -113,6 +116,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                         final String companyName =
                             company['company_name'] ?? 'Unknown Company';
                         final String companyId = company['company_id'] ?? '';
+
+                        final bool isThisItemLoading =
+                            isLoading && _selectedCompanyId == companyId;
 
                         return Card(
                           margin: const EdgeInsets.only(bottom: 10),
@@ -134,7 +140,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                            trailing: isLoading
+                            trailing: isThisItemLoading
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
@@ -151,6 +157,9 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                             onTap: isLoading
                                 ? null
                                 : () {
+                                    setState(() {
+                                      _selectedCompanyId = companyId;
+                                    });
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(

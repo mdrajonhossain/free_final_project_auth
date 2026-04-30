@@ -13,7 +13,7 @@ class ApiServer {
 
   static final Dio _dio = Dio();
   static String? _token;
-  static const String _graphqlUrl = "http://172.16.3.94:4001/workfreeli";
+  static const String _graphqlUrl = "http://62.151.182.241:4055/workfreeli";
 
   static String? get token => _token;
 
