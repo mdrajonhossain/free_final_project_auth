@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../controller/api/api_service.dart';
 import '../AppColors.dart';
 import 'dart:ui';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:encrypt/encrypt.dart' as encrypt;
 
 class ChatScreen extends StatefulWidget {
@@ -52,25 +54,41 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Decrypts the message body.
   /// Currently returns the text if decryption fails or logic is pending.
   String _decryptMessage(String? encryptedText) {
+    if (encryptedText == null || encryptedText.isEmpty) return "";
+
     try {
-      if (encryptedText == null || encryptedText.isEmpty) return "";
+      // Ensure these keys are identical to the raw keys used in your React project.
+      // If React uses a passphrase string, you must derive the key/iv using a KDF.
+      final key = encrypt.Key.fromUtf8(
+        'my32charssecretkeyfor-aes256-123',
+      ); // 32 characters
+      final iv = encrypt.IV.fromUtf8('1234567890123456'); // 16 characters
 
-      // If the text doesn't look like a standard encrypted string (e.g., doesn't start with 'U2FsdGVkX1'),
-      // it might already be plain text or a different format.
-      if (!encryptedText.startsWith("U2FsdGVkX1")) return encryptedText;
+      final encrypter = encrypt.Encrypter(
+        encrypt.AES(key, mode: encrypt.AESMode.cbc, padding: 'PKCS7'),
+      );
 
-      // Note: You must add 'encrypt: ^5.0.3' to your pubspec.yaml.
-      // IMPORTANT: Ensure your key matches the one used by your backend.
-      // A 32-character string for AES-256.
-      final key = encrypt.Key.fromUtf8('my32charssecretkeyfor-aes256-123');
-      final iv = encrypt.IV.fromLength(16);
-      final encrypter = encrypt.Encrypter(encrypt.AES(key));
+      // Check if the text has the OpenSSL "Salted__" header (common with CryptoJS)
+      if (encryptedText.startsWith("U2FsdGVkX1")) {
+        final Uint8List encryptedBytes = base64.decode(encryptedText);
 
-      // Decrypt using base64 encoding (standard for U2FsdGVkX1 strings)
-      return encrypter.decrypt64(encryptedText, iv: iv);
+        // Standard OpenSSL format: "Salted__" (8 bytes) + Salt (8 bytes) = 16 bytes total header.
+        // The actual encrypted data blocks start from index 16.
+        final Uint8List ciphertextOnly = encryptedBytes.sublist(16);
+
+        final decrypted = encrypter.decrypt(
+          encrypt.Encrypted(ciphertextOnly),
+          iv: iv,
+        );
+        return decrypted.trim();
+      } else {
+        // Fallback for standard base64 strings without the "Salted__" header
+        final decrypted = encrypter.decrypt64(encryptedText, iv: iv);
+        return decrypted.trim();
+      }
     } catch (e) {
-      debugPrint("Decryption error: $e");
-      return encryptedText ?? "";
+      debugPrint("Decryption error for message: $e");
+      return encryptedText;
     }
   }
 
