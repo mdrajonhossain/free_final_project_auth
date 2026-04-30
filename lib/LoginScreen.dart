@@ -37,28 +37,45 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _input({
     required TextEditingController controller,
     required String hint,
-    required IconData icon,
+    required IconData icon, // Keep as required, as it's always provided
+    Color? iconColor, // Added for custom icon color
     TextInputType? keyboardType,
     bool isPassword = false,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withOpacity(
+          0.1,
+        ), // Professional glass effect: translucent background
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white30,
+          width: 1,
+        ), // Subtle border for glass effect
       ),
       child: TextField(
         controller: controller,
         obscureText: isPassword ? obscurePassword : false,
         keyboardType: keyboardType,
+        style: const TextStyle(
+          color: Colors.white,
+        ), // Text color for better visibility on dark translucent background
         decoration: InputDecoration(
-          prefixIcon: Icon(icon),
+          prefixIcon: Icon(
+            icon,
+            color: iconColor ?? Colors.white70,
+          ), // Icon color for glass effect
           hintText: hint,
+          hintStyle: const TextStyle(
+            color: Colors.white54,
+          ), // Hint text color for glass effect
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     obscurePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.white70, // Suffix icon color for glass effect
                   ),
                   onPressed: () {
                     setState(() {
@@ -141,6 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: emailController,
                   hint: "Email",
                   icon: Icons.email,
+                  iconColor: Colors.white70, // Apply icon color
                   keyboardType: TextInputType.emailAddress,
                 ),
 
@@ -150,6 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: passwordController,
                   hint: "Password",
                   icon: Icons.lock_outline,
+                  iconColor: Colors.white70, // Apply icon color
                   isPassword: true,
                 ),
 
@@ -193,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextButton(
                       onPressed: () {}, // TODO: Implement Forgot Password logic
                       child: const Text(
-                        "forgot your password ?",
+                        "Forgot your password ?",
                         style: TextStyle(color: Colors.white70, fontSize: 13),
                       ),
                     ),
@@ -206,6 +225,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 52,
                   child: InkWell(
+                    highlightColor:
+                        Colors.transparent, // Remove highlight border on tap
+                    splashColor:
+                        Colors.transparent, // Remove splash border on tap
                     onTap: () {
                       final state = context.read<LoginBloc>().state;
                       if (state is! LoginLoading) {
