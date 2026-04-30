@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../AppColors.dart';
+import '../skeleton.dart'; // Import the skeleton loader
 
 class ChatsTab extends StatelessWidget {
   final List<dynamic>? conversationRooms;
@@ -9,7 +10,7 @@ class ChatsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (conversationRooms == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const ChatSkeleton(); // Show skeleton instead of loader
     }
 
     if (conversationRooms!.isEmpty) {
