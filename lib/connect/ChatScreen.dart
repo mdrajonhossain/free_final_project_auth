@@ -24,10 +24,15 @@ class _ChatScreenState extends State<ChatScreen> {
   String roomTitle = "Chat";
   String convImg = "";
   bool isLoading = true;
+  int _currentPage = 1;
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
 
   @override
   void initState() {
     super.initState();
+
+    _scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args =
@@ -41,9 +46,23 @@ class _ChatScreenState extends State<ChatScreen> {
               (args['conv_img'] ?? args['img'] ?? args['image'])?.toString() ??
               "";
         });
-        getMessages(conversationId);
+        getMessages(conversationId, page: 1);
       }
     });
+  }
+
+  void _scrollListener() {
+    if (_scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 100 &&
+        !_isFetchingMore &&
+        _hasMore &&
+        !isLoading) {
+      if (conversationId.isNotEmpty) {
+        _currentPage++;
+        getMessages(conversationId, page: _currentPage);
+      }
+    }
   }
 
   @override
@@ -53,7 +72,10 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  Future<void> getMessages(String conversationId) async {
+  Future<void> getMessages(String conversationId, {int page = 1}) async {
+    if (page > 1) {
+      setState(() => _isFetchingMore = true);
+    }
     try {
       // Dynamically fetch current user info to distinguish 'Me' from others
       if (myId.isEmpty) {
@@ -61,15 +83,26 @@ class _ChatScreenState extends State<ChatScreen> {
         myId = userData?['id']?.toString() ?? "";
       }
 
-      final data = await ApiServer().fetchMessages(conversationId);
+      final data = await ApiServer().fetchMessages(conversationId, page: page);
+      final List newMsgs = (data['msgs'] as List?)?.reversed.toList() ?? [];
+
       setState(() {
-        messages = (data['msgs'] as List?)?.reversed.toList() ?? [];
+        if (page == 1) {
+          messages = newMsgs;
+        } else {
+          messages.addAll(newMsgs);
+        }
+        if (newMsgs.isEmpty) {
+          _hasMore = false;
+        }
         isLoading = false;
+        _isFetchingMore = false;
       });
     } catch (e) {
       debugPrint("FETCH ERROR: $e");
       setState(() {
         isLoading = false;
+        _isFetchingMore = false;
       });
     }
   }
@@ -221,8 +254,23 @@ class _ChatScreenState extends State<ChatScreen> {
                         horizontal: 14,
                         vertical: 16,
                       ),
-                      itemCount: messages.length,
+                      itemCount: messages.length + (_isFetchingMore ? 1 : 0),
                       itemBuilder: (context, index) {
+                        if (index == messages.length) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            child: Center(
+                              child: SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
                         final msg = messages[index];
                         final isMe = msg['sender'].toString() == myId;
                         return _messageBubble(msg, isMe);
