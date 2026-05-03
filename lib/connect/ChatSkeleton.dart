@@ -67,19 +67,38 @@ class _ChatSkeletonState extends State<ChatSkeleton>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
-        color: surface,
+        color: surface, // Use the defined surface color for consistency
         border: Border(
           bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
         ),
       ),
       child: Row(
         children: [
-          _box(40, 40, 14),
+          // Placeholder for Back Button
+          _box(24, 24, 12), // Small square with rounded corners for an icon
+          const SizedBox(width: 12),
+
+          // Placeholder for Profile Image
+          _box(
+            40,
+            40,
+            20,
+          ), // Circular avatar placeholder (radius half of width/height)
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [_box(12, 120, 6), const SizedBox(height: 8)],
+              children: [
+                // Placeholder for Title
+                _box(16, 120, 6), // Represents a line of text for the title
+                const SizedBox(height: 4),
+                // Placeholder for Subtitle
+                _box(
+                  10,
+                  80,
+                  5,
+                ), // Represents a smaller line of text for the subtitle
+              ],
             ),
           ),
         ],
