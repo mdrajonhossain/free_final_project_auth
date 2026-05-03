@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../AppColors.dart';
 import '../skeleton.dart'; // Import the skeleton loader
+import 'crypto_utils.dart';
+import 'format_utils.dart';
 
 class ChatsTab extends StatelessWidget {
   final List<dynamic>? conversationRooms;
@@ -50,11 +52,14 @@ class ChatsTab extends StatelessWidget {
         final room = sortedRooms[index];
         String title = room['title'] ?? 'No Title';
 
-        if (title.length > 15) {
-          title = '${title.substring(0, 15)}...';
+        if (title.length > 12) {
+          title = '${title.substring(0, 12)}...';
         }
 
-        final String lastMsg = room['last_msg'] ?? '';
+        final String rawLastMsg = room['last_msg'] ?? '';
+        final String decryptedLastMsg = CryptoUtils.decryptMessage(rawLastMsg);
+        final String lastMsg = FormatUtils.stripHtml(decryptedLastMsg);
+
         // Fallbacks for common image keys
         final String imageUrl =
             (room['conv_img'] ?? room['img'] ?? room['image'] ?? '').toString();
