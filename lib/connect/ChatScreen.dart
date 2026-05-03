@@ -22,6 +22,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Map<String, dynamic>? userData;
   String conversationId = "";
   String roomTitle = "Chat";
+  String convImg = "";
   bool isLoading = true;
 
   @override
@@ -32,8 +33,14 @@ class _ChatScreenState extends State<ChatScreen> {
       final args =
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       if (args != null) {
-        conversationId = args['conversation_id']?.toString() ?? "";
-        roomTitle = args['title']?.toString() ?? "Chat";
+        setState(() {
+          conversationId = args['conversation_id']?.toString() ?? "";
+          roomTitle = args['title']?.toString() ?? "Chat";
+          // Added fallbacks for common keys in case 'conv_img' is null
+          convImg =
+              (args['conv_img'] ?? args['img'] ?? args['image'])?.toString() ??
+              "";
+        });
         getMessages(conversationId);
       }
     });
@@ -134,7 +141,20 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
 
-              child: const Icon(Icons.forum_rounded, color: Colors.white),
+              child: convImg.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.network(
+                        convImg,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.forum_rounded,
+                              color: Colors.white,
+                            ),
+                      ),
+                    )
+                  : const Icon(Icons.forum_rounded, color: Colors.white),
             ),
 
             const SizedBox(width: 12),

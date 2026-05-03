@@ -75,9 +75,7 @@ class _ChatSkeletonState extends State<ChatSkeleton>
       child: Row(
         children: [
           _box(40, 40, 14),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

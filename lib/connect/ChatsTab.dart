@@ -57,6 +57,7 @@ class ChatsTab extends StatelessWidget {
                 arguments: {
                   'conversation_id': room['conversation_id'],
                   'title': room['title'] ?? 'No Title',
+                  'conv_img': room['conv_img'],
                 },
               );
             },
