@@ -5,7 +5,11 @@ import '../skeleton.dart'; // Import the skeleton loader
 class ChatsTab extends StatelessWidget {
   final List<dynamic>? conversationRooms;
 
-  const ChatsTab({super.key, this.conversationRooms});
+  /// Pass the current user's ID to correctly identify their personal chat
+  /// if it isn't explicitly named "Me".
+  final String? userMe;
+
+  const ChatsTab({super.key, this.conversationRooms, this.userMe});
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +26,28 @@ class ChatsTab extends StatelessWidget {
       );
     }
 
+    // Create a mutable copy and sort to ensure "Me" is at the top
+    final List<dynamic> sortedRooms = List.from(conversationRooms!);
+
+    // Find the index of the "Me" user or the user matching myId (conversation_id == myId)
+    final int meIndex = sortedRooms.indexWhere(
+      (room) =>
+          room['title']?.toString().toLowerCase() == 'me' ||
+          (userMe != null && room['conversation_id']?.toString() == userMe),
+    );
+
+    // If the identified "Me" conversation is found and is not already at the top,
+    // move it to index 0.
+    if (meIndex != -1 && meIndex != 0) {
+      final meRoom = sortedRooms.removeAt(meIndex);
+      sortedRooms.insert(0, meRoom);
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.only(top: 16, bottom: 40, left: 16, right: 16),
-      itemCount: conversationRooms!.length,
+      itemCount: sortedRooms.length,
       itemBuilder: (context, index) {
-        final room = conversationRooms![index];
+        final room = sortedRooms[index];
         String title = room['title'] ?? 'No Title';
 
         if (title.length > 15) {
@@ -34,7 +55,9 @@ class ChatsTab extends StatelessWidget {
         }
 
         final String lastMsg = room['last_msg'] ?? '';
-        final String imageUrl = room['conv_img'] ?? '';
+        // Fallbacks for common image keys
+        final String imageUrl =
+            (room['conv_img'] ?? room['img'] ?? room['image'] ?? '').toString();
         final String lastTimeStr = room['last_msg_time'] ?? '';
 
         // Extracting date from ISO string: 2024-07-09T12... -> 2024-07-09

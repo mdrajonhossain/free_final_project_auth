@@ -165,7 +165,10 @@ class _HomePageState extends State<HomePage> {
         /// ================= BODY =================
         body: TabBarView(
           children: [
-            ChatsTab(conversationRooms: conversationRooms),
+            ChatsTab(
+              conversationRooms: conversationRooms,
+              userMe: userData?['id']?.toString(),
+            ),
             const CallsTab(),
             const DashboardTab(),
           ],
