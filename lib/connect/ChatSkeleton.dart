@@ -78,22 +78,12 @@ class _ChatSkeletonState extends State<ChatSkeleton>
 
           const SizedBox(width: 12),
 
-          _box(42, 42, 100),
-
-          const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _box(12, 120, 6),
-                const SizedBox(height: 8),
-                _box(10, 80, 6),
-              ],
+              children: [_box(12, 120, 6), const SizedBox(height: 8)],
             ),
           ),
-
-          _box(38, 38, 12),
         ],
       ),
     );
