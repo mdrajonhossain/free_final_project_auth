@@ -121,8 +121,14 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: bgColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor:
-            AppColors.primaryGradient.colors[0], // Consistent with home page
+        backgroundColor: Colors
+            .transparent, // Set to transparent to show the flexibleSpace gradient
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient:
+                AppColors.primaryGradient, // Use the full primary gradient
+          ),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
