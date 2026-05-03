@@ -1,11 +1,9 @@
-import 'dart:convert';
-import 'dart:typed_data';
-import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
 import '../AppColors.dart';
 import '../controller/api/api_service.dart';
 import 'ChatSkeleton.dart';
+import './crypto_utils.dart';
+import './format_utils.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;
@@ -21,7 +19,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   List<dynamic> messages = [];
   final String myId = "1";
-  static const String _cryptoKey = "D1583ED51EEB8E58F2D3317F4839A";
   String conversationId = "";
   String roomTitle = "Chat";
   bool isLoading = true;
@@ -63,119 +60,10 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  static Map<String, Uint8List> _evpBytesToKey(
-    List<int> password,
-    List<int> salt,
-    int keyLen,
-    int ivLen,
-  ) {
-    List<int> derivedBytes = [];
-    List<int> block = [];
-
-    while (derivedBytes.length < (keyLen + ivLen)) {
-      final input = <int>[];
-
-      if (block.isNotEmpty) {
-        input.addAll(block);
-      }
-
-      input.addAll(password);
-      input.addAll(salt);
-      block = md5.convert(input).bytes;
-      derivedBytes.addAll(block);
-    }
-
-    return {
-      'key': Uint8List.fromList(derivedBytes.sublist(0, keyLen)),
-      'iv': Uint8List.fromList(derivedBytes.sublist(keyLen, keyLen + ivLen)),
-    };
-  }
-
-  dynamic _tryDecodeJson(String value) {
-    try {
-      return jsonDecode(value);
-    } catch (_) {
-      return value;
-    }
-  }
-
-  String _decryptMessage(dynamic encryptedText) {
-    try {
-      if (encryptedText == null) {
-        return "";
-      }
-
-      final encrypted = encryptedText.toString();
-      if (encrypted.isEmpty) {
-        return "";
-      }
-
-      final encryptedBytes = base64.decode(encrypted);
-      if (encryptedBytes.length < 16) {
-        return encrypted;
-      }
-
-      final prefix = utf8.decode(encryptedBytes.sublist(0, 8));
-      if (prefix != "Salted__") {
-        return encrypted;
-      }
-
-      final salt = encryptedBytes.sublist(8, 16);
-      final ciphertext = encryptedBytes.sublist(16);
-      final keyIv = _evpBytesToKey(utf8.encode(_cryptoKey), salt, 32, 16);
-      final key = encrypt.Key(keyIv['key']!);
-      final iv = encrypt.IV(keyIv['iv']!);
-      final encrypter = encrypt.Encrypter(
-        encrypt.AES(key, mode: encrypt.AESMode.cbc),
-      );
-
-      final decrypted = encrypter.decrypt(
-        encrypt.Encrypted(Uint8List.fromList(ciphertext)),
-        iv: iv,
-      );
-
-      final result = _tryDecodeJson(decrypted);
-      return result.toString();
-    } catch (e) {
-      debugPrint("DECRYPT ERROR: $e");
-
-      return encryptedText.toString();
-    }
-  }
-
-  String _encryptMessage(dynamic data) {
-    try {
-      final jsonString = data is String ? data : jsonEncode(data);
-      final salt = encrypt.IV.fromSecureRandom(8).bytes;
-      final keyIv = _evpBytesToKey(utf8.encode(_cryptoKey), salt, 32, 16);
-      final key = encrypt.Key(keyIv['key']!);
-      final iv = encrypt.IV(keyIv['iv']!);
-      final encrypter = encrypt.Encrypter(
-        encrypt.AES(key, mode: encrypt.AESMode.cbc),
-      );
-      final encrypted = encrypter.encrypt(jsonString, iv: iv);
-      final result = Uint8List.fromList([
-        ...utf8.encode("Salted__"),
-        ...salt,
-        ...encrypted.bytes,
-      ]);
-
-      return base64.encode(result);
-    } catch (e) {
-      debugPrint("ENCRYPT ERROR: $e");
-
-      return data.toString();
-    }
-  }
-
-  String _stripHtml(String text) {
-    return text.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), '');
-  }
-
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
-    final encryptedText = _encryptMessage(text);
+    final encryptedText = CryptoUtils.encryptMessage(text);
     final newMessage = {
       "sender": myId,
       "sendername": "Me",
@@ -202,40 +90,26 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  String _formatTime(String? dateTime) {
-    try {
-      if (dateTime == null || dateTime.isEmpty) {
-        return "";
-      }
-
-      final date = DateTime.parse(dateTime).toLocal();
-
-      final hour = date.hour > 12
-          ? date.hour - 12
-          : date.hour == 0
-          ? 12
-          : date.hour;
-
-      final minute = date.minute.toString().padLeft(2, '0');
-
-      final amPm = date.hour >= 12 ? "PM" : "AM";
-
-      return "$hour:$minute $amPm";
-    } catch (e) {
-      return "";
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final bgColor = AppColors.getBackgroundColor(widget.isDark);
+
+    if (isLoading)
+      return const Scaffold(
+        backgroundColor: Color(0xff0B1120),
+        body: ChatSkeleton(),
+      );
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xff111827),
-        titleSpacing: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        titleSpacing: -5,
         title: Row(
           children: [
             Container(
@@ -261,9 +135,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Text(
                     roomTitle,
-
                     overflow: TextOverflow.ellipsis,
-
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -275,7 +147,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
                   const Text(
                     "Secure conversation",
-
                     style: TextStyle(color: Colors.white54, fontSize: 11),
                   ),
                 ],
@@ -297,32 +168,24 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           children: [
             Expanded(
-              child: isLoading
-                  ? const ChatSkeleton()
-                  : messages.isEmpty
+              child: messages.isEmpty
                   ? const Center(
                       child: Text(
                         "No messages found",
-
                         style: TextStyle(color: Colors.white54),
                       ),
                     )
                   : ListView.builder(
                       reverse: true,
                       controller: _scrollController,
-
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 16,
                       ),
-
                       itemCount: messages.length,
-
                       itemBuilder: (context, index) {
                         final msg = messages[index];
-
                         final isMe = msg['sender'].toString() == myId;
-
                         return _messageBubble(msg, isMe);
                       },
                     ),
@@ -336,9 +199,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _messageBubble(dynamic msg, bool isMe) {
-    final decryptedText = _decryptMessage(msg['msg_body']);
+    final decryptedText = CryptoUtils.decryptMessage(msg['msg_body']);
 
-    final cleanText = _stripHtml(decryptedText);
+    final cleanText = FormatUtils.stripHtml(decryptedText);
 
     final userImage = msg['senderimg']?.toString() ?? "";
 
@@ -448,7 +311,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text(
-                            _formatTime(msg['created_at']?.toString()),
+                            FormatUtils.formatTime(
+                              msg['created_at']?.toString(),
+                            ),
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.65),
                               fontSize: 10,
