@@ -121,7 +121,8 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: bgColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xff111827),
+        backgroundColor:
+            AppColors.primaryGradient.colors[0], // Consistent with home page
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -187,9 +188,11 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
 
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xff0B1120), Color(0xff111827), Color(0xff0F172A)],
+            colors: AppColors
+                .primaryGradient
+                .colors, // Use primary gradient for body background
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -392,7 +395,8 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
         decoration: BoxDecoration(
-          color: const Color(0xff111827),
+          color:
+              AppColors.primaryGradient.colors[0], // Consistent with home page
           border: Border(
             top: BorderSide(color: Colors.white.withOpacity(0.05)),
           ),
