@@ -1,39 +1,319 @@
 import 'package:flutter/material.dart';
 
 class DashboardTab extends StatelessWidget {
-  const DashboardTab({super.key});
+  final Map<String, dynamic>? userMe;
+
+  const DashboardTab({super.key, this.userMe});
+
+  String get fullName {
+    final first = userMe?['firstname'] ?? '';
+    final last = userMe?['lastname'] ?? '';
+    final name = "$first $last".trim();
+    return name.isEmpty ? "User" : name;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            "Dashboard",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
+    const Color bg = Color(0xFF0B1B3A);
+    const Color card = Color(0xFF142A55);
+    const Color card2 = Color(0xFF1A3470);
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+
+              /// ================= HEADER =================
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A3C7A), Color(0xFF0F2550)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 26,
+                      backgroundColor: Colors.white24,
+                      child: Text(
+                        fullName.isNotEmpty ? fullName[0] : "U",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Good Morning 👋",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Text(
+                            fullName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.notifications_none,
+                        color: Colors.white, size: 26),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              /// ================= STATS =================
+              Row(
+                children: const [
+                  Expanded(child: _StatCard(title: "Tasks", value: "12", icon: Icons.task_alt)),
+                  SizedBox(width: 12),
+                  Expanded(child: _StatCard(title: "Files", value: "34", icon: Icons.folder)),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: const [
+                  Expanded(child: _StatCard(title: "Reports", value: "8", icon: Icons.analytics)),
+                  SizedBox(width: 12),
+                  Expanded(child: _StatCard(title: "Alerts", value: "3", icon: Icons.warning_amber)),
+                ],
+              ),
+
+              const SizedBox(height: 22),
+
+              /// ================= SECTION TITLE =================
+              const _Title("Recent Activity"),
+
+              const SizedBox(height: 12),
+
+              /// ================= LIST CARDS =================
+              _ActivityCard(
+                title: "New file uploaded",
+                subtitle: "Project_report.pdf",
+                icon: Icons.upload_file,
+              ),
+
+              _ActivityCard(
+                title: "Task completed",
+                subtitle: "UI redesign finished",
+                icon: Icons.check_circle,
+              ),
+
+              _ActivityCard(
+                title: "New comment",
+                subtitle: "Client feedback received",
+                icon: Icons.comment,
+              ),
+
+              const SizedBox(height: 22),
+
+              const _Title("Modules"),
+
+              const SizedBox(height: 12),
+
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.1,
+                children: const [
+                  _Module(icon: Icons.task_alt, title: "Tasks"),
+                  _Module(icon: Icons.folder, title: "Files"),
+                  _Module(icon: Icons.bar_chart, title: "Analytics"),
+                  _Module(icon: Icons.settings, title: "Settings"),
+                ],
+              ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+}
 
-          SizedBox(height: 15),
+/// ================= TITLE =================
+class _Title extends StatelessWidget {
+  final String text;
+  const _Title(this.text);
 
-          Text(
-            "Manage your chats, calls, and analytics from here.",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70),
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
 
-          SizedBox(height: 20),
+/// ================= STAT CARD =================
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
 
-          Text(
-            "• Total Users: 120\n• Active Chats: 45\n• Calls Today: 18",
-            style: TextStyle(color: Colors.white70),
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color card = Color(0xFF142A55);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 8,
+            offset: Offset(0, 4),
           ),
         ],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white70),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+/// ================= ACTIVITY CARD =================
+class _ActivityCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  const _ActivityCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color card = Color(0xFF142A55);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white70),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Text(subtitle,
+                    style: const TextStyle(
+                        color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ================= MODULE =================
+class _Module extends StatelessWidget {
+  final IconData icon;
+  final String title;
+
+  const _Module({required this.icon, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    const Color card = Color(0xFF142A55);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 6,
+          )
+        ],
+      ),
+      child: InkWell(
+        onTap: () {},
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 28),
+            const SizedBox(height: 8),
+            Text(title,
+                style: const TextStyle(
+                    color: Colors.white70, fontSize: 13)),
+          ],
+        ),
       ),
     );
   }

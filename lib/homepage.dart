@@ -173,7 +173,7 @@ class _HomePageState extends State<HomePage> {
               conversationRooms: conversationRooms,
               userMe: userData?['id']?.toString(),
             ),
-            const DashboardTab(),
+            DashboardTab(userMe: userData),
           ],
         ),
       ),
