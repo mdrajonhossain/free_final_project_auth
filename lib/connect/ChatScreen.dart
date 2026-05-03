@@ -18,7 +18,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
 
   List<dynamic> messages = [];
-  final String myId = "1";
+  String myId = "";
+  Map<String, dynamic>? userData;
   String conversationId = "";
   String roomTitle = "Chat";
   bool isLoading = true;
@@ -47,6 +48,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> getMessages(String conversationId) async {
     try {
+      // Dynamically fetch current user info to distinguish 'Me' from others
+      if (myId.isEmpty) {
+        userData = await ApiServer().fetchMe();
+        myId = userData?['id']?.toString() ?? "";
+      }
+
       final data = await ApiServer().fetchMessages(conversationId);
       setState(() {
         messages = (data['msgs'] as List?)?.reversed.toList() ?? [];
@@ -66,8 +73,11 @@ class _ChatScreenState extends State<ChatScreen> {
     final encryptedText = CryptoUtils.encryptMessage(text);
     final newMessage = {
       "sender": myId,
-      "sendername": "Me",
+      "sendername":
+          "${userData?['firstname'] ?? 'Me'} ${userData?['lastname'] ?? ''}"
+              .trim(),
       "senderimg":
+          userData?['img'] ??
           "https://wfss001.freeli.io/profile-pic/Photos/corporate-company-logo-png_seeklogo-425925@1764655943904.png",
       "msg_body": encryptedText,
       "created_at": DateTime.now().toIso8601String(),
