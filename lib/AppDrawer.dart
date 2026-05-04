@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'AppColors.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -18,175 +17,126 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String name =
-        "${userData?['firstname'] ?? 'User'} ${userData?['lastname'] ?? ''}"
-            .trim();
-    final String email = userData?['email'] ?? "No email provided";
+    final String name = (userData != null && userData!['firstname'] != null)
+        ? "${userData!['firstname']} ${userData!['lastname'] ?? ''}".trim()
+        : "Guest User";
+    final String email = userData?['email'] ?? "Sign in to sync your data";
     final String? imgUrl = userData?['img'];
 
+    const Color primaryBlue = Color(0xFF0C1F5E);
+    const Color surfaceBlue = Color(0xFF152A6E);
+
     return Drawer(
-      backgroundColor: Colors.transparent,
-      child: Stack(
+      backgroundColor: primaryBlue,
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          // Glassmorphism effect background
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color:
-                    (isDark ? const Color(0xFF052874) : const Color(0xFF030915))
-                        .withOpacity(0.85),
-                border: Border(
-                  left: BorderSide(color: Colors.white.withOpacity(0.1)),
-                ),
-              ),
+          /// ================= HEADER =================
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+            decoration: const BoxDecoration(
+              color: surfaceBlue,
+              borderRadius: BorderRadius.only(bottomRight: Radius.circular(30)),
             ),
-          ),
-          SafeArea(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profile Header
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundColor: AppColors.accentColor.withOpacity(0.2),
-                        backgroundImage: imgUrl != null
-                            ? NetworkImage(imgUrl)
-                            : null,
-                        child: imgUrl == null
-                            ? const Icon(
-                                Icons.person,
-                                size: 40,
-                                color: Colors.white,
-                              )
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        email,
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.6),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Image.asset('assets/logo.webp', height: 30),
+                    CircleAvatar(
+                      radius: 35,
+                      backgroundColor: Colors.white24,
+                      backgroundImage: imgUrl != null
+                          ? NetworkImage(imgUrl)
+                          : null,
+                      child: imgUrl == null
+                          ? const Icon(
+                              Icons.person,
+                              color: Colors.white,
+                              size: 40,
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  name,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Divider(
-                  color: Colors.white10,
-                  thickness: 1,
-                  indent: 20,
-                  endIndent: 20,
-                ),
-
-                // Menu Items
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    children: [
-                      _drawerItem(Icons.person_outline, "My Profile", () {}),
-                      _drawerItem(Icons.settings_outlined, "Settings", () {}),
-                      _drawerItem(
-                        Icons.notifications_none,
-                        "Notifications",
-                        () {},
-                      ),
-                      _drawerItem(
-                        Icons.security_outlined,
-                        "Privacy & Security",
-                        () {},
-                      ),
-                      _drawerItem(Icons.help_outline, "Help & Support", () {}),
-                    ],
-                  ),
-                ),
-
-                // Footer Section
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      // Theme Switcher
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              "Dark Mode",
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                            Switch(
-                              value: isDark,
-                              onChanged: onThemeChange,
-                              activeColor: AppColors.accentColor,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Logout Button
-                      InkWell(
-                        onTap: onLogout,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.redAccent.withOpacity(0.5),
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.logout,
-                                color: Colors.redAccent,
-                                size: 20,
-                              ),
-                              SizedBox(width: 10),
-                              Text(
-                                "Logout",
-                                style: TextStyle(
-                                  color: Colors.redAccent,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                Text(
+                  email,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 13,
                   ),
                 ),
               ],
             ),
           ),
+
+          /// ================= PRIMARY MENU (2 COLUMN GRID) =================
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
+            child: GridView.count(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              mainAxisSpacing: 5,
+              crossAxisSpacing: 5,
+              childAspectRatio: 2.6,
+              children: [
+                _gridItem(Icons.task_alt, "Tasks", () {}),
+                _gridItem(Icons.folder_open_outlined, "FileHub", () {}),
+                _gridItem(Icons.analytics_outlined, "Daily Sales", () {}),
+              ],
+            ),
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 2),
+            child: Divider(color: Colors.white12, indent: 20, endIndent: 20),
+          ),
+
+          /// ================= SECONDARY MENU =================
+          _drawerItem(Icons.archive_outlined, "Archive rooms", () {}),
+          _drawerItem(Icons.flag_outlined, "Flagged messages", () {}),
+          _drawerItem(
+            Icons.notifications_none_outlined,
+            "All notifications",
+            () {},
+          ),
+
+          _drawerItem(Icons.lock_outline, "Change password", () {}),
+          _drawerItem(
+            Icons.admin_panel_settings_outlined,
+            "Admin settings",
+            () {},
+          ),
+
+          const SizedBox(height: 30),
+
+          /// ================= LOGOUT =================
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _signOutButton(),
+          ),
+
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
+  /// Helper to build Drawer Items
   Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: Colors.white70, size: 22),
@@ -194,8 +144,75 @@ class AppDrawer extends StatelessWidget {
         title,
         style: const TextStyle(color: Colors.white, fontSize: 15),
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 25),
+      visualDensity: const VisualDensity(vertical: -1),
+    );
+  }
+
+  /// Helper to build Grid Items
+  Widget _gridItem(IconData icon, String title, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white70, size: 20),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Styled Sign Out Button
+  Widget _signOutButton() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF913E3E),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15),
+        onTap: onLogout,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Text(
+                "Logout",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

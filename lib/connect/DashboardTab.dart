@@ -26,69 +26,23 @@ class DashboardTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              /// ================= HEADER =================
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1A3C7A), Color(0xFF0F2550)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundColor: Colors.white24,
-                      child: Text(
-                        fullName.isNotEmpty ? fullName[0] : "U",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Good Morning 👋",
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          ),
-                          Text(
-                            fullName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.notifications_none,
-                        color: Colors.white, size: 26),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              /// ================= STATS =================
               Row(
                 children: const [
-                  Expanded(child: _StatCard(title: "Tasks", value: "12", icon: Icons.task_alt)),
+                  Expanded(
+                    child: _StatCard(
+                      title: "Tasks",
+                      value: "12",
+                      icon: Icons.task_alt,
+                    ),
+                  ),
                   SizedBox(width: 12),
-                  Expanded(child: _StatCard(title: "Files", value: "34", icon: Icons.folder)),
+                  Expanded(
+                    child: _StatCard(
+                      title: "Files",
+                      value: "34",
+                      icon: Icons.folder,
+                    ),
+                  ),
                 ],
               ),
 
@@ -96,9 +50,21 @@ class DashboardTab extends StatelessWidget {
 
               Row(
                 children: const [
-                  Expanded(child: _StatCard(title: "Reports", value: "8", icon: Icons.analytics)),
+                  Expanded(
+                    child: _StatCard(
+                      title: "Reports",
+                      value: "8",
+                      icon: Icons.analytics,
+                    ),
+                  ),
                   SizedBox(width: 12),
-                  Expanded(child: _StatCard(title: "Alerts", value: "3", icon: Icons.warning_amber)),
+                  Expanded(
+                    child: _StatCard(
+                      title: "Alerts",
+                      value: "3",
+                      icon: Icons.warning_amber,
+                    ),
+                  ),
                 ],
               ),
 
@@ -196,11 +162,7 @@ class _StatCard extends StatelessWidget {
         color: card,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
         ],
       ),
       child: Row(
@@ -220,13 +182,10 @@ class _StatCard extends StatelessWidget {
               ),
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -264,13 +223,18 @@ class _ActivityCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(subtitle,
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 12)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -295,12 +259,7 @@ class _Module extends StatelessWidget {
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-          )
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
       ),
       child: InkWell(
         onTap: () {},
@@ -309,9 +268,10 @@ class _Module extends StatelessWidget {
           children: [
             Icon(icon, color: Colors.white, size: 28),
             const SizedBox(height: 8),
-            Text(title,
-                style: const TextStyle(
-                    color: Colors.white70, fontSize: 13)),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
           ],
         ),
       ),
