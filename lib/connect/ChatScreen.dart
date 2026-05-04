@@ -4,6 +4,7 @@ import '../controller/api/api_service.dart';
 import 'ChatSkeleton.dart';
 import './crypto_utils.dart';
 import './format_utils.dart';
+import './file_utils.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;
@@ -384,14 +385,16 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        cleanText,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          height: 1.5,
+                      if (cleanText.isNotEmpty)
+                        Text(
+                          cleanText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            height: 1.5,
+                          ),
                         ),
-                      ),
+                      _buildAttachments(msg['all_attachment']),
                       const SizedBox(height: 8),
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -441,6 +444,123 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  /// Builds a professional list of file attachments for a message bubble
+  Widget _buildAttachments(dynamic attachments) {
+    if (attachments == null || attachments is! List || attachments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        ...attachments.map((file) {
+          final String originalName = file['originalname'] ?? "File";
+          final String location = file['location'] ?? "";
+          final String extension = location
+              .split('.')
+              .last
+              .split('?')
+              .first
+              .toLowerCase();
+
+          // Identify if the file is an image
+          final bool isImage = [
+            'jpg',
+            'jpeg',
+            'png',
+            'gif',
+            'webp',
+          ].contains(extension);
+          final String fullUrl = location.startsWith('http')
+              ? location
+              : "https://wfss001.freeli.io/$location";
+
+          if (isImage) {
+            return GestureDetector(
+              onTap: () {
+                // TODO: Implement full screen image viewer
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                constraints: const BoxConstraints(
+                  maxHeight: 200,
+                  maxWidth: 240,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    fullUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 150,
+                        width: 200,
+                        color: Colors.white.withOpacity(0.05),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 100,
+                      width: 150,
+                      color: Colors.white.withOpacity(0.05),
+                      child: const Icon(
+                        Icons.broken_image,
+                        color: Colors.white24,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          } else {
+            // Non-image file card
+            final IconData icon = FileUtils.getFileIcon(location);
+            return Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: Colors.white70, size: 20),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      originalName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        }).toList(),
+      ],
     );
   }
 

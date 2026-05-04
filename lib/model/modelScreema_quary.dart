@@ -234,6 +234,39 @@ query Messages(\$conversationId: String!, \$page: Int!) {
             conv_title
             conv_img
             short_id
+            all_attachment {
+                id
+                conversation_id
+                conversation_title
+                group
+                user_id
+                msg_id
+                bucket
+                file_type
+                key
+                location
+                originalname
+                file_size
+                has_tag
+                root_conv_id
+                url_short_id
+                file_category
+                main_msg_id
+                company_id
+                referenceId
+                reference_type
+                uploaded_by
+                cost_id
+                is_delete
+                is_secret
+                created_at
+                has_delete
+                tag_list
+                mention_user
+                secret_user
+                participants
+                star
+            }
         }
         pagination {
             page
