@@ -301,8 +301,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
 
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: isMe
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
@@ -333,21 +332,22 @@ class _ChatScreenState extends State<ChatScreen> {
                   : CrossAxisAlignment.start,
 
               children: [
-                /// OTHER USER NAME
-                if (!isMe)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 6, bottom: 4),
-
-                    child: Text(
-                      msg['sendername']?.toString() ?? "User",
-
-                      style: const TextStyle(
-                        color: Colors.white60,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
+                /// USER NAME (Now for both sides)
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: isMe ? 0 : 6,
+                    right: isMe ? 6 : 0,
+                    bottom: 4,
+                  ),
+                  child: Text(
+                    isMe ? "You" : (msg['sendername']?.toString() ?? "User"),
+                    style: const TextStyle(
+                      color: Colors.white60,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
+                ),
 
                 /// CHAT BUBBLE
                 Container(
@@ -368,10 +368,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         : null,
                     color: isMe ? null : Colors.white.withOpacity(0.07),
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(22),
-                      topRight: const Radius.circular(22),
-                      bottomLeft: Radius.circular(isMe ? 22 : 6),
-                      bottomRight: Radius.circular(isMe ? 6 : 22),
+                      topLeft: Radius.circular(isMe ? 22 : 6),
+                      topRight: Radius.circular(isMe ? 6 : 22),
+                      bottomLeft: const Radius.circular(22),
+                      bottomRight: const Radius.circular(22),
                     ),
                     border: Border.all(color: Colors.white.withOpacity(0.05)),
                     boxShadow: [
