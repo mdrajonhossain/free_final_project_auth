@@ -154,6 +154,18 @@ class TagsPage extends StatelessWidget {
                           child: Row(
                             children: [
                               const SizedBox(width: 10),
+
+                              /// BULLET INDICATOR
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: tagColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +194,7 @@ class TagsPage extends StatelessWidget {
                                 ),
                                 child: Icon(
                                   Icons.push_pin_rounded,
-                                  color: tagColor,
+                                  color: Colors.white,
                                   size: 16,
                                 ),
                               ),
