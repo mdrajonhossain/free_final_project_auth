@@ -276,3 +276,51 @@ query Messages(\$conversationId: String!, \$page: Int!) {
     }
 }
 """;
+
+const String Get_file_galleryQuery = """
+  query Get_file_gallery(\$conversation_ids: [String!], \$file_type: String, \$tab: String, \$tag_id: [String!], \$conversation_id: String) {
+    get_file_gallery(
+      conversation_ids: \$conversation_ids
+      file_type: \$file_type
+      tab: \$tab
+      tag_id: \$tag_id
+      conversation_id: \$conversation_id
+    ) {
+      tags {
+        tag_id
+        tagged_by
+        title
+        company_id
+        type
+        tag_color
+        created_at
+        updated_at
+        updated_by
+        team_list
+        tag_type
+        conversation_ids
+        connected_user_ids
+        user_use_count
+        created_by_name
+        i_connected
+        my_use_count_int
+        use_count
+        team_list_name
+        favourite
+        disabled
+      }
+      summary {
+        total
+        image
+        audio
+        video
+        other
+        voice
+        share
+        total_viewed_files
+        total_my_uploaded_files
+        total_others_uploaded_files
+      }
+    }
+}
+""";

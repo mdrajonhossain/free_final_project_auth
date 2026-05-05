@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freeli/controller/api/api_service.dart';
+import 'package:freeli/model/modelScreema_quary.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../AppDrawer.dart';
 import 'tags_page.dart';
@@ -21,27 +22,38 @@ class Filehubs extends StatefulWidget {
 }
 
 class _FilehubsState extends State<Filehubs> {
-  int _currentIndex = 1;
+  int _currentIndex = 0; // Default to Tags tab to show API data
   Map<String, dynamic>? userData;
+  Map<String, dynamic>? galleryData;
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    getMeData();
+    get_tagData();
   }
 
-  Future<void> getMeData() async {
+  Future<void> get_tagData() async {
     try {
+      if (!mounted) return;
       setState(() => isLoading = true);
-      final data = await ApiServer().fetchMe();
+
+      // Fetch User profile and Tag Gallery in parallel for performance
+      final results = await Future.wait([
+        ApiServer().fetchMe(),
+        ApiServer().get_tag_gallery(),
+      ]);
+
+      if (!mounted) return;
       setState(() {
-        userData = data;
+        userData = results[0] as Map<String, dynamic>?;
+        galleryData = results[1] as Map<String, dynamic>?;
         isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => isLoading = false);
-      debugPrint("Error fetching user data: $e");
+      debugPrint("Error fetching data: $e");
     }
   }
 
@@ -56,8 +68,11 @@ class _FilehubsState extends State<Filehubs> {
 
   @override
   Widget build(BuildContext context) {
+    // Extract tags from galleryData
+    final List<dynamic> tagsList = galleryData?['tags'] ?? [];
+
     final List<Widget> pages = [
-      TagsPage(isDark: widget.isDark),
+      TagsPage(isDark: widget.isDark, tags: tagsList),
       FileHubPage(isDark: widget.isDark),
       LinksPage(isDark: widget.isDark),
     ];
@@ -103,7 +118,13 @@ class _FilehubsState extends State<Filehubs> {
       ),
 
       /// ================= BODY =================
-      body: pages[_currentIndex],
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4C8DFF)),
+              ),
+            )
+          : pages[_currentIndex],
 
       /// ================= BOTTOM NAV =================
       bottomNavigationBar: BottomNavigationBar(

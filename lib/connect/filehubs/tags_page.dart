@@ -2,8 +2,22 @@ import 'package:flutter/material.dart';
 
 class TagsPage extends StatelessWidget {
   final bool isDark;
+  final List<dynamic> tags;
 
-  const TagsPage({super.key, required this.isDark});
+  const TagsPage({super.key, required this.isDark, this.tags = const []});
+
+  /// Helper to convert hex strings like "#032e84" to Flutter Color
+  Color _parseHexColor(String? hexString) {
+    if (hexString == null || hexString.isEmpty) return Colors.blue;
+    try {
+      final buffer = StringBuffer();
+      if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+      buffer.write(hexString.replaceFirst('#', ''));
+      return Color(int.parse(buffer.toString(), radix: 16));
+    } catch (_) {
+      return Colors.blue;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,75 +34,6 @@ class TagsPage extends StatelessWidget {
     final Color textColor = isDark ? Colors.white : const Color(0xFF1B1D28);
 
     final Color subTextColor = isDark ? Colors.white70 : Colors.black54;
-
-    final List<Map<String, dynamic>> tags = [
-      {
-        'name': 'UI Design',
-        'files': 42,
-        'icon': Icons.design_services_rounded,
-        'color': Colors.blue,
-      },
-      {
-        'name': 'Flutter',
-        'files': 31,
-        'icon': Icons.flutter_dash_rounded,
-        'color': Colors.cyan,
-      },
-      {
-        'name': 'Backend',
-        'files': 18,
-        'icon': Icons.storage_rounded,
-        'color': Colors.green,
-      },
-      {
-        'name': 'Security',
-        'files': 12,
-        'icon': Icons.security_rounded,
-        'color': Colors.red,
-      },
-      {
-        'name': 'Database',
-        'files': 20,
-        'icon': Icons.dns_rounded,
-        'color': Colors.orange,
-      },
-      {
-        'name': 'API',
-        'files': 15,
-        'icon': Icons.api_rounded,
-        'color': Colors.purple,
-      },
-      {
-        'name': 'Flutter',
-        'files': 31,
-        'icon': Icons.flutter_dash_rounded,
-        'color': Colors.cyan,
-      },
-      {
-        'name': 'Backend',
-        'files': 18,
-        'icon': Icons.storage_rounded,
-        'color': Colors.green,
-      },
-      {
-        'name': 'Security',
-        'files': 12,
-        'icon': Icons.security_rounded,
-        'color': Colors.red,
-      },
-      {
-        'name': 'Database',
-        'files': 20,
-        'icon': Icons.dns_rounded,
-        'color': Colors.orange,
-      },
-      {
-        'name': 'API',
-        'files': 15,
-        'icon': Icons.api_rounded,
-        'color': Colors.purple,
-      },
-    ];
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -169,71 +114,83 @@ class TagsPage extends StatelessWidget {
 
             /// TAG LIST
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: tags.length,
-                itemBuilder: (context, index) {
-                  final tag = tags[index];
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withOpacity(0.05)
-                            : Colors.grey.withOpacity(0.08),
+              child: tags.isEmpty
+                  ? Center(
+                      child: Text(
+                        "No tags found",
+                        style: TextStyle(color: subTextColor),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(isDark ? 0.18 : 0.05),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: tags.length,
+                      itemBuilder: (context, index) {
+                        final tag = tags[index];
+                        final String title = tag['title'] ?? 'Untitled';
+                        final int count = tag['i_connected'] ?? 0;
+                        final Color tagColor = _parseHexColor(tag['tag_color']);
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: cardColor,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.05)
+                                  : Colors.grey.withOpacity(0.08),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(
+                                  isDark ? 0.18 : 0.05,
+                                ),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                "${tag['name']} (5)",
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "$title ($count)",
+                                      style: TextStyle(
+                                        color: textColor,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              /// ACTION BUTTON
+                              Container(
+                                height: 25,
+                                width: 25,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.08)
+                                      : Colors.grey.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  Icons.push_pin_rounded,
+                                  color: tagColor,
+                                  size: 16,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-
-                        /// ACTION BUTTON
-                        Container(
-                          height: 25,
-                          width: 25,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withOpacity(0.08)
-                                : Colors.grey.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.push_pin_rounded,
-                            color: Colors.blue,
-                            size: 16,
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

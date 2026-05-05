@@ -227,4 +227,36 @@ class ApiServer {
       throw GqlException("Network error: Please check your connection.");
     }
   }
+
+  // ==========================get_tag_gallery==============================
+  Future<Map<String, dynamic>> get_tag_gallery() async {
+    try {
+      final data = await ApiServer.call(
+        Get_file_galleryQuery,
+        variables: {
+          "conversation_ids": null,
+          "file_type": "all",
+          "tab": "tag",
+          "tag_id": ["tag"],
+          "conversation_id": null,
+        },
+      );
+      final galleryData = data['get_file_gallery'];
+      if (galleryData != null) {
+        print("[API] get_tag_gallery: success");
+        return Map<String, dynamic>.from(galleryData);
+      }
+      throw const GqlException("File gallery data not found");
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      print("[API ERROR] get_tag_gallery: $e");
+      throw GqlException("Failed to fetch gallery: ${e.toString()}");
+    }
+  }
+
+  // ==================End
 }
