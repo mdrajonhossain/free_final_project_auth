@@ -79,7 +79,7 @@ class _FilehubsState extends State<Filehubs> {
         ? const Color(0xFF052874)
         : const Color(0xFF0A3BA8);
     final Color backgroundColor = widget.isDark
-        ? const Color(0xFF030915)
+        ? const Color(0xFF1A3470)
         : Colors.grey[100]!;
 
     return Scaffold(

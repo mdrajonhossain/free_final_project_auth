@@ -12,6 +12,7 @@ class TagsPage extends StatefulWidget {
 
 class _TagsPageState extends State<TagsPage> {
   late List<dynamic> _filteredTags;
+
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -23,23 +24,30 @@ class _TagsPageState extends State<TagsPage> {
   @override
   void didUpdateWidget(covariant TagsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     if (oldWidget.tags != widget.tags) {
       _runFilter(_searchController.text);
     }
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// SEARCH FILTER
   void _runFilter(String enteredKeyword) {
     List<dynamic> results = [];
-    if (enteredKeyword.isEmpty) {
+
+    if (enteredKeyword.trim().isEmpty) {
       results = widget.tags;
     } else {
-      results = widget.tags
-          .where(
-            (tag) => (tag['title'] ?? '').toString().toLowerCase().contains(
-              enteredKeyword.toLowerCase(),
-            ),
-          )
-          .toList();
+      results = widget.tags.where((tag) {
+        final title = (tag['title'] ?? '').toString().toLowerCase();
+
+        return title.contains(enteredKeyword.toLowerCase());
+      }).toList();
     }
 
     setState(() {
@@ -47,13 +55,21 @@ class _TagsPageState extends State<TagsPage> {
     });
   }
 
-  /// Helper to convert hex strings like "#032e84" to Flutter Color
+  /// HEX COLOR PARSER
   Color _parseHexColor(String? hexString) {
-    if (hexString == null || hexString.isEmpty) return Colors.blue;
+    if (hexString == null || hexString.isEmpty) {
+      return Colors.blue;
+    }
+
     try {
       final buffer = StringBuffer();
-      if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+
+      if (hexString.length == 6 || hexString.length == 7) {
+        buffer.write('ff');
+      }
+
       buffer.write(hexString.replaceFirst('#', ''));
+
       return Color(int.parse(buffer.toString(), radix: 16));
     } catch (_) {
       return Colors.blue;
@@ -62,14 +78,28 @@ class _TagsPageState extends State<TagsPage> {
 
   @override
   Widget build(BuildContext context) {
+    /// COLORS
+    final backgroundColor = widget.isDark
+        ? const Color(0xFF1A3470)
+        : const Color(0xFFF4F7FC);
+
+    final surfaceColor = widget.isDark ? const Color(0xFF132850) : Colors.white;
+
+    final cardColor = widget.isDark ? const Color(0xFF102347) : Colors.white;
+
+    final textColor = widget.isDark ? Colors.white : const Color(0xFF1B1D28);
+
+    final subTextColor = widget.isDark ? Colors.white70 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
+
       body: SafeArea(
         child: Column(
           children: [
             /// HEADER
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
               child: Row(
                 children: [
                   Expanded(
@@ -77,148 +107,246 @@ class _TagsPageState extends State<TagsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Tags - Most recent",
+                          "Tags",
                           style: TextStyle(
-                            color: Colors.black87,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
+
+                        const SizedBox(height: 5),
+
                         Text(
-                          "Your latest and most active tags",
-                          style: TextStyle(color: Colors.black87, fontSize: 14),
+                          "Manage all project tags professionally",
+                          style: TextStyle(
+                            color: subTextColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ],
+                    ),
+                  ),
+
+                  /// TOTAL COUNT
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: widget.isDark
+                          ? Colors.white.withOpacity(.06)
+                          : Colors.blue.withOpacity(.08),
+
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      "${_filteredTags.length}",
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
-            /// SEARCH
+            /// SEARCH BOX
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
                 height: 58,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: widget.isDark
+                        ? Colors.white.withOpacity(.05)
+                        : Colors.black.withOpacity(.04),
+                  ),
+
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(
-                        widget.isDark ? 0.15 : 0.06,
-                      ),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
+                      color: Colors.black.withOpacity(.06),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
+
                 child: TextField(
                   controller: _searchController,
                   onChanged: _runFilter,
-                  style: TextStyle(color: Colors.black87, fontSize: 15),
+                  style: TextStyle(color: textColor, fontSize: 15),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Search tags...",
-                    hintStyle: TextStyle(color: Colors.black54),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: Colors.black54,
+                    hintStyle: TextStyle(color: subTextColor, fontSize: 14),
+                    prefixIcon: Icon(Icons.search_rounded, color: subTextColor),
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        /// FILTER ACTION
+                      },
+                      icon: Icon(Icons.filter_alt_sharp, color: subTextColor),
                     ),
-                    suffixIcon: Icon(Icons.tune_rounded, color: Colors.black54),
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(height: 5),
+            const SizedBox(height: 18),
 
             /// TAG LIST
             Expanded(
               child: _filteredTags.isEmpty
                   ? Center(
-                      child: Text(
-                        "No tags found",
-                        style: TextStyle(color: Colors.black54),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 60,
+                            color: subTextColor,
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          Text(
+                            "No tags found",
+                            style: TextStyle(
+                              color: subTextColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 2,
+                      ),
                       itemCount: _filteredTags.length,
                       itemBuilder: (context, index) {
                         final tag = _filteredTags[index];
                         final String title = tag['title'] ?? 'Untitled';
                         final int count = tag['i_connected'] ?? 0;
                         final Color tagColor = _parseHexColor(tag['tag_color']);
-
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(10),
+                          margin: const EdgeInsets.only(bottom: 5),
+
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
+
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1A3470),
+                            color: cardColor,
+
                             borderRadius: BorderRadius.circular(24),
+
                             border: Border.all(
                               color: widget.isDark
-                                  ? Colors.white.withOpacity(0.05)
-                                  : Colors.grey.withOpacity(0.08),
+                                  ? Colors.white.withOpacity(.04)
+                                  : Colors.black.withOpacity(.03),
                             ),
+
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(
-                                  widget.isDark ? 0.18 : 0.05,
-                                ),
-                                blurRadius: 18,
-                                offset: const Offset(0, 8),
+                                color: Colors.black.withOpacity(.08),
+
+                                blurRadius: 24,
+
+                                offset: const Offset(0, 10),
                               ),
                             ],
                           ),
+
                           child: Row(
                             children: [
-                              const SizedBox(width: 10),
-
-                              /// BULLET INDICATOR
+                              /// TAG COLOR
                               Container(
-                                width: 12,
-                                height: 12,
+                                width: 14,
+                                height: 14,
+
                                 decoration: BoxDecoration(
                                   color: tagColor,
                                   shape: BoxShape.circle,
+
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: tagColor.withOpacity(.45),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 12),
 
+                              const SizedBox(width: 16),
+
+                              /// TITLE
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
+
                                   children: [
                                     Text(
-                                      "$title ($count)",
+                                      title,
+
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
+                                        color: textColor,
+
+                                        fontSize: 15,
+
                                         fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 3),
+
+                                    Text(
+                                      "$count connected files",
+
+                                      style: TextStyle(
+                                        color: subTextColor,
+
+                                        fontSize: 12,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
 
-                              /// ACTION BUTTON
+                              /// ACTION
                               Container(
-                                height: 25,
-                                width: 25,
+                                height: 38,
+                                width: 38,
+
                                 decoration: BoxDecoration(
                                   color: widget.isDark
-                                      ? Colors.white.withOpacity(0.08)
-                                      : Colors.grey.withOpacity(0.08),
+                                      ? Colors.white.withOpacity(.06)
+                                      : Colors.blue.withOpacity(.08),
+
                                   borderRadius: BorderRadius.circular(14),
                                 ),
+
                                 child: Icon(
                                   Icons.push_pin_rounded,
-                                  color: Colors.white,
-                                  size: 16,
+
+                                  color: widget.isDark
+                                      ? Colors.white70
+                                      : Colors.blueGrey,
+
+                                  size: 18,
                                 ),
                               ),
                             ],
