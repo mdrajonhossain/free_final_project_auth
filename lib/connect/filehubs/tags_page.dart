@@ -1,10 +1,51 @@
 import 'package:flutter/material.dart';
 
-class TagsPage extends StatelessWidget {
+class TagsPage extends StatefulWidget {
   final bool isDark;
   final List<dynamic> tags;
 
   const TagsPage({super.key, required this.isDark, this.tags = const []});
+
+  @override
+  State<TagsPage> createState() => _TagsPageState();
+}
+
+class _TagsPageState extends State<TagsPage> {
+  late List<dynamic> _filteredTags;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredTags = widget.tags;
+  }
+
+  @override
+  void didUpdateWidget(covariant TagsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.tags != widget.tags) {
+      _runFilter(_searchController.text);
+    }
+  }
+
+  void _runFilter(String enteredKeyword) {
+    List<dynamic> results = [];
+    if (enteredKeyword.isEmpty) {
+      results = widget.tags;
+    } else {
+      results = widget.tags
+          .where(
+            (tag) => (tag['title'] ?? '').toString().toLowerCase().contains(
+              enteredKeyword.toLowerCase(),
+            ),
+          )
+          .toList();
+    }
+
+    setState(() {
+      _filteredTags = results;
+    });
+  }
 
   /// Helper to convert hex strings like "#032e84" to Flutter Color
   Color _parseHexColor(String? hexString) {
@@ -21,19 +62,25 @@ class TagsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color backgroundColor = isDark
+    final Color backgroundColor = widget.isDark
         ? const Color(0xFF030915)
         : const Color(0xFFF4F7FC);
 
-    final Color surfaceColor = isDark ? const Color(0xFF052874) : Colors.white;
+    final Color surfaceColor = widget.isDark
+        ? const Color(0xFF052874)
+        : Colors.white;
 
-    final Color cardColor = isDark ? const Color(0xFF0A327F) : Colors.white;
+    final Color cardColor = widget.isDark
+        ? const Color(0xFF0A327F)
+        : Colors.white;
 
     final Color primaryColor = const Color(0xFF4C8DFF);
 
-    final Color textColor = isDark ? Colors.white : const Color(0xFF1B1D28);
+    final Color textColor = widget.isDark
+        ? Colors.white
+        : const Color(0xFF1B1D28);
 
-    final Color subTextColor = isDark ? Colors.white70 : Colors.black54;
+    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.black54;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -79,13 +126,17 @@ class TagsPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.15 : 0.06),
+                      color: Colors.black.withOpacity(
+                        widget.isDark ? 0.15 : 0.06,
+                      ),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 child: TextField(
+                  controller: _searchController,
+                  onChanged: _runFilter,
                   style: TextStyle(color: textColor, fontSize: 15),
                   decoration: InputDecoration(
                     border: InputBorder.none,
@@ -103,7 +154,7 @@ class TagsPage extends StatelessWidget {
 
             /// TAG LIST
             Expanded(
-              child: tags.isEmpty
+              child: _filteredTags.isEmpty
                   ? Center(
                       child: Text(
                         "No tags found",
@@ -112,9 +163,9 @@ class TagsPage extends StatelessWidget {
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: tags.length,
+                      itemCount: _filteredTags.length,
                       itemBuilder: (context, index) {
-                        final tag = tags[index];
+                        final tag = _filteredTags[index];
                         final String title = tag['title'] ?? 'Untitled';
                         final int count = tag['i_connected'] ?? 0;
                         final Color tagColor = _parseHexColor(tag['tag_color']);
@@ -126,14 +177,14 @@ class TagsPage extends StatelessWidget {
                             color: cardColor,
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: isDark
+                              color: widget.isDark
                                   ? Colors.white.withOpacity(0.05)
                                   : Colors.grey.withOpacity(0.08),
                             ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(
-                                  isDark ? 0.18 : 0.05,
+                                  widget.isDark ? 0.18 : 0.05,
                                 ),
                                 blurRadius: 18,
                                 offset: const Offset(0, 8),
@@ -176,7 +227,7 @@ class TagsPage extends StatelessWidget {
                                 height: 25,
                                 width: 25,
                                 decoration: BoxDecoration(
-                                  color: isDark
+                                  color: widget.isDark
                                       ? Colors.white.withOpacity(0.08)
                                       : Colors.grey.withOpacity(0.08),
                                   borderRadius: BorderRadius.circular(14),
