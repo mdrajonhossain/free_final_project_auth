@@ -37,8 +37,6 @@ class _FilehubsState extends State<Filehubs> {
     try {
       if (!mounted) return;
       setState(() => isLoading = true);
-
-      // Fetch User profile and Tag Gallery in parallel for performance
       final results = await Future.wait([
         ApiServer().fetchMe(),
         ApiServer().get_tag_gallery(),
@@ -98,6 +96,10 @@ class _FilehubsState extends State<Filehubs> {
         backgroundColor: const Color.fromARGB(255, 12, 31, 94),
         elevation: 0,
         centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         automaticallyImplyLeading: false,
         titleSpacing: 5,
         title: Image.asset('assets/logo.webp', height: 45),

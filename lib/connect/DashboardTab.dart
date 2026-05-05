@@ -26,51 +26,6 @@ class DashboardTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: const [
-                  Expanded(
-                    child: _StatCard(
-                      title: "Tasks",
-                      value: "12",
-                      icon: Icons.task_alt,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      title: "Files",
-                      value: "34",
-                      icon: Icons.folder,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: const [
-                  Expanded(
-                    child: _StatCard(
-                      title: "Reports",
-                      value: "8",
-                      icon: Icons.analytics,
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      title: "Alerts",
-                      value: "3",
-                      icon: Icons.warning_amber,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 22),
-
-              /// ================= SECTION TITLE =================
               const _Title("Recent Activity"),
 
               const SizedBox(height: 12),
@@ -107,11 +62,25 @@ class DashboardTab extends StatelessWidget {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 childAspectRatio: 1.1,
-                children: const [
-                  _Module(icon: Icons.task_alt, title: "Tasks"),
-                  _Module(icon: Icons.folder, title: "Files"),
-                  _Module(icon: Icons.bar_chart, title: "Analytics"),
-                  _Module(icon: Icons.settings, title: "Settings"),
+                children: [
+                  _Module(icon: Icons.task_alt, title: "Tasks", onTap: () {}),
+                  _Module(
+                    icon: Icons.folder,
+                    title: "FileHub",
+                    onTap: () {
+                      Navigator.pushNamed(context, '/filehuball');
+                    },
+                  ),
+                  _Module(
+                    icon: Icons.bar_chart,
+                    title: "Analytics",
+                    onTap: () {},
+                  ),
+                  _Module(
+                    icon: Icons.settings,
+                    title: "Settings",
+                    onTap: () {},
+                  ),
                 ],
               ),
             ],
@@ -143,14 +112,9 @@ class _Title extends StatelessWidget {
 /// ================= STAT CARD =================
 class _StatCard extends StatelessWidget {
   final String title;
-  final String value;
   final IconData icon;
 
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-  });
+  const _StatCard({required this.title, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -172,14 +136,6 @@ class _StatCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
               Text(
                 title,
                 style: const TextStyle(color: Colors.white70, fontSize: 12),
@@ -248,8 +204,9 @@ class _ActivityCard extends StatelessWidget {
 class _Module extends StatelessWidget {
   final IconData icon;
   final String title;
+  final VoidCallback onTap;
 
-  const _Module({required this.icon, required this.title});
+  const _Module({required this.icon, required this.title, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +219,7 @@ class _Module extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 6)],
       ),
       child: InkWell(
-        onTap: () {},
+        onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

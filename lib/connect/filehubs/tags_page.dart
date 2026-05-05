@@ -59,22 +59,11 @@ class TagsPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "Manage all project tags professionally",
+                          "Your latest and most active tags",
                           style: TextStyle(color: subTextColor, fontSize: 14),
                         ),
                       ],
                     ),
-                  ),
-
-                  /// ADD BUTTON
-                  Container(
-                    height: 48,
-                    width: 48,
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(Icons.add, color: Colors.white),
                   ),
                 ],
               ),
