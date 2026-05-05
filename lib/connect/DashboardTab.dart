@@ -19,7 +19,7 @@ class DashboardTab extends StatelessWidget {
     const Color card2 = Color(0xFF1A3470);
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: card2,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
