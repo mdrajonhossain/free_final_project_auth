@@ -259,4 +259,36 @@ class ApiServer {
   }
 
   // ==================End
+
+  // ==========================get_File_gallery==============================
+  Future<Map<String, dynamic>> get_file_gallery() async {
+    try {
+      final data = await ApiServer.call(
+        Get_file_galleryQuery,
+        variables: {
+          "conversation_ids": null,
+          "file_type": "all",
+          "tab": "file",
+          "tag_id": ["file"],
+          "conversation_id": null,
+        },
+      );
+      final galleryData = data['get_file_gallery'];
+      if (galleryData != null) {
+        print("[API] get_file_gallery: success");
+        return Map<String, dynamic>.from(galleryData);
+      }
+      throw const GqlException("File gallery data not found");
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      print("[API ERROR] get_file_gallery: $e");
+      throw GqlException("Failed to fetch gallery: ${e.toString()}");
+    }
+  }
+
+  // ==================End
 }

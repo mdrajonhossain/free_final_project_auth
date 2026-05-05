@@ -19,8 +19,8 @@ class FileHubSkeleton extends StatelessWidget {
       itemCount: 6,
       itemBuilder: (context, index) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(18),
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: baseColor,
             borderRadius: BorderRadius.circular(24),
@@ -34,11 +34,11 @@ class FileHubSkeleton extends StatelessWidget {
             children: [
               // Icon/Color dot skeleton
               Container(
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: highlightColor,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               const SizedBox(width: 16),
