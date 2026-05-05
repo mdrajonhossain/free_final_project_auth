@@ -62,28 +62,8 @@ class _TagsPageState extends State<TagsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final Color backgroundColor = widget.isDark
-        ? const Color(0xFF030915)
-        : const Color(0xFFF4F7FC);
-
-    final Color surfaceColor = widget.isDark
-        ? const Color(0xFF052874)
-        : Colors.white;
-
-    final Color cardColor = widget.isDark
-        ? const Color(0xFF0A327F)
-        : Colors.white;
-
-    final Color primaryColor = const Color(0xFF4C8DFF);
-
-    final Color textColor = widget.isDark
-        ? Colors.white
-        : const Color(0xFF1B1D28);
-
-    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.black54;
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -99,7 +79,7 @@ class _TagsPageState extends State<TagsPage> {
                         Text(
                           "Tags - Most recent",
                           style: TextStyle(
-                            color: textColor,
+                            color: Colors.black87,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -107,7 +87,7 @@ class _TagsPageState extends State<TagsPage> {
                         const SizedBox(height: 4),
                         Text(
                           "Your latest and most active tags",
-                          style: TextStyle(color: subTextColor, fontSize: 14),
+                          style: TextStyle(color: Colors.black87, fontSize: 14),
                         ),
                       ],
                     ),
@@ -122,7 +102,7 @@ class _TagsPageState extends State<TagsPage> {
               child: Container(
                 height: 58,
                 decoration: BoxDecoration(
-                  color: surfaceColor,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
@@ -137,20 +117,23 @@ class _TagsPageState extends State<TagsPage> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: _runFilter,
-                  style: TextStyle(color: textColor, fontSize: 15),
+                  style: TextStyle(color: Colors.black87, fontSize: 15),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: "Search tags...",
-                    hintStyle: TextStyle(color: subTextColor),
-                    prefixIcon: Icon(Icons.search_rounded, color: subTextColor),
-                    suffixIcon: Icon(Icons.tune_rounded, color: subTextColor),
+                    hintStyle: TextStyle(color: Colors.black54),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: Colors.black54,
+                    ),
+                    suffixIcon: Icon(Icons.tune_rounded, color: Colors.black54),
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 5),
 
             /// TAG LIST
             Expanded(
@@ -158,7 +141,7 @@ class _TagsPageState extends State<TagsPage> {
                   ? Center(
                       child: Text(
                         "No tags found",
-                        style: TextStyle(color: subTextColor),
+                        style: TextStyle(color: Colors.black54),
                       ),
                     )
                   : ListView.builder(
@@ -174,7 +157,7 @@ class _TagsPageState extends State<TagsPage> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: cardColor,
+                            color: const Color(0xFF1A3470),
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
                               color: widget.isDark
@@ -213,7 +196,7 @@ class _TagsPageState extends State<TagsPage> {
                                     Text(
                                       "$title ($count)",
                                       style: TextStyle(
-                                        color: textColor,
+                                        color: Colors.white,
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
                                       ),
