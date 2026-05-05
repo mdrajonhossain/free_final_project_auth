@@ -6,6 +6,7 @@ import '../../AppDrawer.dart';
 import 'tags_page.dart';
 import 'file_hub_page.dart';
 import 'links_page.dart';
+import 'FileHubSkeleton.dart';
 
 class Filehubs extends StatefulWidget {
   final bool isDark;
@@ -121,11 +122,7 @@ class _FilehubsState extends State<Filehubs> {
 
       /// ================= BODY =================
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4C8DFF)),
-              ),
-            )
+          ? FileHubSkeleton(isDark: widget.isDark)
           : pages[_currentIndex],
 
       /// ================= BOTTOM NAV =================

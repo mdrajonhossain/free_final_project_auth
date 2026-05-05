@@ -160,9 +160,12 @@ class _TagsPageState extends State<TagsPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
                 height: 58,
+
                 decoration: BoxDecoration(
                   color: surfaceColor,
+
                   borderRadius: BorderRadius.circular(20),
+
                   border: Border.all(
                     color: widget.isDark
                         ? Colors.white.withOpacity(.05)
@@ -181,23 +184,32 @@ class _TagsPageState extends State<TagsPage> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: _runFilter,
+
                   style: TextStyle(color: textColor, fontSize: 15),
+
                   decoration: InputDecoration(
                     border: InputBorder.none,
+
                     hintText: "Search tags...",
+
                     hintStyle: TextStyle(color: subTextColor, fontSize: 14),
+
                     prefixIcon: Icon(Icons.search_rounded, color: subTextColor),
+
                     suffixIcon: IconButton(
                       onPressed: () {
-                        /// FILTER ACTION
+                        _searchController.clear();
+                        _runFilter('');
                       },
                       icon: Icon(Icons.filter_alt_sharp, color: subTextColor),
                     ),
+
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),
                   ),
                 ),
               ),
             ),
+
             const SizedBox(height: 18),
 
             /// TAG LIST
@@ -228,16 +240,23 @@ class _TagsPageState extends State<TagsPage> {
                     )
                   : ListView.builder(
                       physics: const BouncingScrollPhysics(),
+
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 2,
+                        horizontal: 10,
+                        vertical: 5,
                       ),
+
                       itemCount: _filteredTags.length,
+
                       itemBuilder: (context, index) {
                         final tag = _filteredTags[index];
+
                         final String title = tag['title'] ?? 'Untitled';
+
                         final int count = tag['i_connected'] ?? 0;
+
                         final Color tagColor = _parseHexColor(tag['tag_color']);
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 5),
 
@@ -311,7 +330,7 @@ class _TagsPageState extends State<TagsPage> {
                                       ),
                                     ),
 
-                                    const SizedBox(height: 3),
+                                    const SizedBox(height: 5),
 
                                     Text(
                                       "$count connected files",
@@ -328,8 +347,8 @@ class _TagsPageState extends State<TagsPage> {
 
                               /// ACTION
                               Container(
-                                height: 38,
-                                width: 38,
+                                height: 30,
+                                width: 30,
 
                                 decoration: BoxDecoration(
                                   color: widget.isDark

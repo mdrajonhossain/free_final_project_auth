@@ -43,6 +43,11 @@ class _FileHubPageState extends State<FileHubPage> {
   Widget build(BuildContext context) {
     final bool isDark = widget.isDark;
 
+    /// COLORS
+    final backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFF5F7FC);
+
     final surfaceColor = isDark ? const Color(0xFF16213E) : Colors.white;
 
     final cardColor = isDark ? const Color(0xFF1B2945) : Colors.white;
@@ -63,11 +68,16 @@ class _FileHubPageState extends State<FileHubPage> {
 
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
+
           margin: const EdgeInsets.only(right: 10),
+
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFF4C8DFF) : surfaceColor,
+
             borderRadius: BorderRadius.circular(22),
+
             border: Border.all(
               color: isSelected
                   ? const Color(0xFF4C8DFF)
@@ -75,6 +85,7 @@ class _FileHubPageState extends State<FileHubPage> {
                   ? Colors.white.withOpacity(.05)
                   : Colors.black.withOpacity(.05),
             ),
+
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(.05),
@@ -86,9 +97,12 @@ class _FileHubPageState extends State<FileHubPage> {
 
           child: Text(
             label,
+
             style: TextStyle(
               color: isSelected ? Colors.white : textColor,
+
               fontSize: 13,
+
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
@@ -98,29 +112,36 @@ class _FileHubPageState extends State<FileHubPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF1A3470),
+
       body: SafeArea(
         child: Column(
           children: [
             /// HEADER
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+
               child: Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+
                       children: [
                         Text(
                           "FileHub",
+
                           style: TextStyle(
                             color: textColor,
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+
                         const SizedBox(height: 4),
+
                         Text(
                           "Access and manage your cloud files",
+
                           style: TextStyle(color: subTextColor, fontSize: 13),
                         ),
                       ],
@@ -133,73 +154,104 @@ class _FileHubPageState extends State<FileHubPage> {
             /// CATEGORY SELECTOR
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+
               child: Row(
                 children: [
                   buildCategoryChip("All Hubs", 0),
+
                   buildCategoryChip("Files", 1),
+
                   buildCategoryChip("Links", 2),
+
                   buildCategoryChip("Tags", 3),
+
                   buildCategoryChip("Media", 4),
+
                   buildCategoryChip("Docs", 5),
                 ],
               ),
             ),
+
             const SizedBox(height: 10),
 
             /// SEARCH
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
+
               child: Container(
                 height: 58,
+
                 decoration: BoxDecoration(
                   color: surfaceColor,
+
                   borderRadius: BorderRadius.circular(18),
+
                   border: Border.all(
                     color: isDark
                         ? Colors.white.withOpacity(.05)
                         : Colors.black.withOpacity(.04),
                   ),
+
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(isDark ? 0.15 : 0.06),
+
                       blurRadius: 15,
+
                       offset: const Offset(0, 5),
                     ),
                   ],
                 ),
+
                 child: TextField(
                   style: TextStyle(color: textColor, fontSize: 15),
+
                   decoration: InputDecoration(
                     border: InputBorder.none,
+
                     hintText: "Search files...",
+
                     hintStyle: TextStyle(color: subTextColor),
+
                     prefixIcon: Icon(Icons.search_rounded, color: subTextColor),
+
                     suffixIcon: Icon(
                       Icons.filter_list_rounded,
                       color: subTextColor,
                     ),
+
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),
                   ),
                 ),
               ),
             ),
+
             const SizedBox(height: 22),
 
             /// FILE LIST
             Expanded(
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
+
                 padding: const EdgeInsets.symmetric(horizontal: 20),
+
                 itemCount: files.length,
+
                 itemBuilder: (context, index) {
                   final file = files[index];
+
                   return Container(
                     margin: const EdgeInsets.only(bottom: 14),
+
                     padding: const EdgeInsets.all(14),
+
                     decoration: BoxDecoration(
                       color: cardColor,
+
                       borderRadius: BorderRadius.circular(24),
+
                       border: Border.all(
                         color: isDark
                             ? Colors.white.withOpacity(0.05)
@@ -209,7 +261,9 @@ class _FileHubPageState extends State<FileHubPage> {
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(isDark ? 0.18 : 0.05),
+
                           blurRadius: 18,
+
                           offset: const Offset(0, 8),
                         ),
                       ],
@@ -221,64 +275,85 @@ class _FileHubPageState extends State<FileHubPage> {
                         Container(
                           height: 56,
                           width: 56,
+
                           decoration: BoxDecoration(
                             color: isDark
                                 ? Colors.white.withOpacity(0.08)
                                 : Colors.blue.withOpacity(0.1),
+
                             borderRadius: BorderRadius.circular(18),
                           ),
 
                           child: Icon(
                             file['icon'],
+
                             color: isDark
                                 ? Colors.white70
                                 : const Color(0xFF4C8DFF),
+
                             size: 28,
                           ),
                         ),
+
                         const SizedBox(width: 16),
 
                         /// FILE INFO
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+
                             children: [
                               Text(
                                 file['name'],
+
                                 maxLines: 1,
+
                                 overflow: TextOverflow.ellipsis,
+
                                 style: TextStyle(
                                   color: textColor,
+
                                   fontWeight: FontWeight.bold,
+
                                   fontSize: 15,
                                 ),
                               ),
 
                               const SizedBox(height: 6),
+
                               Row(
                                 children: [
                                   Text(
                                     file['size'],
+
                                     style: TextStyle(
                                       color: subTextColor,
+
                                       fontSize: 12,
                                     ),
                                   ),
+
                                   const SizedBox(width: 10),
+
                                   Container(
                                     width: 4,
                                     height: 4,
+
                                     decoration: BoxDecoration(
                                       color: subTextColor.withOpacity(0.5),
+
                                       shape: BoxShape.circle,
                                     ),
                                   ),
 
                                   const SizedBox(width: 10),
+
                                   Text(
                                     file['date'],
+
                                     style: TextStyle(
                                       color: subTextColor,
+
                                       fontSize: 12,
                                     ),
                                   ),
@@ -292,16 +367,20 @@ class _FileHubPageState extends State<FileHubPage> {
                         Container(
                           height: 38,
                           width: 38,
+
                           decoration: BoxDecoration(
                             color: isDark
                                 ? Colors.white.withOpacity(0.05)
                                 : Colors.grey.withOpacity(0.08),
+
                             borderRadius: BorderRadius.circular(12),
                           ),
 
                           child: Icon(
                             Icons.more_vert_rounded,
+
                             color: subTextColor.withOpacity(0.8),
+
                             size: 20,
                           ),
                         ),
