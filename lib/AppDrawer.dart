@@ -96,6 +96,7 @@ class AppDrawer extends StatelessWidget {
               children: [
                 _gridItem(Icons.task_alt, "Tasks", () {}),
                 _gridItem(Icons.folder_open_outlined, "FileHub", () {
+                  Navigator.pop(context);
                   Navigator.pushNamed(context, '/filehuball');
                 }),
                 _gridItem(Icons.analytics_outlined, "Daily Sales", () {}),
