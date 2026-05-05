@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../controller/stateBloc/message/chat_bloc.dart';
 import '../AppColors.dart';
-import '../controller/api/api_service.dart';
 import 'ChatSkeleton.dart';
 import './crypto_utils.dart';
 import './format_utils.dart';
@@ -17,22 +18,16 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  late ChatBloc _chatBloc;
 
-  List<dynamic> messages = [];
-  String myId = "";
-  Map<String, dynamic>? userData;
   String conversationId = "";
   String roomTitle = "Chat";
   String convImg = "";
-  bool isLoading = true;
-  int _currentPage = 1;
-  bool _isFetchingMore = false;
-  bool _hasMore = true;
 
   @override
   void initState() {
     super.initState();
-
+    _chatBloc = ChatBloc();
     _scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -46,8 +41,8 @@ class _ChatScreenState extends State<ChatScreen> {
           convImg =
               (args['conv_img'] ?? args['img'] ?? args['image'])?.toString() ??
               "";
+          _chatBloc.add(ChatFetchRequested(conversationId));
         });
-        getMessages(conversationId, page: 1);
       }
     });
   }
@@ -55,13 +50,9 @@ class _ChatScreenState extends State<ChatScreen> {
   void _scrollListener() {
     if (_scrollController.hasClients &&
         _scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 100 &&
-        !_isFetchingMore &&
-        _hasMore &&
-        !isLoading) {
+            _scrollController.position.maxScrollExtent - 100) {
       if (conversationId.isNotEmpty) {
-        _currentPage++;
-        getMessages(conversationId, page: _currentPage);
+        _chatBloc.add(ChatLoadMoreRequested(conversationId));
       }
     }
   }
@@ -70,67 +61,20 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _chatBloc.close();
     super.dispose();
-  }
-
-  Future<void> getMessages(String conversationId, {int page = 1}) async {
-    if (page > 1) {
-      setState(() => _isFetchingMore = true);
-    }
-    try {
-      // Dynamically fetch current user info to distinguish 'Me' from others
-      if (myId.isEmpty) {
-        userData = await ApiServer().fetchMe();
-        myId = userData?['id']?.toString() ?? "";
-      }
-
-      final data = await ApiServer().fetchMessages(conversationId, page: page);
-      final List newMsgs = (data['msgs'] as List?)?.reversed.toList() ?? [];
-
-      setState(() {
-        if (page == 1) {
-          messages = newMsgs;
-        } else {
-          messages.addAll(newMsgs);
-        }
-        if (newMsgs.isEmpty) {
-          _hasMore = false;
-        }
-        isLoading = false;
-        _isFetchingMore = false;
-      });
-    } catch (e) {
-      debugPrint("FETCH ERROR: $e");
-      setState(() {
-        isLoading = false;
-        _isFetchingMore = false;
-      });
-    }
   }
 
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
-    final encryptedText = CryptoUtils.encryptMessage(text);
-    final newMessage = {
-      "sender": myId,
-      "sendername":
-          "${userData?['firstname'] ?? 'Me'} ${userData?['lastname'] ?? ''}"
-              .trim(),
-      "senderimg":
-          userData?['img'] ??
-          "https://wfss001.freeli.io/profile-pic/Photos/corporate-company-logo-png_seeklogo-425925@1764655943904.png",
-      "msg_body": encryptedText,
-      "created_at": DateTime.now().toIso8601String(),
-    };
-
-    setState(() {
-      messages.insert(0, newMessage);
-    });
-
+    _chatBloc.add(ChatMessageSent(text));
     _messageController.clear();
+    _scrollToBottom();
+  }
 
-    Future.delayed(const Duration(milliseconds: 100), () {
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           0,
@@ -145,144 +89,145 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final bgColor = AppColors.getBackgroundColor(widget.isDark);
 
-    if (isLoading)
-      return const Scaffold(
-        backgroundColor: Color(0xff0B1120),
-        body: ChatSkeleton(),
-      );
+    return BlocProvider.value(
+      value: _chatBloc,
+      child: BlocBuilder<ChatBloc, ChatState>(
+        builder: (context, state) {
+          if (state.isLoading) {
+            return const Scaffold(
+              backgroundColor: Color(0xff0B1120),
+              body: ChatSkeleton(),
+            );
+          }
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors
-            .transparent, // Set to transparent to show the flexibleSpace gradient
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient:
-                AppColors.primaryGradient, // Use the full primary gradient
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        titleSpacing: -5,
-        title: Row(
-          children: [
-            Container(
-              height: 42,
-              width: 42,
-
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-
-                gradient: const LinearGradient(
-                  colors: [Color(0xff7C5CFF), Color(0xff5B4DFF)],
+          return Scaffold(
+            backgroundColor: bgColor,
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: Container(
+                decoration: const BoxDecoration(
+                  gradient: AppColors.primaryGradient,
                 ),
               ),
-
-              child: convImg.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.network(
-                        convImg,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.forum_rounded,
-                              color: Colors.white,
-                            ),
-                      ),
-                    )
-                  : const Icon(Icons.forum_rounded, color: Colors.white),
-            ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+              titleSpacing: -5,
+              title: Row(
                 children: [
-                  Text(
-                    roomTitle,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-
-                  const SizedBox(height: 2),
-
-                  const Text(
-                    "Secure conversation",
-                    style: TextStyle(color: Colors.white54, fontSize: 11),
-                  ),
+                  _buildRoomImage(),
+                  const SizedBox(width: 12),
+                  _buildRoomTitle(),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: AppColors
-                .primaryGradient
-                .colors, // Use primary gradient for body background
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-
-        child: Column(
-          children: [
-            Expanded(
-              child: messages.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "No messages found",
-                        style: TextStyle(color: Colors.white54),
-                      ),
-                    )
-                  : ListView.builder(
-                      reverse: true,
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 16,
-                      ),
-                      itemCount: messages.length + (_isFetchingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == messages.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 10),
-                            child: Center(
-                              child: SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-                        final msg = messages[index];
-                        final isMe = msg['sender'].toString() == myId;
-                        return _messageBubble(msg, isMe);
-                      },
-                    ),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: AppColors.primaryGradient.colors,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: state.messages.isEmpty
+                        ? _buildEmptyMessages()
+                        : _buildMessageList(state),
+                  ),
+                  _inputBox(),
+                ],
+              ),
             ),
+          );
+        },
+      ),
+    );
+  }
 
-            _inputBox(),
-          ],
+  Widget _buildRoomImage() {
+    return Container(
+      height: 42,
+      width: 42,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(
+          colors: [Color(0xff7C5CFF), Color(0xff5B4DFF)],
         ),
       ),
+      child: convImg.isNotEmpty
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.network(
+                convImg,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.forum_rounded, color: Colors.white),
+              ),
+            )
+          : const Icon(Icons.forum_rounded, color: Colors.white),
+    );
+  }
+
+  Widget _buildRoomTitle() {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            roomTitle,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            "Secure conversation",
+            style: TextStyle(color: Colors.white54, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyMessages() {
+    return const Center(
+      child: Text("No messages found", style: TextStyle(color: Colors.white54)),
+    );
+  }
+
+  Widget _buildMessageList(ChatState state) {
+    return ListView.builder(
+      reverse: true,
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      itemCount: state.messages.length + (state.isFetchingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == state.messages.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Center(
+              child: SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white70,
+                ),
+              ),
+            ),
+          );
+        }
+        final msg = state.messages[index];
+        final isMe = msg['sender'].toString() == state.myId;
+        return _messageBubble(msg, isMe);
+      },
     );
   }
 
