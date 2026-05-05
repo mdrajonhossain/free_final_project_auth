@@ -155,7 +155,10 @@ class _ChatScreenState extends State<ChatScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         gradient: const LinearGradient(
-          colors: [Color(0xff7C5CFF), Color(0xff5B4DFF)],
+          colors: [
+            Color.fromARGB(255, 6, 180, 157),
+            Color.fromARGB(255, 6, 180, 157),
+          ],
         ),
       ),
       child: convImg.isNotEmpty
@@ -308,7 +311,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   decoration: BoxDecoration(
                     gradient: isMe
                         ? const LinearGradient(
-                            colors: [Color(0xff7C5CFF), Color(0xff5B4DFF)],
+                            colors: [
+                              Color.fromARGB(42, 129, 138, 137),
+                              Color.fromARGB(42, 129, 138, 137),
+                            ],
                           )
                         : null,
                     color: isMe ? null : Colors.white.withOpacity(0.07),

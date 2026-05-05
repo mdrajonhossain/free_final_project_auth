@@ -95,7 +95,9 @@ class AppDrawer extends StatelessWidget {
               childAspectRatio: 2.6,
               children: [
                 _gridItem(Icons.task_alt, "Tasks", () {}),
-                _gridItem(Icons.folder_open_outlined, "FileHub", () {}),
+                _gridItem(Icons.folder_open_outlined, "FileHub", () {
+                  Navigator.pushNamed(context, '/filehuball');
+                }),
                 _gridItem(Icons.analytics_outlined, "Daily Sales", () {}),
               ],
             ),
