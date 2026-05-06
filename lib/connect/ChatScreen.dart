@@ -569,7 +569,17 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => AttachmentPopup.show(context),
+                      onPressed: () async {
+                        final results = await AttachmentPopup.show(
+                          context,
+                          userEmail: _chatBloc.state.userData?['email'],
+                        );
+
+                        if (results != null && results.isNotEmpty) {
+                          // Implement logic here to add results to file list
+                          // or trigger a sendMessage with attachments.
+                        }
+                      },
                       icon: Icon(
                         Icons.attach_file_rounded,
                         color: Colors.white.withOpacity(0.6),

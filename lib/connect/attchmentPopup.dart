@@ -1,19 +1,24 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:freeli/controller/api/api_files_upload.dart';
 
 class AttachmentPopup {
-  static void show(BuildContext context) {
-    showModalBottomSheet(
+  static Future<List<Map<String, dynamic>>?> show(
+    BuildContext context, {
+    String? userEmail,
+  }) {
+    return showModalBottomSheet<List<Map<String, dynamic>>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const AttachmentSheet(),
+      builder: (_) => AttachmentSheet(userEmail: userEmail),
     );
   }
 }
 
 class AttachmentSheet extends StatefulWidget {
-  const AttachmentSheet({super.key});
+  final String? userEmail;
+  const AttachmentSheet({super.key, this.userEmail});
 
   @override
   State<AttachmentSheet> createState() => _AttachmentSheetState();
@@ -21,8 +26,12 @@ class AttachmentSheet extends StatefulWidget {
 
 class _AttachmentSheetState extends State<AttachmentSheet> {
   final List<PlatformFile> files = [];
+  final List<Map<String, dynamic>> uploaded_files = [];
+  final Map<String, double> uploadProgress = {};
+  final Set<String> completedFiles = {};
+  final List<Map<String, dynamic>> uploadResults = [];
+  bool isUploading = false;
 
-  /// PICK FILES
   Future<void> pickFiles() async {
     final FilePicker picker = FilePicker.platform;
     FilePickerResult? result = await picker.pickFiles(
@@ -30,11 +39,62 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
       withData: false,
     );
 
-    if (result != null) {
-      setState(() {
-        files.addAll(result.files);
-      });
+    if (result == null || result.files.isEmpty) return;
+
+    final selectedFiles = result.files;
+    setState(() {
+      isUploading = true;
+    });
+
+    final email = widget.userEmail ?? "default-user";
+    final bucketName = email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '-');
+
+    for (var file in selectedFiles) {
+      if (file.path == null) continue;
+
+      // Ensure every file gets a unique serial even in batch
+      final sl =
+          "${DateTime.now().microsecondsSinceEpoch}_${file.name.hashCode}";
+
+      try {
+        final response = await ApifilesServer().uploadFile(
+          filePath: file.path!,
+          fileName: file.name,
+          bucketName: bucketName,
+          sl: sl,
+          onProgress: (int sent, int total) {
+            setState(() {
+              uploadProgress[file.name] = total > 0 ? sent / total : 0;
+            });
+          },
+        );
+
+        if (response != null &&
+            response is Map &&
+            response['status'] == true &&
+            response['file_info'] != null) {
+          setState(() {
+            uploaded_files.addAll(
+              List<Map<String, dynamic>>.from(response['file_info']),
+            );
+          });
+          setState(() {
+            completedFiles.add(file.name);
+          });
+          uploadResults.addAll(
+            List<Map<String, dynamic>>.from(response['file_info']),
+          );
+        }
+      } catch (e) {
+        debugPrint("Error uploading ${file.name}: $e");
+      }
     }
+
+    setState(() => isUploading = false);
+
+    // if (mounted && uploadResults.isNotEmpty) {
+    //   Navigator.pop(context, uploadResults);
+    // }
   }
 
   /// FORMAT FILE SIZE
@@ -204,7 +264,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
 
             /// FILE LIST
             Expanded(
-              child: files.isEmpty
+              child: uploaded_files.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -248,11 +308,16 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.all(20),
-                      itemCount: files.length,
+                      itemCount: uploaded_files.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 14),
                       itemBuilder: (context, index) {
-                        final file = files[index];
-                        final color = getFileColor(file.name);
+                        final file = uploaded_files[index];
+                        final fileName = file['originalname'] ?? "Unknown File";
+                        final transforms = file['transforms'] as List?;
+                        final size = transforms != null && transforms.isNotEmpty
+                            ? (transforms[0]['size'] as int? ?? 0)
+                            : 0;
+                        final color = getFileColor(fileName);
 
                         return Container(
                           padding: const EdgeInsets.all(16),
@@ -274,7 +339,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Icon(
-                                  getFileIcon(file.name),
+                                  getFileIcon(fileName),
                                   color: color,
                                   size: 30,
                                 ),
@@ -288,7 +353,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      file.name,
+                                      fileName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -300,8 +365,22 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
 
                                     const SizedBox(height: 5),
 
+                                    if (uploadProgress.containsKey(fileName))
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 4,
+                                          bottom: 4,
+                                        ),
+                                        child: LinearProgressIndicator(
+                                          value: uploadProgress[fileName],
+                                          backgroundColor: Colors.white10,
+                                          color: const Color(0xff7C5CFF),
+                                          minHeight: 2,
+                                        ),
+                                      ),
+
                                     Text(
-                                      formatBytes(file.size),
+                                      formatBytes(size),
                                       style: const TextStyle(
                                         color: Colors.white54,
                                         fontSize: 12,
@@ -330,7 +409,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                                 onSelected: (value) {
                                   if (value == "remove") {
                                     setState(() {
-                                      files.removeAt(index);
+                                      uploaded_files.removeAt(index);
                                     });
                                   }
                                 },
@@ -342,53 +421,52 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                     ),
             ),
 
-            /// BOTTOM BUTTON
-            // Padding(
-            //   padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
-            //   child: SizedBox(
-            //     width: double.infinity,
-            //     height: 58,
-            //     child: ElevatedButton(
-            //       onPressed: files.isEmpty
-            //           ? null
-            //           : () {
-            //               Navigator.pop(context);
+            if (uploaded_files.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 58,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context, uploaded_files);
 
-            //               ScaffoldMessenger.of(context).showSnackBar(
-            //                 SnackBar(
-            //                   backgroundColor: const Color(0xff7C5CFF),
-            //                   behavior: SnackBarBehavior.floating,
-            //                   shape: RoundedRectangleBorder(
-            //                     borderRadius: BorderRadius.circular(14),
-            //                   ),
-            //                   content: Text(
-            //                     "${files.length} file(s) uploaded successfully",
-            //                     style: const TextStyle(color: Colors.white),
-            //                   ),
-            //                 ),
-            //               );
-            //             },
-            //       style: ElevatedButton.styleFrom(
-            //         backgroundColor: const Color(0xff7C5CFF),
-            //         disabledBackgroundColor: Colors.white12,
-            //         elevation: 0,
-            //         shape: RoundedRectangleBorder(
-            //           borderRadius: BorderRadius.circular(18),
-            //         ),
-            //       ),
-            //       child: Text(
-            //         files.isEmpty
-            //             ? "No Files Selected"
-            //             : "Upload ${files.length} File(s)",
-            //         style: const TextStyle(
-            //           color: Colors.white,
-            //           fontSize: 15,
-            //           fontWeight: FontWeight.w700,
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-            // ),
+                      print(
+                        "UPLOADED FILES*********************: ${uploaded_files}",
+                      );
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: const Color(0xff7C5CFF),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          content: Text(
+                            "${uploaded_files.length} file(s) attached",
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xff7C5CFF),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                    child: const Text(
+                      "Send Attachments",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
