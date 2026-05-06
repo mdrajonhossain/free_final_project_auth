@@ -8,6 +8,7 @@ import './crypto_utils.dart';
 import './format_utils.dart';
 import './file_utils.dart';
 import './chat_service.dart';
+import './attchmentPopup.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;
@@ -568,7 +569,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () => AttachmentPopup.show(context),
                       icon: Icon(
                         Icons.attach_file_rounded,
                         color: Colors.white.withOpacity(0.6),
