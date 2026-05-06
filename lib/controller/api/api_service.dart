@@ -216,9 +216,6 @@ class ApiServer {
       );
       final messages = data['messages'];
       if (messages != null) {
-        if (userId != null) {
-          fetchRooms(userId);
-        }
         return Map<String, dynamic>.from(messages);
       }
       throw const GqlException("Messages data not found");
