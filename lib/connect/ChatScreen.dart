@@ -528,7 +528,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _inputBox() {
     return SafeArea(
       child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+        padding: const EdgeInsets.fromLTRB(12, 10, 14, 14),
         decoration: BoxDecoration(
           color:
               AppColors.primaryGradient.colors[0], // Consistent with home page
@@ -541,28 +541,55 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white.withOpacity(0.04)),
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
                 ),
-                child: TextField(
-                  controller: _messageController,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
-                  minLines: 1,
-                  maxLines: 5,
-                  decoration: const InputDecoration(
-                    hintText: "Type message...",
-                    hintStyle: TextStyle(color: Colors.white38),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 14,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _messageController,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
+                        minLines: 1,
+                        maxLines: 5,
+                        decoration: const InputDecoration(
+                          hintText: "Type message...",
+                          hintStyle: TextStyle(color: Colors.white38),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: Icon(
+                        Icons.attach_file_rounded,
+                        color: Colors.white.withOpacity(0.6),
+                        size: 22,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: Icon(
+                        Icons.emoji_emotions_rounded,
+                        color: Colors.white.withOpacity(0.6),
+                        size: 22,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                 ),
               ),
             ),
-
             const SizedBox(width: 12),
             GestureDetector(
               onTap: _sendMessage,
