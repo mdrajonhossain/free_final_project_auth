@@ -159,21 +159,11 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Upload File",
+                              "Upload file(s)",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,
-                              ),
-                            ),
-
-                            SizedBox(height: 5),
-
-                            Text(
-                              "Manage and upload your files professionally",
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 13,
                               ),
                             ),
                           ],
@@ -353,52 +343,52 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
             ),
 
             /// BOTTOM BUTTON
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
-              child: SizedBox(
-                width: double.infinity,
-                height: 58,
-                child: ElevatedButton(
-                  onPressed: files.isEmpty
-                      ? null
-                      : () {
-                          Navigator.pop(context);
+            // Padding(
+            //   padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
+            //   child: SizedBox(
+            //     width: double.infinity,
+            //     height: 58,
+            //     child: ElevatedButton(
+            //       onPressed: files.isEmpty
+            //           ? null
+            //           : () {
+            //               Navigator.pop(context);
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: const Color(0xff7C5CFF),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              content: Text(
-                                "${files.length} file(s) uploaded successfully",
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          );
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff7C5CFF),
-                    disabledBackgroundColor: Colors.white12,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                  ),
-                  child: Text(
-                    files.isEmpty
-                        ? "No Files Selected"
-                        : "Upload ${files.length} File(s)",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            //               ScaffoldMessenger.of(context).showSnackBar(
+            //                 SnackBar(
+            //                   backgroundColor: const Color(0xff7C5CFF),
+            //                   behavior: SnackBarBehavior.floating,
+            //                   shape: RoundedRectangleBorder(
+            //                     borderRadius: BorderRadius.circular(14),
+            //                   ),
+            //                   content: Text(
+            //                     "${files.length} file(s) uploaded successfully",
+            //                     style: const TextStyle(color: Colors.white),
+            //                   ),
+            //                 ),
+            //               );
+            //             },
+            //       style: ElevatedButton.styleFrom(
+            //         backgroundColor: const Color(0xff7C5CFF),
+            //         disabledBackgroundColor: Colors.white12,
+            //         elevation: 0,
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(18),
+            //         ),
+            //       ),
+            //       child: Text(
+            //         files.isEmpty
+            //             ? "No Files Selected"
+            //             : "Upload ${files.length} File(s)",
+            //         style: const TextStyle(
+            //           color: Colors.white,
+            //           fontSize: 15,
+            //           fontWeight: FontWeight.w700,
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

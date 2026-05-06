@@ -34,43 +34,43 @@ mutation Login(
     companies {
         company_id
         company_name
-        created_by
-        updated_by
-        company_img
-        role
-        industry
-        domain_name
-        plan_name
-        plan_user_limit
-        plan_storage_limit
-        is_deactivate
-        plan_id
-        subscription_id
-        product_id
-        price_id
-        class
-        campus
-        section
-        plan_access
-        created_at
-        updated_at
-        createdAt
-        updatedAt
-        team_title
-        company_size
-        hear_about
-        phone_number
-        company_email
-        company_address
-        company_website
-        business_type
-        registration_number
-        tin_number
-        social_link
-        module
-        created_by_role
-        company_contact_person
-        same_address
+        # created_by
+        # updated_by
+        # company_img
+        # role
+        # industry
+        # domain_name
+        # plan_name
+        # plan_user_limit
+        # plan_storage_limit
+        # is_deactivate
+        # plan_id
+        # subscription_id
+        # product_id
+        # price_id
+        # class
+        # campus
+        # section
+        # plan_access
+        # created_at
+        # updated_at
+        # createdAt
+        # updatedAt
+        # team_title
+        # company_size
+        # hear_about
+        # phone_number
+        # company_email
+        # company_address
+        # company_website
+        # business_type
+        # registration_number
+        # tin_number
+        # social_link
+        # module
+        # created_by_role
+        # company_contact_person
+        # same_address
     }
   }
 }
@@ -110,7 +110,7 @@ mutation Send_msg(
       msg_body
       msg_type
       is_reply_msg
-      participants
+      # participants
       created_at
       last_update_time
     }
