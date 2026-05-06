@@ -14,5 +14,16 @@ class ChatLoadMoreRequested extends ChatEvent {
 
 class ChatMessageSent extends ChatEvent {
   final String text;
-  ChatMessageSent(this.text);
+  final String conversationId;
+  final String companyId;
+  final String senderId;
+  final dynamic participants;
+
+  ChatMessageSent({
+    required this.text,
+    required this.conversationId,
+    required this.companyId,
+    required this.senderId,
+    required this.participants,
+  });
 }

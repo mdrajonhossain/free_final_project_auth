@@ -29,7 +29,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         myId = userData?['id']?.toString() ?? "";
       }
 
-      final data = await apiServer.fetchMessages(event.conversationId, page: 1);
+      final data = await apiServer.fetchMessages(
+        event.conversationId,
+        page: 1,
+        userId: myId,
+      );
       final List messages = (data['msgs'] as List?)?.reversed.toList() ?? [];
 
       emit(
@@ -74,9 +78,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     }
   }
 
-  void _onMessageSent(ChatMessageSent event, Emitter<ChatState> emit) {
+  Future<void> _onMessageSent(
+    ChatMessageSent event,
+    Emitter<ChatState> emit,
+  ) async {
     final encryptedText = CryptoUtils.encryptMessage(event.text);
-    final newMessage = {
+    final String tempId = "temp_${DateTime.now().millisecondsSinceEpoch}";
+
+    final optimisticMessage = {
+      "msg_id": tempId,
       "sender": state.myId,
       "sendername":
           "${state.userData?['firstname'] ?? 'Me'} ${state.userData?['lastname'] ?? ''}"
@@ -86,9 +96,33 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           "https://wfss001.freeli.io/profile-pic/Photos/corporate-company-logo-png_seeklogo-425925@1764655943904.png",
       "msg_body": encryptedText,
       "created_at": DateTime.now().toIso8601String(),
+      "all_attachment": [],
     };
 
-    final updatedMessages = List.from(state.messages)..insert(0, newMessage);
+    // 1. Optimistic Update: Add message to list immediately
+    final updatedMessages = [optimisticMessage, ...state.messages];
     emit(state.copyWith(messages: updatedMessages));
+
+    try {
+      // 2. Network Call
+      final serverMsg = await apiServer.sendMessage(
+        msgBody: encryptedText,
+        conversationId: event.conversationId,
+        companyId: event.companyId,
+        senderId: state.myId,
+        participants: event.participants is List
+            ? List<String>.from(event.participants)
+            : [event.participants.toString()],
+      );
+
+      // 3. Update State: Replace optimistic message with real server response
+      final List finalMessages = state.messages
+          .map((m) => m['msg_id'] == tempId ? serverMsg : m)
+          .toList();
+
+      emit(state.copyWith(messages: finalMessages));
+    } catch (e) {
+      emit(state.copyWith(error: e.toString()));
+    }
   }
 }

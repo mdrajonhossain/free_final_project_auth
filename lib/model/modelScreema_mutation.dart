@@ -75,3 +75,45 @@ mutation Login(
   }
 }
 """;
+
+const String sendMessageMutation = """
+mutation Send_msg(
+  \$conversationId: String!,
+  \$companyId: String!,
+  \$senderId: String!,
+  \$msgBody: String!,
+  \$participants: [String!]!,
+  \$msgType: String!,
+  \$flagged: Boolean!,
+  \$isReplyMsg: String!
+) {
+  send_msg(
+    input: {
+      conversation_id: \$conversationId
+      company_id: \$companyId
+      sender: \$senderId
+      msg_body: \$msgBody
+      is_reply_msg: \$isReplyMsg
+      msg_type: \$msgType
+      flagged: \$flagged
+      participants: \$participants
+    }
+  ) {
+    msg {
+      conversation_id
+      msg_id
+      sender
+      senderemail
+      senderimg
+      fnln
+      sendername
+      msg_body
+      msg_type
+      is_reply_msg
+      participants
+      created_at
+      last_update_time
+    }
+  }
+}
+""";

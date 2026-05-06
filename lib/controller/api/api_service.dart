@@ -207,6 +207,7 @@ class ApiServer {
   Future<Map<String, dynamic>> fetchMessages(
     String conversationId, {
     int page = 1,
+    String? userId,
   }) async {
     try {
       final data = await ApiServer.call(
@@ -215,6 +216,9 @@ class ApiServer {
       );
       final messages = data['messages'];
       if (messages != null) {
+        if (userId != null) {
+          fetchRooms(userId);
+        }
         return Map<String, dynamic>.from(messages);
       }
       throw const GqlException("Messages data not found");
@@ -291,4 +295,49 @@ class ApiServer {
   }
 
   // ==================End
+
+  Future<Map<String, dynamic>> sendMessage({
+    required String msgBody,
+    required String conversationId,
+    required String companyId,
+    required String senderId,
+    required List<String> participants,
+    String msgType = "text",
+    bool flagged = false,
+    String isReplyMsg = "no",
+  }) async {
+    try {
+      final variables = {
+        "conversationId": conversationId,
+        "companyId": companyId,
+        "senderId": senderId,
+        "msgBody": msgBody,
+        "participants": participants,
+        "msgType": msgType,
+        "flagged": flagged,
+        "isReplyMsg": isReplyMsg,
+      };
+
+      final data = await ApiServer.call(
+        sendMessageMutation,
+        variables: variables,
+      );
+
+      final result = data['send_msg'];
+
+      if (result != null && result['msg'] != null) {
+        fetchRooms(senderId);
+        return Map<String, dynamic>.from(result['msg']);
+      }
+
+      throw const GqlException("Failed to send message: Empty response");
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      throw GqlException("Network error: ${e.toString()}");
+    }
+  }
 }

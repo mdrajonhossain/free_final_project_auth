@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/controller/api/api_service.dart';
 import '../controller/stateBloc/message/chat_bloc.dart';
 import '../AppColors.dart';
 import 'ChatSkeleton.dart';
 import './crypto_utils.dart';
 import './format_utils.dart';
 import './file_utils.dart';
+import './chat_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;
@@ -21,6 +23,8 @@ class _ChatScreenState extends State<ChatScreen> {
   late ChatBloc _chatBloc;
 
   String conversationId = "";
+  String company_id = "";
+  dynamic participants;
   String roomTitle = "Chat";
   String convImg = "";
 
@@ -36,6 +40,8 @@ class _ChatScreenState extends State<ChatScreen> {
       if (args != null) {
         setState(() {
           conversationId = args['conversation_id']?.toString() ?? "";
+          company_id = args['company_id']?.toString() ?? "";
+          participants = args['participants'];
           roomTitle = args['title']?.toString() ?? "Chat";
           // Added fallbacks for common keys in case 'conv_img' is null
           convImg =
@@ -66,11 +72,15 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-    _chatBloc.add(ChatMessageSent(text));
-    _messageController.clear();
-    _scrollToBottom();
+    ChatService.sendMessage(
+      context: context,
+      controller: _messageController,
+      conversationId: conversationId,
+      companyId: company_id,
+      participants: participants,
+      chatBloc: _chatBloc,
+      onScroll: _scrollToBottom,
+    );
   }
 
   void _scrollToBottom() {
