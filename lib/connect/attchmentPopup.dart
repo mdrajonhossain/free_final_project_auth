@@ -398,53 +398,6 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                   });
                 },
               ),
-            // Padding(
-            //   padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
-            //   child: SizedBox(
-            //     width: double.infinity,
-            //     height: 58,
-            //     child: ElevatedButton(
-            //       onPressed: () {
-            //         final List<Map<String, dynamic>> results = uploaded_files
-            //             .map((file) {
-            //               return {...file, 'tags': selectedTags.toList()};
-            //             })
-            //             .toList();
-
-            //         Navigator.pop(context, results);
-
-            //         ScaffoldMessenger.of(context).showSnackBar(
-            //           SnackBar(
-            //             backgroundColor: const Color(0xff7C5CFF),
-            //             behavior: SnackBarBehavior.floating,
-            //             shape: RoundedRectangleBorder(
-            //               borderRadius: BorderRadius.circular(14),
-            //             ),
-            //             content: Text(
-            //               "${uploaded_files.length} file(s) attached with ${selectedTags.length} tags",
-            //               style: const TextStyle(color: Colors.white),
-            //             ),
-            //           ),
-            //         );
-            //       },
-            //       style: ElevatedButton.styleFrom(
-            //         backgroundColor: const Color(0xff7C5CFF),
-            //         elevation: 0,
-            //         shape: RoundedRectangleBorder(
-            //           borderRadius: BorderRadius.circular(18),
-            //         ),
-            //       ),
-            //       child: const Text(
-            //         "Send Attachments",
-            //         style: TextStyle(
-            //           color: Colors.white,
-            //           fontSize: 15,
-            //           fontWeight: FontWeight.w700,
-            //         ),
-            //       ),
-            //     ),
-            //   ),
-            // ),
           ],
         ),
       ),
