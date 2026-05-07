@@ -1,24 +1,28 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:freeli/controller/api/api_files_upload.dart';
+import 'package:freeli/controller/api/api_service.dart';
 
 class AttachmentPopup {
   static Future<List<Map<String, dynamic>>?> show(
     BuildContext context, {
     String? userEmail,
+    String? companyId,
   }) {
     return showModalBottomSheet<List<Map<String, dynamic>>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => AttachmentSheet(userEmail: userEmail),
+      builder: (_) =>
+          AttachmentSheet(userEmail: userEmail, companyId: companyId),
     );
   }
 }
 
 class AttachmentSheet extends StatefulWidget {
   final String? userEmail;
-  const AttachmentSheet({super.key, this.userEmail});
+  final String? companyId;
+  const AttachmentSheet({super.key, this.userEmail, this.companyId});
 
   @override
   State<AttachmentSheet> createState() => _AttachmentSheetState();
@@ -36,18 +40,42 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
   bool showingTags = false;
   String tagSearchQuery = "";
   final Set<String> selectedTags = {};
-  final List<String> availableTags = [
-    "Urgent",
-    "Work",
-    "Personal",
-    "Invoice",
-    "Draft",
-    "Final",
-    "Review",
-    "Feedback",
-    "Marketing",
-    "Legal",
-  ];
+  List<Map<String, dynamic>> availableTags = [];
+  bool isLoadingTags = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTags();
+  }
+
+  Future<void> _loadTags() async {
+    if (widget.companyId == null || widget.companyId!.isEmpty) {
+      debugPrint("Tag Load Aborted: companyId is missing");
+      return;
+    }
+
+    setState(() => isLoadingTags = true);
+    try {
+      final tags = await ApiServer().fetchPublicTags(widget.companyId);
+      setState(() {
+        availableTags = tags;
+        isLoadingTags = false;
+      });
+    } catch (e) {
+      debugPrint("Error in _loadTags: $e");
+      setState(() => isLoadingTags = false);
+    }
+  }
+
+  Color _parseColor(String? hexColor) {
+    if (hexColor == null || hexColor.isEmpty) return const Color(0xff7C5CFF);
+    try {
+      return Color(int.parse(hexColor.replaceAll('#', '0xff')));
+    } catch (e) {
+      return const Color(0xff7C5CFF);
+    }
+  }
 
   Future<void> pickFiles() async {
     final FilePicker picker = FilePicker.platform;
@@ -336,8 +364,13 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                   height: 58,
                   child: ElevatedButton(
                     onPressed: () {
-                      // You could merge selectedTags into your file data here if needed
-                      Navigator.pop(context, uploaded_files);
+                      final List<Map<String, dynamic>> results = uploaded_files
+                          .map((file) {
+                            return {...file, 'tags': selectedTags.toList()};
+                          })
+                          .toList();
+
+                      Navigator.pop(context, results);
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -541,10 +574,26 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
   }
 
   Widget _buildTagSelection() {
-    final filteredTags = availableTags
-        .where((t) => t.toLowerCase().contains(tagSearchQuery.toLowerCase()))
-        .toList();
+    if (isLoadingTags) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xff7C5CFF)),
+      );
+    }
 
+    final filteredTags = availableTags.where((tag) {
+      final title = tag['title']?.toString().toLowerCase() ?? "";
+      return title.contains(tagSearchQuery.toLowerCase());
+    }).toList();
+
+    // If no tags are available or found after filtering, display a message
+    if (filteredTags.isEmpty && !isLoadingTags) {
+      return const Center(
+        child: Text(
+          "No tags found.",
+          style: TextStyle(color: Colors.white54, fontSize: 16),
+        ),
+      );
+    }
     return Column(
       children: [
         Padding(
@@ -586,7 +635,11 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
             itemCount: filteredTags.length,
             itemBuilder: (context, index) {
               final tag = filteredTags[index];
-              final isSelected = selectedTags.contains(tag);
+              final tagName = tag['title']?.toString() ?? "Unknown";
+              final tagId = tag['tag_id']?.toString() ?? "";
+              final isSelected = selectedTags.contains(tagId);
+              final tagColor = _parseColor(tag['tag_color']?.toString());
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
@@ -601,8 +654,16 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                   ),
                 ),
                 child: CheckboxListTile(
+                  secondary: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: tagColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                   title: Text(
-                    tag,
+                    tagName,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w500,
@@ -614,9 +675,9 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                   onChanged: (val) {
                     setState(() {
                       if (val == true) {
-                        selectedTags.add(tag);
+                        selectedTags.add(tagId);
                       } else {
-                        selectedTags.remove(tag);
+                        selectedTags.remove(tagId);
                       }
                     });
                   },

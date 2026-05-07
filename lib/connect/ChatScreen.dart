@@ -573,6 +573,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         final results = await AttachmentPopup.show(
                           context,
                           userEmail: _chatBloc.state.userData?['email'],
+                          companyId: company_id,
                         );
 
                         if (results != null && results.isNotEmpty) {

@@ -357,3 +357,33 @@ const String Get_file_galleryQuery = """
     }
 }
 """;
+
+const String Get_tag_public = """
+  query Tags(\$company_id: String!) {      
+    tags(company_id: \$company_id) {
+      public {
+        tag_id
+        tagged_by
+        title
+        company_id
+        type
+        tag_color
+        created_at
+        updated_at
+        updated_by
+        team_list
+        tag_type
+        conversation_ids
+        connected_user_ids
+        user_use_count
+        created_by_name
+        i_connected
+        my_use_count_int
+        use_count
+        team_list_name
+        favourite
+        disabled
+      }
+    }
+  }
+""";

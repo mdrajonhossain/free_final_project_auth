@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart'; // Import Dio
+import 'package:flutter/foundation.dart';
 import 'package:freeli/model/modelScreema_quary.dart';
 import '../../model/modelScreema_mutation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -335,6 +336,36 @@ class ApiServer {
       rethrow;
     } catch (e) {
       throw GqlException("Network error: ${e.toString()}");
+    }
+  }
+
+  // ================== Public Tags ============================
+  Future<List<Map<String, dynamic>>> fetchPublicTags(String? companyId) async {
+    if (companyId == null || companyId.isEmpty) {
+      debugPrint(
+        "[API] fetchPublicTags: skipped because companyId is empty/null",
+      );
+      return [];
+    }
+    if (_token == null) {
+      await ApiServer.init();
+    }
+    try {
+      final data = await ApiServer.call(
+        Get_tag_public,
+        variables: {"company_id": companyId},
+      );
+      final tags = data['tags']?['public'];
+      if (tags != null) {
+        debugPrint(
+          "[API] fetchPublicTags: successfully loaded ${tags.length} tags",
+        );
+        return List<Map<String, dynamic>>.from(tags);
+      }
+      return [];
+    } catch (e) {
+      debugPrint("[API ERROR] fetchPublicTags: $e");
+      return [];
     }
   }
 }
