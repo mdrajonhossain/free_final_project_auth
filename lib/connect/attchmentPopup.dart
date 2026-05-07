@@ -32,6 +32,23 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
   final List<Map<String, dynamic>> uploadResults = [];
   bool isUploading = false;
 
+  // Tag state management
+  bool showingTags = false;
+  String tagSearchQuery = "";
+  final Set<String> selectedTags = {};
+  final List<String> availableTags = [
+    "Urgent",
+    "Work",
+    "Personal",
+    "Invoice",
+    "Draft",
+    "Final",
+    "Review",
+    "Feedback",
+    "Marketing",
+    "Legal",
+  ];
+
   Future<void> pickFiles() async {
     final FilePicker picker = FilePicker.platform;
     FilePickerResult? result = await picker.pickFiles(
@@ -175,6 +192,60 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
     }
   }
 
+  Widget _buildUploadBox() {
+    return GestureDetector(
+      onTap: isUploading ? null : pickFiles,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+        height: 140,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(.02),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(.08), width: 1.5),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isUploading)
+              const CircularProgressIndicator(
+                color: Color(0xff7C5CFF),
+                strokeWidth: 2,
+              )
+            else ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xff7C5CFF).withOpacity(.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add_to_photos_rounded,
+                  color: Color(0xff7C5CFF),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                "Click to upload files",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                "Support PDF, DOC, PNG, JPG, MP4...",
+                style: TextStyle(color: Colors.white38, fontSize: 12),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -213,49 +284,39 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                   const SizedBox(height: 22),
 
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Upload file(s)",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      ElevatedButton.icon(
-                        onPressed: pickFiles,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff7C5CFF),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 14,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        icon: const Icon(
-                          Icons.upload_rounded,
+                      Text(
+                        showingTags ? "Select Tags" : "Upload file(s)",
+                        style: const TextStyle(
                           color: Colors.white,
-                          size: 20,
-                        ),
-                        label: const Text(
-                          "Upload",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
+                      if (showingTags)
+                        TextButton(
+                          onPressed: () => setState(() => showingTags = false),
+                          child: const Text(
+                            "Back",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                            ),
+                          ),
+                        )
+                      else if (uploaded_files.isNotEmpty)
+                        TextButton(
+                          onPressed: () => setState(() => showingTags = true),
+                          child: const Text(
+                            "Continue",
+                            style: TextStyle(
+                              color: Color(0xff7C5CFF),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ],
@@ -264,164 +325,10 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
 
             /// FILE LIST
             Expanded(
-              child: uploaded_files.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            height: 95,
-                            width: 95,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(.04),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.cloud_upload_rounded,
-                              color: Colors.white38,
-                              size: 42,
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          const Text(
-                            "No files uploaded",
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-
-                          const SizedBox(height: 6),
-
-                          const Text(
-                            "Tap upload button to add files",
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.all(20),
-                      itemCount: uploaded_files.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 14),
-                      itemBuilder: (context, index) {
-                        final file = uploaded_files[index];
-                        final fileName = file['originalname'] ?? "Unknown File";
-                        final transforms = file['transforms'] as List?;
-                        final size = transforms != null && transforms.isNotEmpty
-                            ? (transforms[0]['size'] as int? ?? 0)
-                            : 0;
-                        final color = getFileColor(fileName);
-
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(.04),
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(.05),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              /// FILE ICON
-                              Container(
-                                height: 58,
-                                width: 58,
-                                decoration: BoxDecoration(
-                                  color: color.withOpacity(.15),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Icon(
-                                  getFileIcon(fileName),
-                                  color: color,
-                                  size: 30,
-                                ),
-                              ),
-
-                              const SizedBox(width: 14),
-
-                              /// FILE INFO
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      fileName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 5),
-
-                                    if (uploadProgress.containsKey(fileName))
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 4,
-                                          bottom: 4,
-                                        ),
-                                        child: LinearProgressIndicator(
-                                          value: uploadProgress[fileName],
-                                          backgroundColor: Colors.white10,
-                                          color: const Color(0xff7C5CFF),
-                                          minHeight: 2,
-                                        ),
-                                      ),
-
-                                    Text(
-                                      formatBytes(size),
-                                      style: const TextStyle(
-                                        color: Colors.white54,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              /// REMOVE
-                              PopupMenuButton(
-                                color: const Color(0xff1B2335),
-                                icon: const Icon(
-                                  Icons.more_vert_rounded,
-                                  color: Colors.white54,
-                                ),
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                    value: "remove",
-                                    child: Text(
-                                      "Remove",
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                ],
-                                onSelected: (value) {
-                                  if (value == "remove") {
-                                    setState(() {
-                                      uploaded_files.removeAt(index);
-                                    });
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+              child: showingTags ? _buildTagSelection() : _buildFileSelection(),
             ),
 
-            if (uploaded_files.isNotEmpty)
+            if (uploaded_files.isNotEmpty && showingTags)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
                 child: SizedBox(
@@ -429,11 +336,8 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                   height: 58,
                   child: ElevatedButton(
                     onPressed: () {
+                      // You could merge selectedTags into your file data here if needed
                       Navigator.pop(context, uploaded_files);
-
-                      print(
-                        "UPLOADED FILES*********************: ${uploaded_files}",
-                      );
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -443,7 +347,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           content: Text(
-                            "${uploaded_files.length} file(s) attached",
+                            "${uploaded_files.length} file(s) attached with ${selectedTags.length} tags",
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
@@ -470,6 +374,258 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFileSelection() {
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        _buildUploadBox(),
+        Expanded(
+          child: uploaded_files.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        height: 95,
+                        width: 95,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(.04),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.cloud_upload_rounded,
+                          color: Colors.white38,
+                          size: 42,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      const Text(
+                        "No files selected",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      const Text(
+                        "Tap the upload box to add files",
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: uploaded_files.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
+                  itemBuilder: (context, index) {
+                    final file = uploaded_files[index];
+                    final fileName = file['originalname'] ?? "Unknown File";
+                    final transforms = file['transforms'] as List?;
+                    final size = transforms != null && transforms.isNotEmpty
+                        ? (transforms[0]['size'] as int? ?? 0)
+                        : 0;
+                    final color = getFileColor(fileName);
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(.04),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(.05),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          /// FILE ICON
+                          Container(
+                            height: 58,
+                            width: 58,
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(.15),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              getFileIcon(fileName),
+                              color: color,
+                              size: 30,
+                            ),
+                          ),
+
+                          const SizedBox(width: 14),
+
+                          /// FILE INFO
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fileName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 5),
+
+                                if (uploadProgress.containsKey(fileName))
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 4,
+                                      bottom: 4,
+                                    ),
+                                    child: LinearProgressIndicator(
+                                      value: uploadProgress[fileName],
+                                      backgroundColor: Colors.white10,
+                                      color: const Color(0xff7C5CFF),
+                                      minHeight: 2,
+                                    ),
+                                  ),
+
+                                Text(
+                                  formatBytes(size),
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          /// REMOVE
+                          PopupMenuButton(
+                            color: const Color(0xff1B2335),
+                            icon: const Icon(
+                              Icons.more_vert_rounded,
+                              color: Colors.white54,
+                            ),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: "remove",
+                                child: Text(
+                                  "Remove",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                            onSelected: (value) {
+                              if (value == "remove") {
+                                setState(() {
+                                  uploaded_files.removeAt(index);
+                                });
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTagSelection() {
+    final filteredTags = availableTags
+        .where((t) => t.toLowerCase().contains(tagSearchQuery.toLowerCase()))
+        .toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+          child: TextField(
+            style: const TextStyle(color: Colors.white),
+            onChanged: (v) => setState(() => tagSearchQuery = v),
+            decoration: InputDecoration(
+              hintText: "Search tags...",
+              hintStyle: const TextStyle(color: Colors.white38),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Colors.white38,
+              ),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.04),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(
+                  color: Color(0xff7C5CFF),
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: filteredTags.length,
+            itemBuilder: (context, index) {
+              final tag = filteredTags[index];
+              final isSelected = selectedTags.contains(tag);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xff7C5CFF).withOpacity(.08)
+                      : Colors.white.withOpacity(.02),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xff7C5CFF).withOpacity(.3)
+                        : Colors.white.withOpacity(.04),
+                  ),
+                ),
+                child: CheckboxListTile(
+                  title: Text(
+                    tag,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  value: isSelected,
+                  activeColor: const Color(0xff7C5CFF),
+                  checkColor: Colors.white,
+                  onChanged: (val) {
+                    setState(() {
+                      if (val == true) {
+                        selectedTags.add(tag);
+                      } else {
+                        selectedTags.remove(tag);
+                      }
+                    });
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
