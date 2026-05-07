@@ -387,3 +387,23 @@ const String Get_tag_public = """
     }
   }
 """;
+
+const String allLink = """
+query Hub_all_link_msgs {
+    hub_all_link_msgs {
+        links {
+            url_id
+            title
+            url
+            msg_id
+            conversation_id
+            user_id
+            created_at
+            company_id            
+            is_delete            
+            conversation_title
+            uploaded_by
+        }
+    }
+}
+""";

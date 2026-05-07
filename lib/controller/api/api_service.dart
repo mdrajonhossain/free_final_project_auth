@@ -368,4 +368,25 @@ class ApiServer {
       return [];
     }
   }
+
+  // ===============All Link start ========================
+  Future<List<dynamic>> fetchAllLink() async {
+    try {
+      final data = await ApiServer.call(allLink);
+      final meDataLink = data['hub_all_link_msgs']?['links'];
+      if (meDataLink != null) {
+        return List<dynamic>.from(meDataLink);
+      }
+      throw const GqlException("User profile not found or session expired");
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      throw GqlException("Network error: Please check your connection.");
+    }
+  }
+
+  // ===============All Link End ========================
 }
