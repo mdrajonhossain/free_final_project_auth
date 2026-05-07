@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:freeli/connect/ChatInput.dart';
+import 'package:freeli/connect/chat_service.dart';
 import 'package:freeli/controller/api/api_files_upload.dart';
 import 'package:freeli/controller/api/api_service.dart';
 
@@ -58,17 +59,21 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
   }
 
   void _sendMessage() {
-    if (uploaded_files.isEmpty) return;
+    print("=====================================1");
+    print("Files1, $uploadResults");
+    print("Tags2, $selectedTags.toList(),");
+    print("Message3, ${_messageController.text}");
+    print("=====================================2");
 
-    final List<Map<String, dynamic>> results = uploaded_files.map((file) {
-      return {
-        ...file,
-        'tags': selectedTags.toList(),
-        'caption': _messageController.text.trim(),
-      };
-    }).toList();
-
-    Navigator.pop(context, results);
+    // ChatService.sendMessage(
+    //   context: context,
+    //   controller: _messageController,
+    //   conversationId: conversationId,
+    //   companyId: company_id,
+    //   participants: participants,
+    //   chatBloc: _chatBloc,
+    //   onScroll: _scrollToBottom,
+    // );
   }
 
   Future<void> _loadTags() async {
