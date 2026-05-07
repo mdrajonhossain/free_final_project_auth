@@ -307,7 +307,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.88,
       ),
       decoration: const BoxDecoration(
-        color: Color(0xff0B1120),
+        color: Color.fromARGB(255, 67, 91, 153),
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: SafeArea(
@@ -368,7 +368,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                           child: const Text(
                             "Continue",
                             style: TextStyle(
-                              color: Color(0xff7C5CFF),
+                              color: Color.fromARGB(255, 241, 241, 241),
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
