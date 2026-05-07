@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:freeli/connect/ChatInput.dart';
 import 'package:freeli/controller/api/api_files_upload.dart';
 import 'package:freeli/controller/api/api_service.dart';
 
@@ -29,6 +30,7 @@ class AttachmentSheet extends StatefulWidget {
 }
 
 class _AttachmentSheetState extends State<AttachmentSheet> {
+  final TextEditingController _messageController = TextEditingController();
   final List<PlatformFile> files = [];
   final List<Map<String, dynamic>> uploaded_files = [];
   final Map<String, double> uploadProgress = {};
@@ -47,6 +49,26 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
   void initState() {
     super.initState();
     _loadTags();
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  void _sendMessage() {
+    if (uploaded_files.isEmpty) return;
+
+    final List<Map<String, dynamic>> results = uploaded_files.map((file) {
+      return {
+        ...file,
+        'tags': selectedTags.toList(),
+        'caption': _messageController.text.trim(),
+      };
+    }).toList();
+
+    Navigator.pop(context, results);
   }
 
   Future<void> _loadTags() async {
@@ -277,13 +299,20 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * .88,
+      // Use padding to push the entire content up when the keyboard opens
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
       decoration: const BoxDecoration(
         color: Color(0xff0B1120),
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: SafeArea(
         top: false,
+        bottom: false, // We handle bottom padding manually with viewInsets
         child: Column(
           children: [
             /// HEADER
@@ -357,53 +386,65 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
             ),
 
             if (uploaded_files.isNotEmpty && showingTags)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 58,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final List<Map<String, dynamic>> results = uploaded_files
-                          .map((file) {
-                            return {...file, 'tags': selectedTags.toList()};
-                          })
-                          .toList();
-
-                      Navigator.pop(context, results);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: const Color(0xff7C5CFF),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          content: Text(
-                            "${uploaded_files.length} file(s) attached with ${selectedTags.length} tags",
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff7C5CFF),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
-                    child: const Text(
-                      "Send Attachments",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
+              ChatInput(
+                controller: _messageController,
+                onSend: _sendMessage,
+                companyId: widget.companyId ?? "",
+                userEmail: widget.userEmail,
+                showAttachmentIcon: false, // Disable only the attachment icon
+                onAttachmentsPicked: (results) {
+                  setState(() {
+                    uploaded_files.addAll(results);
+                  });
+                },
               ),
+            // Padding(
+            //   padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
+            //   child: SizedBox(
+            //     width: double.infinity,
+            //     height: 58,
+            //     child: ElevatedButton(
+            //       onPressed: () {
+            //         final List<Map<String, dynamic>> results = uploaded_files
+            //             .map((file) {
+            //               return {...file, 'tags': selectedTags.toList()};
+            //             })
+            //             .toList();
+
+            //         Navigator.pop(context, results);
+
+            //         ScaffoldMessenger.of(context).showSnackBar(
+            //           SnackBar(
+            //             backgroundColor: const Color(0xff7C5CFF),
+            //             behavior: SnackBarBehavior.floating,
+            //             shape: RoundedRectangleBorder(
+            //               borderRadius: BorderRadius.circular(14),
+            //             ),
+            //             content: Text(
+            //               "${uploaded_files.length} file(s) attached with ${selectedTags.length} tags",
+            //               style: const TextStyle(color: Colors.white),
+            //             ),
+            //           ),
+            //         );
+            //       },
+            //       style: ElevatedButton.styleFrom(
+            //         backgroundColor: const Color(0xff7C5CFF),
+            //         elevation: 0,
+            //         shape: RoundedRectangleBorder(
+            //           borderRadius: BorderRadius.circular(18),
+            //         ),
+            //       ),
+            //       child: const Text(
+            //         "Send Attachments",
+            //         style: TextStyle(
+            //           color: Colors.white,
+            //           fontSize: 15,
+            //           fontWeight: FontWeight.w700,
+            //         ),
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

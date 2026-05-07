@@ -9,6 +9,7 @@ import './format_utils.dart';
 import './file_utils.dart';
 import './chat_service.dart';
 import './attchmentPopup.dart';
+import './ChatInput.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;
@@ -149,7 +150,17 @@ class _ChatScreenState extends State<ChatScreen> {
                         ? _buildEmptyMessages()
                         : _buildMessageList(state),
                   ),
-                  _inputBox(),
+                  ChatInput(
+                    controller: _messageController,
+                    onSend: _sendMessage,
+                    companyId: company_id,
+                    userEmail: state.userData?['email'],
+                    onAttachmentsPicked: (results) {
+                      // Handle picked attachments here
+                      debugPrint("Picked ${results.length} attachments");
+                      // You can add logic to send them or show a preview
+                    },
+                  ),
                 ],
               ),
             ),
@@ -523,114 +534,6 @@ class _ChatScreenState extends State<ChatScreen> {
           }
         }).toList(),
       ],
-    );
-  }
-
-  Widget _inputBox() {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 14, 14),
-        decoration: BoxDecoration(
-          color:
-              AppColors.primaryGradient.colors[0], // Consistent with home page
-          border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.05)),
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),
-                        minLines: 1,
-                        maxLines: 5,
-                        decoration: const InputDecoration(
-                          hintText: "Type message...",
-                          hintStyle: TextStyle(color: Colors.white38),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () async {
-                        final results = await AttachmentPopup.show(
-                          context,
-                          userEmail: _chatBloc.state.userData?['email'],
-                          companyId: company_id,
-                        );
-
-                        if (results != null && results.isNotEmpty) {
-                          // Implement logic here to add results to file list
-                          // or trigger a sendMessage with attachments.
-                        }
-                      },
-                      icon: Icon(
-                        Icons.attach_file_rounded,
-                        color: Colors.white.withOpacity(0.6),
-                        size: 22,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(
-                        Icons.emoji_emotions_rounded,
-                        color: Colors.white.withOpacity(0.6),
-                        size: 22,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: _sendMessage,
-              child: Container(
-                height: 54,
-                width: 54,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xff7C5CFF), Color(0xff5B4DFF)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xff6C63FF).withOpacity(0.4),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.send_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
