@@ -186,19 +186,28 @@ class ApiServer {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchPublicTags(String? companyId) async {
+  // ======================== start tag public ===================================
+  Future<List<Map<String, dynamic>>> fetch_Public_Tags(
+    String? companyId,
+  ) async {
     try {
-      // Placeholder logic: replace with your actual GQL query for tags
       final data = await ApiServer.call(
-        """query GetTags(\$companyId: String!) { get_tags(company_id: \$companyId) { tag_id title tag_color } }""",
-        variables: {"companyId": companyId},
+        Get_tag_public,
+        variables: {"company_id": companyId},
       );
-      return List<Map<String, dynamic>>.from(data['get_tags'] ?? []);
+      final List<dynamic> publicTags = data['tags']?['public'] ?? [];
+      return List<Map<String, dynamic>>.from(publicTags);
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+
+      rethrow;
     } catch (e) {
-      debugPrint("Error fetching tags: $e");
-      return [];
+      throw GqlException("Failed to fetch public tags: ${e.toString()}");
     }
   }
+  // ======================== End tag public ===================================
 
   Future<Map<String, dynamic>> fetchAllLink() async {
     try {

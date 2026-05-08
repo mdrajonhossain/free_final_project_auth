@@ -167,7 +167,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
 
     setState(() => isLoadingTags = true);
     try {
-      final tags = await ApiServer().fetchPublicTags(widget.companyId);
+      final tags = await ApiServer().fetch_Public_Tags(widget.companyId);
       setState(() {
         availableTags = tags;
         isLoadingTags = false;
