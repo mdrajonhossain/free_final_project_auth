@@ -26,11 +26,19 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? userData;
   List<dynamic>? conversationRooms;
   bool isLoading = true;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     getMeData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> getMeData() async {
@@ -76,6 +84,14 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final bgColor = AppColors.getBackgroundColor(widget.isDark);
 
+    List<dynamic>? filteredRooms = conversationRooms;
+    if (_isSearching && _searchController.text.isNotEmpty) {
+      filteredRooms = conversationRooms?.where((room) {
+        final title = room['title']?.toString().toLowerCase() ?? "";
+        return title.contains(_searchController.text.toLowerCase());
+      }).toList();
+    }
+
     String displayName = "Loading...";
     String displayEmail = "...";
 
@@ -113,35 +129,67 @@ class _HomePageState extends State<HomePage> {
           centerTitle: false,
           automaticallyImplyLeading: false,
           titleSpacing: 5,
-          title: Image.asset('assets/logo.webp', height: 45),
+          title: _isSearching
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    cursorColor: Colors.white,
+                    decoration: const InputDecoration(
+                      hintText: "Search conversation title...",
+                      hintStyle: TextStyle(color: Colors.white60),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    onChanged: (value) {
+                      setState(() {}); // Refresh UI to filter results
+                    },
+                  ),
+                )
+              : Image.asset('assets/logo.webp', height: 45),
 
           actions: [
-            IconButton(
-              constraints: const BoxConstraints(),
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              onPressed: () {},
-              icon: const Icon(Icons.search, color: Colors.white),
-              tooltip: 'Search',
-            ),
-            IconButton(
-              constraints: const BoxConstraints(),
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              onPressed: () {},
-              icon: const Icon(Icons.filter_alt_sharp, color: Colors.white),
-              tooltip: 'Filter',
-            ),
-            Builder(
-              builder: (context) {
-                return IconButton(
-                  constraints: const BoxConstraints(),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  onPressed: () => Scaffold.of(context).openEndDrawer(),
-                  icon: const Icon(Icons.menu, color: Colors.white),
-                  tooltip: 'Toggle menu',
-                );
-              },
-            ),
-            const SizedBox(width: 3),
+            if (_isSearching)
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchController.clear();
+                  });
+                },
+                icon: const Icon(Icons.close, color: Colors.white),
+                tooltip: 'Close search',
+              )
+            else ...[
+              IconButton(
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                onPressed: () => setState(() => _isSearching = true),
+                icon: const Icon(Icons.search, color: Colors.white),
+                tooltip: 'Search',
+              ),
+              IconButton(
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                onPressed: () {},
+                icon: const Icon(Icons.filter_alt_sharp, color: Colors.white),
+                tooltip: 'Filter',
+              ),
+              Builder(
+                builder: (context) {
+                  return IconButton(
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    onPressed: () => Scaffold.of(context).openEndDrawer(),
+                    icon: const Icon(Icons.menu, color: Colors.white),
+                    tooltip: 'Toggle menu',
+                  );
+                },
+              ),
+              const SizedBox(width: 3),
+            ],
           ],
 
           /// ================= TAB BAR =================
@@ -166,11 +214,11 @@ class _HomePageState extends State<HomePage> {
         body: TabBarView(
           children: [
             ChatsTab(
-              conversationRooms: conversationRooms,
+              conversationRooms: filteredRooms,
               userMe: userData?['id']?.toString(),
             ),
             CallsTab(
-              conversationRooms: conversationRooms,
+              conversationRooms: filteredRooms,
               userMe: userData?['id']?.toString(),
             ),
             DashboardTab(userMe: userData),
