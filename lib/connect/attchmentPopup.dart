@@ -670,15 +670,6 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
       return title.contains(tagSearchQuery.toLowerCase());
     }).toList();
 
-    // If no tags are available or found after filtering, display a message
-    if (filteredTags.isEmpty && !isLoadingTags) {
-      return const Center(
-        child: Text(
-          "No tags found.",
-          style: TextStyle(color: Colors.white54, fontSize: 16),
-        ),
-      );
-    }
     return Column(
       children: [
         Padding(
@@ -715,61 +706,68 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: filteredTags.length,
-            itemBuilder: (context, index) {
-              final tag = filteredTags[index];
-              final tagName = tag['title']?.toString() ?? "Unknown";
-              final tagId = tag['tag_id']?.toString() ?? "";
-              final isSelected = selectedTags.contains(tagId);
-              final tagColor = _parseColor(tag['tag_color']?.toString());
+          child: filteredTags.isEmpty
+              ? const Center(
+                  child: Text(
+                    "No tags found.",
+                    style: TextStyle(color: Colors.white54, fontSize: 16),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: filteredTags.length,
+                  itemBuilder: (context, index) {
+                    final tag = filteredTags[index];
+                    final tagName = tag['title']?.toString() ?? "Unknown";
+                    final tagId = tag['tag_id']?.toString() ?? "";
+                    final isSelected = selectedTags.contains(tagId);
+                    final tagColor = _parseColor(tag['tag_color']?.toString());
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xff7C5CFF).withOpacity(.08)
-                      : Colors.white.withOpacity(.02),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xff7C5CFF).withOpacity(.3)
-                        : Colors.white.withOpacity(.04),
-                  ),
-                ),
-                child: CheckboxListTile(
-                  secondary: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: tagColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  title: Text(
-                    tagName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  value: isSelected,
-                  activeColor: const Color(0xff7C5CFF),
-                  checkColor: Colors.white,
-                  onChanged: (val) {
-                    setState(() {
-                      if (val == true) {
-                        selectedTags.add(tagId);
-                      } else {
-                        selectedTags.remove(tagId);
-                      }
-                    });
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? const Color(0xff7C5CFF).withOpacity(.08)
+                            : Colors.white.withOpacity(.02),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xff7C5CFF).withOpacity(.3)
+                              : Colors.white.withOpacity(.04),
+                        ),
+                      ),
+                      child: CheckboxListTile(
+                        secondary: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: tagColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        title: Text(
+                          tagName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        value: isSelected,
+                        activeColor: const Color(0xff7C5CFF),
+                        checkColor: Colors.white,
+                        onChanged: (val) {
+                          setState(() {
+                            if (val == true) {
+                              selectedTags.add(tagId);
+                            } else {
+                              selectedTags.remove(tagId);
+                            }
+                          });
+                        },
+                      ),
+                    );
                   },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );
