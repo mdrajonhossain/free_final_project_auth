@@ -35,10 +35,15 @@ class _LinksPageState extends State<LinksPage> {
       print("LINK DATA: $data");
 
       /// যদি API null দেয় তাহলে fallback data দেখাবে
-      if (data != null && data is List) {
-        links = List<Map<String, dynamic>>.from(
-          data.map((e) => Map<String, dynamic>.from(e as Map)),
-        );
+      if (data != null && data['items'] is List) {
+        links = (data['items'] as List).map((e) {
+          final map = Map<String, dynamic>.from(e as Map);
+          return {
+            'title': map['title'],
+            'url': map['location'], // API returns 'location'
+            'id': map['id'],
+          };
+        }).toList();
       } else {
         links = [
           {

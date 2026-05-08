@@ -96,7 +96,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           "https://wfss001.freeli.io/profile-pic/Photos/corporate-company-logo-png_seeklogo-425925@1764655943904.png",
       "msg_body": encryptedText,
       "created_at": DateTime.now().toIso8601String(),
-      "all_attachment": [],
+      "all_attachment": event.attachFiles?['allfiles'] ?? [],
     };
 
     // 1. Optimistic Update: Add message to list immediately
@@ -106,13 +106,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     try {
       // 2. Network Call
       final serverMsg = await apiServer.sendMessage(
-        msgBody: encryptedText,
+        msgBody: event.msgType == "text" ? encryptedText : event.text,
         conversationId: event.conversationId,
         companyId: event.companyId,
         senderId: state.myId,
         participants: event.participants is List
             ? List<String>.from(event.participants)
             : [event.participants.toString()],
+        msgType: event.msgType,
+        attachFiles: event.attachFiles,
+        tags: event.tags,
+        allAttachment: event.allAttachment,
       );
 
       // 3. Update State: Replace optimistic message with real server response

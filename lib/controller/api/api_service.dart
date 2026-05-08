@@ -14,7 +14,9 @@ class ApiServer {
 
   static final Dio _dio = Dio();
   static String? _token;
-  static const String _graphqlUrl = "http://62.151.182.241:4055/workfreeli";
+  // static const String _graphqlUrl = "http://62.151.182.241:4055/workfreeli";
+  static const String _graphqlUrl =
+      "https://cadevapicdn02.freeli.io/workfreeli";
 
   static String? get token => _token;
 
@@ -184,6 +186,31 @@ class ApiServer {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchPublicTags(String? companyId) async {
+    try {
+      // Placeholder logic: replace with your actual GQL query for tags
+      final data = await ApiServer.call(
+        """query GetTags(\$companyId: String!) { get_tags(company_id: \$companyId) { tag_id title tag_color } }""",
+        variables: {"companyId": companyId},
+      );
+      return List<Map<String, dynamic>>.from(data['get_tags'] ?? []);
+    } catch (e) {
+      debugPrint("Error fetching tags: $e");
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchAllLink() async {
+    try {
+      final data = await ApiServer.call(
+        """query GetAllLinks { get_file_gallery(tab: "link") { items { id title location } } }""",
+      );
+      return Map<String, dynamic>.from(data['get_file_gallery'] ?? {});
+    } catch (e) {
+      throw GqlException("Failed to fetch links");
+    }
+  }
+
   Future<Map<String, dynamic>> fetchRooms(String userId) async {
     try {
       final data = await ApiServer.call(
@@ -303,17 +330,29 @@ class ApiServer {
     String msgType = "text",
     bool flagged = false,
     String isReplyMsg = "no",
+    Map<String, dynamic>? attachFiles,
+    List<String>? tags,
+    List<Map<String, dynamic>>? allAttachment,
   }) async {
     try {
       final variables = {
-        "conversationId": conversationId,
-        "companyId": companyId,
-        "senderId": senderId,
-        "msgBody": msgBody,
-        "participants": participants,
-        "msgType": msgType,
-        "flagged": flagged,
-        "isReplyMsg": isReplyMsg,
+        "input": {
+          "conversation_id": conversationId,
+          "company_id": companyId,
+          "sender": senderId,
+          "msg_type": msgType,
+          "msg_body": msgBody,
+          "participants": participants,
+          "is_reply_msg": isReplyMsg,
+          "flagged": flagged,
+          "referenceId": "",
+          "reference_type": "",
+          "reply_for_msgid": "",
+          "is_secret": false,
+          "tag_list": tags ?? [],
+          "attach_files": attachFiles,
+          "all_attachment": allAttachment ?? [],
+        },
       };
 
       final data = await ApiServer.call(
@@ -335,58 +374,7 @@ class ApiServer {
       }
       rethrow;
     } catch (e) {
-      throw GqlException("Network error: ${e.toString()}");
-    }
-  }
-
-  // ================== Public Tags ============================
-  Future<List<Map<String, dynamic>>> fetchPublicTags(String? companyId) async {
-    if (companyId == null || companyId.isEmpty) {
-      debugPrint(
-        "[API] fetchPublicTags: skipped because companyId is empty/null",
-      );
-      return [];
-    }
-    if (_token == null) {
-      await ApiServer.init();
-    }
-    try {
-      final data = await ApiServer.call(
-        Get_tag_public,
-        variables: {"company_id": companyId},
-      );
-      final tags = data['tags']?['public'];
-      if (tags != null) {
-        debugPrint(
-          "[API] fetchPublicTags: successfully loaded ${tags.length} tags",
-        );
-        return List<Map<String, dynamic>>.from(tags);
-      }
-      return [];
-    } catch (e) {
-      debugPrint("[API ERROR] fetchPublicTags: $e");
-      return [];
-    }
-  }
-
-  // ===============All Link start ========================
-  Future<List<dynamic>> fetchAllLink() async {
-    try {
-      final data = await ApiServer.call(allLink);
-      final meDataLink = data['hub_all_link_msgs']?['links'];
-      if (meDataLink != null) {
-        return List<dynamic>.from(meDataLink);
-      }
-      throw const GqlException("User profile not found or session expired");
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
-    } catch (e) {
       throw GqlException("Network error: Please check your connection.");
     }
   }
-
-  // ===============All Link End ========================
 }

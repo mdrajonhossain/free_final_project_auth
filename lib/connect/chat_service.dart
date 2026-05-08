@@ -12,9 +12,19 @@ class ChatService {
     required dynamic participants, // Accepts String or List
     required ChatBloc chatBloc,
     required VoidCallback onScroll,
+    Map<String, dynamic>? attachFiles,
+    List<String>? tags,
+    List<Map<String, dynamic>>? allAttachment,
   }) async {
     final text = controller.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty &&
+        (attachFiles == null || (attachFiles['allfiles'] as List).isEmpty))
+      return;
+
+    final String finalMsgType =
+        (attachFiles != null && (attachFiles['allfiles'] as List).isNotEmpty)
+        ? "media_attachment "
+        : "text";
 
     // Dispatch event to Bloc - Business logic (encryption/API) handled there
     chatBloc.add(
@@ -24,6 +34,10 @@ class ChatService {
         companyId: companyId,
         senderId: chatBloc.state.myId,
         participants: participants,
+        attachFiles: attachFiles,
+        tags: tags,
+        allAttachment: allAttachment,
+        msgType: finalMsgType,
       ),
     );
 

@@ -18,6 +18,10 @@ class ChatMessageSent extends ChatEvent {
   final String companyId;
   final String senderId;
   final dynamic participants;
+  final Map<String, dynamic>? attachFiles;
+  final List<String>? tags;
+  final List<Map<String, dynamic>>? allAttachment;
+  final String msgType;
 
   ChatMessageSent({
     required this.text,
@@ -25,5 +29,9 @@ class ChatMessageSent extends ChatEvent {
     required this.companyId,
     required this.senderId,
     required this.participants,
+    this.attachFiles,
+    this.tags,
+    this.allAttachment,
+    this.msgType = "text",
   });
 }

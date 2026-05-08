@@ -4,19 +4,28 @@ import 'package:freeli/connect/ChatInput.dart';
 import 'package:freeli/connect/chat_service.dart';
 import 'package:freeli/controller/api/api_files_upload.dart';
 import 'package:freeli/controller/api/api_service.dart';
+import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 
 class AttachmentPopup {
   static Future<List<Map<String, dynamic>>?> show(
     BuildContext context, {
     String? userEmail,
     String? companyId,
+    required String conversationId,
+    required dynamic participants,
+    required ChatBloc chatBloc,
   }) {
     return showModalBottomSheet<List<Map<String, dynamic>>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          AttachmentSheet(userEmail: userEmail, companyId: companyId),
+      builder: (_) => AttachmentSheet(
+        userEmail: userEmail,
+        companyId: companyId,
+        conversationId: conversationId,
+        participants: participants,
+        chatBloc: chatBloc,
+      ),
     );
   }
 }
@@ -24,7 +33,17 @@ class AttachmentPopup {
 class AttachmentSheet extends StatefulWidget {
   final String? userEmail;
   final String? companyId;
-  const AttachmentSheet({super.key, this.userEmail, this.companyId});
+  final String conversationId;
+  final dynamic participants;
+  final ChatBloc chatBloc;
+  const AttachmentSheet({
+    super.key,
+    this.userEmail,
+    this.companyId,
+    required this.conversationId,
+    required this.participants,
+    required this.chatBloc,
+  });
 
   @override
   State<AttachmentSheet> createState() => _AttachmentSheetState();
@@ -59,21 +78,85 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
   }
 
   void _sendMessage() {
-    print("=====================================1");
-    print("Files1, $uploadResults");
-    print("Tags2, $selectedTags.toList(),");
-    print("Message3, ${_messageController.text}");
-    print("=====================================2");
+    List<String> imgFiles = [];
+    List<String> audioFiles = [];
+    List<String> videoFiles = [];
+    List<String> otherFiles = [];
+    List<Map<String, dynamic>> sanitizedAllFiles = [];
 
-    // ChatService.sendMessage(
-    //   context: context,
-    //   controller: _messageController,
-    //   conversationId: conversationId,
-    //   companyId: company_id,
-    //   participants: participants,
-    //   chatBloc: _chatBloc,
-    //   onScroll: _scrollToBottom,
-    // );
+    for (var file in uploaded_files) {
+      final String bucket = file['bucket'] ?? '';
+      final String key = file['key'] ?? '';
+      final String path = (bucket.isNotEmpty && key.isNotEmpty)
+          ? "$bucket/$key"
+          : "";
+
+      // Robust extraction of mimetype and size from top-level or transforms
+      String mimeType = file['mimetype'] ?? file['contentType'] ?? '';
+      int fileSize = int.tryParse(file['size']?.toString() ?? '0') ?? 0;
+
+      final transforms = file['transforms'] as List?;
+      if (mimeType.isEmpty && transforms != null && transforms.isNotEmpty) {
+        mimeType =
+            transforms[0]['mimetype'] ??
+            transforms[0]['contentType'] ??
+            transforms[0]['content_type'] ??
+            '';
+      }
+      if (fileSize == 0 && transforms != null && transforms.isNotEmpty) {
+        fileSize = int.tryParse(transforms[0]['size']?.toString() ?? '0') ?? 0;
+      }
+
+      if (mimeType.startsWith('image/')) {
+        imgFiles.add(path);
+      } else if (mimeType.startsWith('audio/')) {
+        audioFiles.add(path);
+      } else if (mimeType.startsWith('video/')) {
+        videoFiles.add(path);
+      } else {
+        otherFiles.add(path);
+      }
+
+      // Create a clean object that matches the server's expected AttachmentFileInfoInput
+      sanitizedAllFiles.add({
+        "originalname": file['originalname'] ?? "",
+        "mimetype": mimeType,
+        "voriginalName": file['voriginalName'] ?? file['voriginal_name'] ?? "",
+        "size": fileSize,
+        "bucket": bucket,
+        "key": key,
+        "acl": file['acl'] ?? "public-read",
+        "referenceId": "",
+        "reference_type": "",
+      });
+    }
+
+    final List<Map<String, dynamic>> allAttachmentInput = sanitizedAllFiles
+        .map((_) => {"tag_list": [], "has_tag": ""})
+        .toList();
+
+    final Map<String, dynamic> attachFiles = {
+      "imgfile": imgFiles,
+      "audiofile": audioFiles,
+      "videofile": videoFiles,
+      "otherfile": otherFiles,
+      "allfiles": sanitizedAllFiles,
+    };
+
+    ChatService.sendMessage(
+      context: context,
+      controller: _messageController,
+      conversationId: widget.conversationId,
+      companyId: widget.companyId ?? "",
+      participants: widget.participants,
+      chatBloc: widget.chatBloc,
+      onScroll: () {},
+      attachFiles: attachFiles,
+      tags: selectedTags.toList(),
+      allAttachment: allAttachmentInput,
+    );
+
+    if (mounted) Navigator.pop(context, sanitizedAllFiles);
   }
 
   Future<void> _loadTags() async {
@@ -396,6 +479,9 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                 onSend: _sendMessage,
                 companyId: widget.companyId ?? "",
                 userEmail: widget.userEmail,
+                conversationId: widget.conversationId,
+                participants: widget.participants,
+                chatBloc: widget.chatBloc,
                 showAttachmentIcon: false, // Disable only the attachment icon
                 onAttachmentsPicked: (results) {
                   setState(() {

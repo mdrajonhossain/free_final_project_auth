@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 import '../AppColors.dart';
 import 'attchmentPopup.dart';
 
@@ -7,6 +8,9 @@ class ChatInput extends StatelessWidget {
   final VoidCallback onSend;
   final String companyId;
   final String? userEmail;
+  final String conversationId;
+  final dynamic participants;
+  final ChatBloc chatBloc;
   final Function(List<Map<String, dynamic>>) onAttachmentsPicked;
   final bool
   showAttachmentIcon; // New parameter to control attachment icon visibility
@@ -17,6 +21,9 @@ class ChatInput extends StatelessWidget {
     required this.onSend,
     required this.companyId,
     required this.onAttachmentsPicked,
+    required this.conversationId,
+    required this.participants,
+    required this.chatBloc,
     this.userEmail,
     this.showAttachmentIcon = true, // Default to true
   });
@@ -70,6 +77,9 @@ class ChatInput extends StatelessWidget {
                             context,
                             userEmail: userEmail,
                             companyId: companyId,
+                            conversationId: conversationId,
+                            participants: participants,
+                            chatBloc: chatBloc,
                           );
                           if (results != null && results.isNotEmpty) {
                             onAttachmentsPicked(results);

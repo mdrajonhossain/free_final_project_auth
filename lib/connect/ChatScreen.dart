@@ -155,6 +155,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     onSend: _sendMessage,
                     companyId: company_id,
                     userEmail: state.userData?['email'],
+                    conversationId: conversationId,
+                    participants: participants,
+                    chatBloc: _chatBloc,
                     onAttachmentsPicked: (results) {
                       // Handle picked attachments here
                       debugPrint("Picked ${results.length} attachments");
