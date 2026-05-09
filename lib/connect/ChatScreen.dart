@@ -10,6 +10,7 @@ import './file_utils.dart';
 import './chat_service.dart';
 import './attchmentPopup.dart';
 import './ChatInput.dart';
+import './FullImageViewer.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;
@@ -458,7 +459,12 @@ class _ChatScreenState extends State<ChatScreen> {
           if (isImage) {
             return GestureDetector(
               onTap: () {
-                // TODO: Implement full screen image viewer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FullImageViewer(imageUrl: fullUrl),
+                  ),
+                );
               },
               child: Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -472,31 +478,34 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    fullUrl,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        height: 150,
-                        width: 200,
-                        color: Colors.white.withOpacity(0.05),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                  child: Hero(
+                    tag: fullUrl,
+                    child: Image.network(
+                      fullUrl,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 150,
+                          width: 200,
+                          color: Colors.white.withOpacity(0.05),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
                           ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 100,
+                        width: 150,
+                        color: Colors.white.withOpacity(0.05),
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: Colors.white24,
                         ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 100,
-                      width: 150,
-                      color: Colors.white.withOpacity(0.05),
-                      child: const Icon(
-                        Icons.broken_image,
-                        color: Colors.white24,
                       ),
                     ),
                   ),
