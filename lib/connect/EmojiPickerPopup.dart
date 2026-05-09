@@ -78,7 +78,7 @@ class EmojiPickerView extends StatelessWidget {
     return Container(
       height: 280, // Fixed professional height
       decoration: BoxDecoration(
-        color: const Color(0xff1B2335).withOpacity(0.95),
+        color: const Color.fromARGB(255, 64, 88, 146).withOpacity(0.95),
         border: Border(top: BorderSide(color: Colors.white.withOpacity(0.1))),
       ),
       child: Column(
@@ -94,7 +94,7 @@ class EmojiPickerView extends StatelessWidget {
             child: Row(
               children: [
                 const Text(
-                  "Pick Emoji",
+                  "Emoji",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
