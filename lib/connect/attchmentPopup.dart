@@ -132,7 +132,12 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
     }
 
     final List<Map<String, dynamic>> allAttachmentInput = sanitizedAllFiles
-        .map((_) => {"tag_list": [], "has_tag": ""})
+        .map(
+          (_) => {
+            "tag_list": selectedTags.toList(),
+            "has_tag": selectedTags.isNotEmpty ? "Y" : "N",
+          },
+        )
         .toList();
 
     final Map<String, dynamic> attachFiles = {

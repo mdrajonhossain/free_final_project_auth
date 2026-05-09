@@ -17,14 +17,21 @@ class ChatService {
     List<Map<String, dynamic>>? allAttachment,
   }) async {
     final text = controller.text.trim();
-    if (text.isEmpty &&
-        (attachFiles == null || (attachFiles['allfiles'] as List).isEmpty))
-      return;
+    final bool hasFiles =
+        attachFiles != null &&
+        attachFiles['allfiles'] is List &&
+        (attachFiles['allfiles'] as List).isNotEmpty;
 
-    final String finalMsgType =
-        (attachFiles != null && (attachFiles['allfiles'] as List).isNotEmpty)
-        ? "media_attachment "
-        : "text";
+    // Rule: Sending only tags is not allowed. Must have text or files.
+    if (text.isEmpty && !hasFiles) return;
+
+    // Rule: Chat screen messages (no files) are "text" only.
+    // Rule: Attachment option (has files) are "media_attachment".
+    final String finalMsgType = hasFiles ? "media_attachment" : "text";
+    final List<String>? effectiveTags = hasFiles ? tags : null;
+    final List<Map<String, dynamic>>? effectiveAllAttachment = hasFiles
+        ? allAttachment
+        : null;
 
     // Dispatch event to Bloc - Business logic (encryption/API) handled there
     chatBloc.add(
@@ -34,9 +41,9 @@ class ChatService {
         companyId: companyId,
         senderId: chatBloc.state.myId,
         participants: participants,
-        attachFiles: attachFiles,
-        tags: tags,
-        allAttachment: allAttachment,
+        attachFiles: hasFiles ? attachFiles : null,
+        tags: effectiveTags,
+        allAttachment: effectiveAllAttachment,
         msgType: finalMsgType,
       ),
     );
@@ -45,12 +52,7 @@ class ChatService {
     controller.clear();
     onScroll();
 
-    if (chatBloc.state.error != null && context.mounted) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Failed to send message")));
-      }
-    }
+    // Note: Success/Error handling should be managed via BlocListener in the UI
+    // because chatBloc.add is an asynchronous operation.
   }
 }

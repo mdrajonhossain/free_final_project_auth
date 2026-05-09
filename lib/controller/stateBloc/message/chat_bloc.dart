@@ -101,7 +101,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     // 1. Optimistic Update: Add message to list immediately
     final updatedMessages = [optimisticMessage, ...state.messages];
-    emit(state.copyWith(messages: updatedMessages));
+    // Clear previous error state so the UI doesn't show a stale failure notification
+    emit(state.copyWith(messages: updatedMessages, error: null));
 
     try {
       // 2. Network Call
@@ -124,7 +125,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           .map((m) => m['msg_id'] == tempId ? serverMsg : m)
           .toList();
 
-      emit(state.copyWith(messages: finalMessages));
+      emit(state.copyWith(messages: finalMessages, error: null));
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }

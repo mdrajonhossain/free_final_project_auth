@@ -358,9 +358,10 @@ class ApiServer {
           "reference_type": "",
           "reply_for_msgid": "",
           "is_secret": false,
-          "tag_list": tags ?? [],
-          "attach_files": attachFiles,
-          "all_attachment": allAttachment ?? [],
+          if (tags != null && tags.isNotEmpty) "tag_list": tags,
+          if (attachFiles != null) "attach_files": attachFiles,
+          if (allAttachment != null && allAttachment.isNotEmpty)
+            "all_attachment": allAttachment,
         },
       };
 
