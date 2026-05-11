@@ -15,6 +15,26 @@ class ChatsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(
+          bottom: 80, // bottom space
+          right: 8, // right space
+        ),
+        child: FloatingActionButton(
+          onPressed: () {
+            print("New chat button pressed");
+          },
+          backgroundColor: AppColors.accentColor,
+          child: const Icon(Icons.add, color: Colors.white, size: 40),
+        ),
+      ),
+      body: _buildTabContent(context),
+    );
+  }
+
+  Widget _buildTabContent(BuildContext context) {
     if (conversationRooms == null) {
       return const ChatSkeleton(); // Show skeleton instead of loader
     }
