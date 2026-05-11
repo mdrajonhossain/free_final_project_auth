@@ -4,6 +4,7 @@ import '../skeleton.dart'; // Import the skeleton loader
 import 'crypto_utils.dart';
 import 'format_utils.dart';
 import 'DirectMessagePopup.dart';
+import 'createRoom.dart';
 
 class ChatsTab extends StatefulWidget {
   final List<dynamic>? conversationRooms;
@@ -69,7 +70,12 @@ class _ChatsTabState extends State<ChatsTab>
               label: "Create room",
               icon: Icons.groups_rounded,
               onPressed: () {
-                print("Create room clicked");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateRoomScreen(),
+                  ),
+                );
                 _toggleMenu();
               },
             ),
