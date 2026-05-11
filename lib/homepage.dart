@@ -29,6 +29,7 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
+  String _selectedFilter = 'all';
 
   @override
   void initState() {
@@ -86,8 +87,33 @@ class _HomePageState extends State<HomePage> {
     final bgColor = AppColors.getBackgroundColor(widget.isDark);
 
     List<dynamic>? filteredRooms = conversationRooms;
+
+    // 1. Filter by Category (Category Logic)
+    if (_selectedFilter != 'all') {
+      final myId = userData?['id']?.toString();
+      filteredRooms = filteredRooms?.where((room) {
+        final creatorId = room['created_by']?.toString();
+        final isGroup =
+            room['group'] == 'yes'; // Assuming 'yes' for Rooms as per logic
+
+        switch (_selectedFilter) {
+          case 'me':
+            return creatorId == myId;
+          case 'others':
+            return creatorId != myId;
+          case 'rooms':
+            return isGroup;
+          case 'direct':
+            return !isGroup;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // 2. Filter by Search
     if (_isSearching && _searchController.text.isNotEmpty) {
-      filteredRooms = conversationRooms?.where((room) {
+      filteredRooms = filteredRooms?.where((room) {
         final title = room['title']?.toString().toLowerCase() ?? "";
         return title.contains(_searchController.text.toLowerCase());
       }).toList();
@@ -175,7 +201,12 @@ class _HomePageState extends State<HomePage> {
                 constraints: const BoxConstraints(),
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 onPressed: () {
-                  roomFilter.show(context);
+                  roomFilter.show(
+                    context,
+                    onFilterSelected: (filter) {
+                      setState(() => _selectedFilter = filter);
+                    },
+                  );
                 },
                 icon: const Icon(Icons.filter_alt_sharp, color: Colors.white),
                 tooltip: 'Filter',

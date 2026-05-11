@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 class roomFilter {
-  static void show(BuildContext context) {
+  static void show(
+    BuildContext context, {
+    required Function(String) onFilterSelected,
+  }) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -27,31 +30,31 @@ class roomFilter {
                       context,
                       Icons.all_inbox_rounded,
                       "All",
-                      () => debugPrint("Filter: All messages"),
+                      () => onFilterSelected("all"),
                     ),
                     _buildOption(
                       context,
                       Icons.person_rounded,
                       "Created by me",
-                      () => debugPrint("Filter: Created by me"),
+                      () => onFilterSelected("me"),
                     ),
                     _buildOption(
                       context,
                       Icons.people_outline_rounded,
                       "Created by others",
-                      () => debugPrint("Filter: Created by others"),
+                      () => onFilterSelected("others"),
                     ),
                     _buildOption(
                       context,
                       Icons.groups_rounded,
                       "Rooms",
-                      () => debugPrint("Filter: Rooms"),
+                      () => onFilterSelected("rooms"),
                     ),
                     _buildOption(
                       context,
                       Icons.chat_bubble_outline_rounded,
                       "Direct messages",
-                      () => debugPrint("Filter: Direct messages"),
+                      () => onFilterSelected("direct"),
                     ),
                   ],
                 ),
