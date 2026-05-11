@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage> {
                     style: const TextStyle(color: Colors.white, fontSize: 16),
                     cursorColor: Colors.white,
                     decoration: const InputDecoration(
-                      hintText: "Search conversation title...",
+                      hintText: "Search",
                       hintStyle: TextStyle(color: Colors.white60),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 8),

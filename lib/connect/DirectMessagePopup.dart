@@ -87,22 +87,31 @@ class DirectMessagePopup {
                             itemCount: filteredList.length,
                             itemBuilder: (context, index) {
                               final room = filteredList[index];
+                              final String imageUrl =
+                                  (room['conv_img'] ??
+                                          room['img'] ??
+                                          room['image'] ??
+                                          '')
+                                      .toString();
                               return ListTile(
                                 leading: CircleAvatar(
                                   backgroundColor: AppColors.accentColor,
-                                  child: Text(
-                                    (room['title']?[0] ?? 'C').toUpperCase(),
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
+                                  backgroundImage: imageUrl.isNotEmpty
+                                      ? NetworkImage(imageUrl)
+                                      : null,
+                                  child: imageUrl.isEmpty
+                                      ? Text(
+                                          (room['title']?[0] ?? 'C')
+                                              .toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : null,
                                 ),
                                 title: Text(
                                   room['title'] ?? "No Title",
                                   style: const TextStyle(color: Colors.black),
-                                ),
-                                subtitle: Text(
-                                  room['email']?.toString() ??
-                                      "No email provided",
-                                  style: const TextStyle(color: Colors.black54),
                                 ),
                                 onTap: () {
                                   Navigator.pop(context);
