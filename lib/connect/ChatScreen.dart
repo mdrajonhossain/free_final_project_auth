@@ -235,6 +235,8 @@ class _ChatScreenState extends State<ChatScreen> {
     return ListView.builder(
       reverse: true,
       controller: _scrollController,
+      // Cache off-screen items to prevent re-decryption/re-building during scroll
+      cacheExtent: 1000,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       itemCount: state.messages.length + (state.isFetchingMore ? 1 : 0),
       itemBuilder: (context, index) {
@@ -255,17 +257,34 @@ class _ChatScreenState extends State<ChatScreen> {
         }
         final msg = state.messages[index];
         final isMe = msg['sender'].toString() == state.myId;
-        return _messageBubble(msg, isMe);
+
+        // Using a dedicated widget instead of a method improves rebuild performance
+        return _MessageBubble(
+          key: ValueKey(msg['id'] ?? index),
+          msg: msg,
+          isMe: isMe,
+        );
       },
     );
   }
+}
 
-  Widget _messageBubble(dynamic msg, bool isMe) {
-    final decryptedText = CryptoUtils.decryptMessage(msg['msg_body']);
+class _MessageBubble extends StatelessWidget {
+  final dynamic msg;
+  final bool isMe;
 
-    final cleanText = FormatUtils.stripHtml(decryptedText);
+  const _MessageBubble({super.key, required this.msg, required this.isMe});
 
-    final userImage = msg['senderimg']?.toString() ?? "";
+  @override
+  Widget build(BuildContext context) {
+    // Decryption and formatting happen only when this specific bubble builds
+    final String decryptedText = CryptoUtils.decryptMessage(
+      msg['msg_body'] ?? '',
+    );
+    final String cleanText = FormatUtils.stripHtml(decryptedText);
+    final String userImage = msg['senderimg']?.toString() ?? "";
+
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -371,7 +390,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             height: 1.5,
                           ),
                         ),
-                      _buildAttachments(msg['all_attachment']),
+                      _AttachmentList(attachments: msg['all_attachment']),
                       const SizedBox(height: 8),
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -423,9 +442,15 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+}
 
-  /// Builds a professional list of file attachments for a message bubble
-  Widget _buildAttachments(dynamic attachments) {
+class _AttachmentList extends StatelessWidget {
+  final dynamic attachments;
+
+  const _AttachmentList({required this.attachments});
+
+  @override
+  Widget build(BuildContext context) {
     if (attachments == null || attachments is! List || attachments.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -437,11 +462,13 @@ class _ChatScreenState extends State<ChatScreen> {
         ...attachments.map((file) {
           final String originalName = file['originalname'] ?? "File";
           final String location = file['location'] ?? "";
+
+          // More efficient extension extraction
           final String extension = location
-              .split('.')
-              .last
               .split('?')
               .first
+              .split('.')
+              .last
               .toLowerCase();
 
           // Identify if the file is an image

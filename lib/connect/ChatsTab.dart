@@ -28,24 +28,26 @@ class ChatsTab extends StatelessWidget {
       );
     }
 
-    // Create a mutable copy and sort to ensure "Me" is at the top
-    final List<dynamic> sortedRooms = List.from(conversationRooms!);
+    final List<dynamic> sortedRooms;
+    if (conversationRooms!.length > 1) {
+      sortedRooms = List.from(conversationRooms!);
+      final int meIndex = sortedRooms.indexWhere(
+        (room) =>
+            room['title']?.toString().toLowerCase() == 'me' ||
+            (userMe != null && room['conversation_id']?.toString() == userMe),
+      );
 
-    // Find the index of the "Me" user or the user matching myId (conversation_id == myId)
-    final int meIndex = sortedRooms.indexWhere(
-      (room) =>
-          room['title']?.toString().toLowerCase() == 'me' ||
-          (userMe != null && room['conversation_id']?.toString() == userMe),
-    );
-
-    // If the identified "Me" conversation is found and is not already at the top,
-    // move it to index 0.
-    if (meIndex != -1 && meIndex != 0) {
-      final meRoom = sortedRooms.removeAt(meIndex);
-      sortedRooms.insert(0, meRoom);
+      if (meIndex != -1 && meIndex != 0) {
+        final meRoom = sortedRooms.removeAt(meIndex);
+        sortedRooms.insert(0, meRoom);
+      }
+    } else {
+      sortedRooms = conversationRooms!;
     }
 
     return ListView.builder(
+      cacheExtent:
+          500, // Keeps items in memory to avoid re-calculating/decrypting during scroll
       padding: const EdgeInsets.only(top: 16, bottom: 40, left: 16, right: 16),
       itemCount: sortedRooms.length,
       itemBuilder: (context, index) {
@@ -65,8 +67,10 @@ class ChatsTab extends StatelessWidget {
             (room['conv_img'] ?? room['img'] ?? room['image'] ?? '').toString();
         final String lastTimeStr = room['last_msg_time'] ?? '';
 
-        // Extracting date from ISO string: 2024-07-09T12... -> 2024-07-09
-        String displayTime = lastTimeStr.split('T').first;
+        // substring(0, 10) is significantly faster than split().first for ISO date strings
+        final String displayTime = lastTimeStr.length >= 10
+            ? lastTimeStr.substring(0, 10)
+            : lastTimeStr;
 
         return Card(
           color: Colors.green.withOpacity(
