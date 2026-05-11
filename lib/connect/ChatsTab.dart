@@ -3,6 +3,7 @@ import '../AppColors.dart';
 import '../skeleton.dart'; // Import the skeleton loader
 import 'crypto_utils.dart';
 import 'format_utils.dart';
+import 'DirectMessagePopup.dart';
 
 class ChatsTab extends StatefulWidget {
   final List<dynamic>? conversationRooms;
@@ -59,8 +60,8 @@ class _ChatsTabState extends State<ChatsTab>
               label: "Direct message",
               icon: Icons.person_add_alt_1_rounded,
               onPressed: () {
-                print("Direct message clicked");
                 _toggleMenu();
+                DirectMessagePopup.show(context, widget.conversationRooms);
               },
             ),
             const SizedBox(height: 16),
