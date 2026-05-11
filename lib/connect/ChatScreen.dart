@@ -11,6 +11,7 @@ import './chat_service.dart';
 import './attchmentPopup.dart';
 import './ChatInput.dart';
 import './chatMore_Screen.dart';
+import './chatFilter_Screen.dart';
 import './FullImageViewer.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -135,7 +136,9 @@ class _ChatScreenState extends State<ChatScreen> {
                   const SizedBox(width: 12),
                   _buildRoomTitle(),
                   GestureDetector(
-                    onTap: () => ChatMoreScreen.show(context),
+                    onTap: () {
+                      print("Call button tapped");
+                    },
                     child: Container(
                       margin: const EdgeInsets.only(left: 8),
                       padding: const EdgeInsets.all(6),
@@ -150,7 +153,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => ChatMoreScreen.show(context),
+                    onTap: () => ChatFilterScreen.show(context),
                     child: Container(
                       margin: const EdgeInsets.only(left: 8),
                       padding: const EdgeInsets.all(6),
