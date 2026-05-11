@@ -12,6 +12,7 @@ import './attchmentPopup.dart';
 import './ChatInput.dart';
 import './chatMore_Screen.dart';
 import './chatFilter_Screen.dart';
+import './UserProfilePopup.dart';
 import './FullImageViewer.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -351,18 +352,26 @@ class _MessageBubble extends StatelessWidget {
         children: [
           /// LEFT SIDE USER
           if (!isMe) ...[
-            CircleAvatar(
-              radius: 18,
+            GestureDetector(
+              onTap: () => UserProfilePopup.show(
+                context,
+                name: msg['sendername']?.toString() ?? "User",
+                email: msg['senderemail']?.toString() ?? "user@freeli.io",
+                imageUrl: userImage,
+              ),
+              child: CircleAvatar(
+                radius: 18,
 
-              backgroundColor: Colors.white12,
+                backgroundColor: Colors.white12,
 
-              backgroundImage: userImage.isNotEmpty
-                  ? NetworkImage(userImage)
-                  : null,
+                backgroundImage: userImage.isNotEmpty
+                    ? NetworkImage(userImage)
+                    : null,
 
-              child: userImage.isEmpty
-                  ? const Icon(Icons.person, color: Colors.white, size: 18)
-                  : null,
+                child: userImage.isEmpty
+                    ? const Icon(Icons.person, color: Colors.white, size: 18)
+                    : null,
+              ),
             ),
             const SizedBox(width: 10),
           ],
@@ -381,12 +390,22 @@ class _MessageBubble extends StatelessWidget {
                     right: isMe ? 6 : 0,
                     bottom: 4,
                   ),
-                  child: Text(
-                    isMe ? "You" : (msg['sendername']?.toString() ?? "User"),
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                  child: GestureDetector(
+                    onTap: () => UserProfilePopup.show(
+                      context,
+                      name: isMe
+                          ? "You"
+                          : (msg['sendername']?.toString() ?? "User"),
+                      email: msg['senderemail']?.toString() ?? "user@freeli.io",
+                      imageUrl: userImage,
+                    ),
+                    child: Text(
+                      isMe ? "You" : (msg['sendername']?.toString() ?? "User"),
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
@@ -474,17 +493,25 @@ class _MessageBubble extends StatelessWidget {
           /// RIGHT SIDE MY IMAGE
           if (isMe) ...[
             const SizedBox(width: 10),
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: const Color(0xff6C63FF),
+            GestureDetector(
+              onTap: () => UserProfilePopup.show(
+                context,
+                name: "You",
+                email: msg['senderemail']?.toString() ?? "me@freeli.io",
+                imageUrl: userImage,
+              ),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: const Color(0xff6C63FF),
 
-              backgroundImage: userImage.isNotEmpty
-                  ? NetworkImage(userImage)
-                  : null,
+                backgroundImage: userImage.isNotEmpty
+                    ? NetworkImage(userImage)
+                    : null,
 
-              child: userImage.isEmpty
-                  ? const Icon(Icons.person, color: Colors.white, size: 18)
-                  : null,
+                child: userImage.isEmpty
+                    ? const Icon(Icons.person, color: Colors.white, size: 18)
+                    : null,
+              ),
             ),
           ],
         ],
