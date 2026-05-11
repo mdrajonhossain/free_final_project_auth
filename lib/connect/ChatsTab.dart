@@ -4,14 +4,43 @@ import '../skeleton.dart'; // Import the skeleton loader
 import 'crypto_utils.dart';
 import 'format_utils.dart';
 
-class ChatsTab extends StatelessWidget {
+class ChatsTab extends StatefulWidget {
   final List<dynamic>? conversationRooms;
-
-  /// Pass the current user's ID to correctly identify their personal chat
-  /// if it isn't explicitly named "Me".
   final String? userMe;
 
   const ChatsTab({super.key, this.conversationRooms, this.userMe});
+
+  @override
+  State<ChatsTab> createState() => _ChatsTabState();
+}
+
+class _ChatsTabState extends State<ChatsTab>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _isMenuOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleMenu() {
+    _isMenuOpen = !_isMenuOpen;
+    _isMenuOpen ? _controller.forward() : _controller.reverse();
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,24 +51,84 @@ class ChatsTab extends StatelessWidget {
           bottom: 80, // bottom space
           right: 8, // right space
         ),
-        child: FloatingActionButton(
-          onPressed: () {
-            print("New chat button pressed");
-          },
-          backgroundColor: AppColors.accentColor,
-          child: const Icon(Icons.add, color: Colors.white, size: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _buildMenuItem(
+              label: "Direct message",
+              icon: Icons.person_add_alt_1_rounded,
+              onPressed: () {
+                print("Direct message clicked");
+                _toggleMenu();
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildMenuItem(
+              label: "Create room",
+              icon: Icons.groups_rounded,
+              onPressed: () {
+                print("Create room clicked");
+                _toggleMenu();
+              },
+            ),
+            const SizedBox(height: 16),
+            FloatingActionButton(
+              onPressed: _toggleMenu,
+              backgroundColor: AppColors.accentColor,
+              child: RotationTransition(
+                turns: Tween(begin: 0.0, end: 0.125).animate(_animation),
+                child: const Icon(Icons.add, color: Colors.white, size: 40),
+              ),
+            ),
+          ],
         ),
       ),
       body: _buildTabContent(context),
     );
   }
 
+  Widget _buildMenuItem({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return ScaleTransition(
+      scale: _animation,
+      child: FadeTransition(
+        opacity: _animation,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                label,
+                style: const TextStyle(color: Colors.black, fontSize: 15),
+              ),
+            ),
+            const SizedBox(width: 12),
+            FloatingActionButton.small(
+              onPressed: onPressed,
+              backgroundColor: AppColors.accentColor,
+              child: Icon(icon, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTabContent(BuildContext context) {
-    if (conversationRooms == null) {
+    if (widget.conversationRooms == null) {
       return const ChatSkeleton(); // Show skeleton instead of loader
     }
 
-    if (conversationRooms!.isEmpty) {
+    if (widget.conversationRooms!.isEmpty) {
       return const Center(
         child: Text(
           "No conversations yet",
@@ -49,12 +138,13 @@ class ChatsTab extends StatelessWidget {
     }
 
     final List<dynamic> sortedRooms;
-    if (conversationRooms!.length > 1) {
-      sortedRooms = List.from(conversationRooms!);
+    if (widget.conversationRooms!.length > 1) {
+      sortedRooms = List.from(widget.conversationRooms!);
       final int meIndex = sortedRooms.indexWhere(
         (room) =>
             room['title']?.toString().toLowerCase() == 'me' ||
-            (userMe != null && room['conversation_id']?.toString() == userMe),
+            (widget.userMe != null &&
+                room['conversation_id']?.toString() == widget.userMe),
       );
 
       if (meIndex != -1 && meIndex != 0) {
@@ -62,7 +152,7 @@ class ChatsTab extends StatelessWidget {
         sortedRooms.insert(0, meRoom);
       }
     } else {
-      sortedRooms = conversationRooms!;
+      sortedRooms = widget.conversationRooms!;
     }
 
     return ListView.builder(
