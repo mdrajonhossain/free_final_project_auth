@@ -25,6 +25,12 @@ class ChatMoreScreen {
                   children: [
                     _buildOption(
                       context,
+                      Icons.file_copy_rounded,
+                      "Files",
+                      () => debugPrint("Filehub clicked"),
+                    ),
+                    _buildOption(
+                      context,
                       Icons.assignment_rounded,
                       "Task",
                       () => debugPrint("Task list clicked"),
