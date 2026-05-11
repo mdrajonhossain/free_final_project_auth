@@ -10,6 +10,7 @@ import './file_utils.dart';
 import './chat_service.dart';
 import './attchmentPopup.dart';
 import './ChatInput.dart';
+import './chatMore_Screen.dart';
 import './FullImageViewer.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -133,6 +134,21 @@ class _ChatScreenState extends State<ChatScreen> {
                   _buildRoomImage(),
                   const SizedBox(width: 12),
                   _buildRoomTitle(),
+                  GestureDetector(
+                    onTap: () => ChatMoreScreen.show(context),
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.more_vert,
+                        size: 28,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -217,7 +233,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           const SizedBox(height: 2),
           const Text(
-            "Secure conversation",
+            "Online",
             style: TextStyle(color: Colors.white54, fontSize: 11),
           ),
         ],
