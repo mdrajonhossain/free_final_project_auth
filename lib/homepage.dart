@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freeli/connect/roomFilter.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'AppColors.dart';
 import 'connect/ChatsTab.dart';
@@ -173,7 +174,9 @@ class _HomePageState extends State<HomePage> {
               IconButton(
                 constraints: const BoxConstraints(),
                 padding: const EdgeInsets.symmetric(horizontal: 6),
-                onPressed: () {},
+                onPressed: () {
+                  roomFilter.show(context);
+                },
                 icon: const Icon(Icons.filter_alt_sharp, color: Colors.white),
                 tooltip: 'Filter',
               ),
