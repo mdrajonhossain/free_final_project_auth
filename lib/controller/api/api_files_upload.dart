@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:http_parser/http_parser.dart';
 import 'package:dio/dio.dart';
+import '../../config/config.dart';
 import 'api_service.dart';
 import 'gql_exception.dart';
 
@@ -12,7 +13,7 @@ class ApifilesServer {
 
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: "http://62.151.182.241:4055",
+      baseUrl: AppConfig.fileServerUrl,
       connectTimeout: const Duration(seconds: 60),
       receiveTimeout: const Duration(seconds: 60),
     ),

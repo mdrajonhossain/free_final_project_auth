@@ -5,6 +5,7 @@ import 'package:freeli/model/modelScreema_quary.dart';
 import '../../model/modelScreema_mutation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'gql_exception.dart';
+import '../../config/config.dart';
 
 class ApiServer {
   // Singleton instance
@@ -15,8 +16,7 @@ class ApiServer {
   static final Dio _dio = Dio();
   static String? _token;
   // static const String _graphqlUrl = "http://62.151.182.241:4055/workfreeli";
-  static const String _graphqlUrl =
-      "https://cadevapicdn02.freeli.io/workfreeli";
+  static const String _graphqlUrl = AppConfig.baseUrl + "/workfreeli";
 
   static String? get token => _token;
 
