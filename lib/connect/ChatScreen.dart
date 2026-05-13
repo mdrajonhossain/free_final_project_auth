@@ -572,7 +572,9 @@ class _AttachmentList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-        ...attachments.map((file) {
+        ...attachments.asMap().entries.map((entry) {
+          final int index = entry.key;
+          final dynamic file = entry.value;
           final String originalName = file['originalname'] ?? "File";
           final String location = file['location'] ?? "";
 
@@ -601,87 +603,126 @@ class _AttachmentList extends StatelessWidget {
               : "https://wfss001.freeli.io/$location";
 
           if (isImage) {
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => FullImageViewer(imageUrl: fullUrl),
-                  ),
-                );
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                constraints: const BoxConstraints(
-                  maxHeight: 200,
-                  maxWidth: 240,
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Tag Counter / Index Indicator
+                Column(
+                  children: [
+                    _buildIndexTag(index),
+                    const SizedBox(height: 8),
+                    _buildIndexStar(index),
+                  ],
                 ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Hero(
-                    tag: "$messageId-$fullUrl",
-                    child: Image.network(
-                      fullUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          height: 150,
-                          width: 200,
-                          color: Colors.white.withOpacity(0.05),
-                          child: const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
+                Flexible(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FullImageViewer(imageUrl: fullUrl),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      constraints: const BoxConstraints(
+                        maxHeight: 200,
+                        maxWidth: 220,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Hero(
+                          tag: "$messageId-$fullUrl",
+                          child: Image.network(
+                            fullUrl,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 150,
+                                width: 200,
+                                color: Colors.white.withOpacity(0.05),
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  height: 100,
+                                  width: 150,
+                                  color: Colors.white.withOpacity(0.05),
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.white24,
+                                  ),
+                                ),
                           ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 100,
-                        width: 150,
-                        color: Colors.white.withOpacity(0.05),
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: Colors.white24,
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             );
           } else {
             // Non-image file card
             final IconData icon = FileUtils.getFileIcon(location);
-            return Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
-              ),
+            return Padding(
+              padding: const EdgeInsets.only(
+                bottom: 8,
+              ), // Consistent bottom margin for each attachment item
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, color: Colors.white70, size: 20),
-                  const SizedBox(width: 10),
+                  _buildIndexTag(index), // Now only has right: 8 margin
                   Flexible(
-                    child: Text(
-                      originalName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
+                    child: Container(
+                      // Removed margin: const EdgeInsets.only(bottom: 6)
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.05),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, color: Colors.white70, size: 20),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              originalName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -689,6 +730,74 @@ class _AttachmentList extends StatelessWidget {
             );
           }
         }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildIndexTag(int index) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white12),
+          ),
+          child: const Icon(
+            Icons.local_offer_rounded,
+            size: 18,
+            color: Colors.white70,
+          ),
+        ),
+
+        /// Top Right Counter
+        Positioned(
+          top: -2,
+          right: 4,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 245, 245, 247),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+            child: const Center(
+              child: Text(
+                "0",
+                style: TextStyle(
+                  color: Color.fromARGB(255, 6, 3, 53),
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIndexStar(int index) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Color.fromARGB(179, 38, 28, 134),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white12),
+          ),
+          child: const Icon(
+            Icons.star_rounded,
+            size: 20,
+            color: Color.fromARGB(179, 245, 245, 247),
+          ),
+        ),
       ],
     );
   }
