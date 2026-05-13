@@ -280,7 +280,7 @@ class _HomePageState extends State<HomePage> {
           onLogout: _handleLogout,
         ),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF0C1F5E),
+          backgroundColor: const Color.fromARGB(255, 12, 31, 94),
           elevation: 0,
           title: _isSearching
               ? TextField(
@@ -311,10 +311,18 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
           bottom: const TabBar(
+            indicatorColor: Colors.white,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
+            dividerColor: Colors.transparent,
+            indicator: UnderlineTabIndicator(
+              borderSide: BorderSide(color: Colors.white, width: 2),
+            ),
+
             tabs: [
-              Tab(text: "Chats"),
-              Tab(text: "Calls"),
-              Tab(text: "Dashboard"),
+              Tab(icon: Icon(Icons.chat), text: "Chats"),
+              Tab(icon: Icon(Icons.call), text: "Calls"),
+              Tab(icon: Icon(Icons.dashboard), text: "Dashboard"),
             ],
           ),
         ),
