@@ -280,6 +280,7 @@ class _HomePageState extends State<HomePage> {
           onLogout: _handleLogout,
         ),
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: const Color.fromARGB(255, 12, 31, 94),
           elevation: 0,
           title: _isSearching
