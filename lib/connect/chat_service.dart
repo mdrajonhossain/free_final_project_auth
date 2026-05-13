@@ -39,7 +39,6 @@ class ChatService {
         text: text,
         conversationId: conversationId,
         companyId: companyId,
-        senderId: chatBloc.state.myId,
         participants: participants,
         attachFiles: hasFiles ? attachFiles : null,
         tags: effectiveTags,

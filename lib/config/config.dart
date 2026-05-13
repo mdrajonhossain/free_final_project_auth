@@ -4,8 +4,8 @@ class AppConfig {
 
   static const String fileServerUrl = "http://62.151.182.241:4055";
 
-  static const String xmppDomain = "cadevquecdn02.freeli.io"; // XMPP Host
-  static const String xmppWsUrl = "wss://$xmppDomain/ws";
+  static const String xmppDomain = "caquecdn03.freeli.io";
+  static const String xmppWsUrl = "wss://$xmppDomain:5443/ws";
 
   static Map<String, String> getUrls() {
     return {

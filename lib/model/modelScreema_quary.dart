@@ -407,3 +407,14 @@ query Hub_all_link_msgs {
     }
 }
 """;
+
+const String xmppRegisterUserQuery = """
+  query xmpp_register_user(\$user_id: String, \$token: String) {
+    xmpp_register_user(user_id: \$user_id, token: \$token) {
+      status
+      xmpp_user
+      xmpp_domain
+      online_user_lists
+  }
+}
+""";

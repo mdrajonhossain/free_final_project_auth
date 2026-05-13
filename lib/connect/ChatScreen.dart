@@ -37,7 +37,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _chatBloc = ChatBloc();
+    _chatBloc = context.read<ChatBloc>();
     _scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -73,7 +73,6 @@ class _ChatScreenState extends State<ChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _chatBloc.close();
     super.dispose();
   }
 
@@ -105,122 +104,119 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     final bgColor = AppColors.getBackgroundColor(widget.isDark);
 
-    return BlocProvider.value(
-      value: _chatBloc,
-      child: BlocBuilder<ChatBloc, ChatState>(
-        builder: (context, state) {
-          if (state.isLoading) {
-            return const Scaffold(
-              backgroundColor: Color(0xff0B1120),
-              body: ChatSkeleton(),
-            );
-          }
-
-          return Scaffold(
-            backgroundColor: bgColor,
-            appBar: AppBar(
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-              flexibleSpace: Container(
-                decoration: const BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                ),
-              ),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
-              titleSpacing: -5,
-              title: Row(
-                children: [
-                  _buildRoomImage(),
-                  const SizedBox(width: 12),
-                  _buildRoomTitle(),
-                  GestureDetector(
-                    onTap: () {
-                      print("Call button tapped");
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.call,
-                        size: 28,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => ChatFilterScreen.show(context),
-                    child: Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.filter_alt_sharp,
-                        size: 28,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => ChatMoreScreen.show(context),
-                    child: Container(
-                      margin: const EdgeInsets.only(left: 8),
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.more_vert,
-                        size: 28,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            body: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: AppColors.primaryGradient.colors,
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: state.messages.isEmpty
-                        ? _buildEmptyMessages()
-                        : _buildMessageList(state),
-                  ),
-                  ChatInput(
-                    controller: _messageController,
-                    onSend: _sendMessage,
-                    companyId: company_id,
-                    userEmail: state.userData?['email'],
-                    conversationId: conversationId,
-                    participants: participants,
-                    chatBloc: _chatBloc,
-                    onAttachmentsPicked: (results) {
-                      // Handle picked attachments here
-                      debugPrint("Picked ${results.length} attachments");
-                      // You can add logic to send them or show a preview
-                    },
-                  ),
-                ],
-              ),
-            ),
+    return BlocBuilder<ChatBloc, ChatState>(
+      builder: (context, state) {
+        if (state.isLoading) {
+          return const Scaffold(
+            backgroundColor: Color(0xff0B1120),
+            body: ChatSkeleton(),
           );
-        },
-      ),
+        }
+
+        return Scaffold(
+          backgroundColor: bgColor,
+          appBar: AppBar(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            flexibleSpace: Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+              ),
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            titleSpacing: -5,
+            title: Row(
+              children: [
+                _buildRoomImage(),
+                const SizedBox(width: 12),
+                _buildRoomTitle(),
+                GestureDetector(
+                  onTap: () {
+                    print("Call button tapped");
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.call,
+                      size: 28,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => ChatFilterScreen.show(context),
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.filter_alt_sharp,
+                      size: 28,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => ChatMoreScreen.show(context),
+                  child: Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.more_vert,
+                      size: 28,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: AppColors.primaryGradient.colors,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: state.messages.isEmpty
+                      ? _buildEmptyMessages()
+                      : _buildMessageList(state),
+                ),
+                ChatInput(
+                  controller: _messageController,
+                  onSend: _sendMessage,
+                  companyId: company_id,
+                  userEmail: state.userData?['email'],
+                  conversationId: conversationId,
+                  participants: participants,
+                  chatBloc: _chatBloc,
+                  onAttachmentsPicked: (results) {
+                    // Handle picked attachments here
+                    debugPrint("Picked ${results.length} attachments");
+                    // You can add logic to send them or show a preview
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -328,9 +324,14 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Decryption and formatting happen only when this specific bubble builds
-    final String decryptedText = CryptoUtils.decryptMessage(
-      msg['msg_body'] ?? '',
-    );
+    String decryptedText = "";
+    try {
+      decryptedText = CryptoUtils.decryptMessage(msg['msg_body'] ?? '');
+    } catch (e) {
+      // Fallback if decryption fails (e.g. invalid base64 or plain text)
+      decryptedText = (msg['msg_body'] ?? '').toString();
+    }
+
     final String cleanText = FormatUtils.stripHtml(decryptedText);
     final String userImage = msg['senderimg']?.toString() ?? "";
 
@@ -458,7 +459,13 @@ class _MessageBubble extends StatelessWidget {
                             height: 1.5,
                           ),
                         ),
-                      _AttachmentList(attachments: msg['all_attachment']),
+                      _AttachmentList(
+                        attachments: msg['all_attachment'],
+                        messageId:
+                            msg['msg_id']?.toString() ??
+                            msg['id']?.toString() ??
+                            'unknown',
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -522,8 +529,9 @@ class _MessageBubble extends StatelessWidget {
 
 class _AttachmentList extends StatelessWidget {
   final dynamic attachments;
+  final String messageId;
 
-  const _AttachmentList({required this.attachments});
+  const _AttachmentList({required this.attachments, required this.messageId});
 
   @override
   Widget build(BuildContext context) {
@@ -582,7 +590,7 @@ class _AttachmentList extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Hero(
-                    tag: fullUrl,
+                    tag: "$messageId-$fullUrl",
                     child: Image.network(
                       fullUrl,
                       fit: BoxFit.cover,

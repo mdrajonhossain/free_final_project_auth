@@ -10,6 +10,7 @@ import 'OtpScreen.dart';
 import 'TrastedScreen.dart';
 import 'HomePage.dart';
 import 'controller/api/api_service.dart';
+import 'controller/stateBloc/message/chat_bloc.dart';
 import 'connect/ChatScreen.dart';
 import 'controller/stateBloc/LoginBloc.dart';
 
@@ -36,7 +37,10 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: [BlocProvider(create: (_) => LoginBloc())],
+      providers: [
+        BlocProvider(create: (_) => LoginBloc()),
+        BlocProvider(create: (_) => ChatBloc()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         initialRoute: '/',

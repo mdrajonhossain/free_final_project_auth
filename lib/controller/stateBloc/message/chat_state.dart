@@ -1,45 +1,49 @@
 part of 'chat_bloc.dart';
 
 class ChatState {
-  final List<dynamic> messages;
+  final List messages;
   final bool isLoading;
   final bool isFetchingMore;
-  final bool hasMore;
+  final String? error;
   final int currentPage;
+  final bool hasMore;
   final String myId;
   final Map<String, dynamic>? userData;
-  final String? error;
+  final String? activeConversationId;
 
   ChatState({
     this.messages = const [],
-    this.isLoading = true,
+    this.isLoading = false,
     this.isFetchingMore = false,
-    this.hasMore = true,
-    this.currentPage = 1,
-    this.myId = "",
-    this.userData,
     this.error,
+    this.currentPage = 1,
+    this.hasMore = true,
+    this.myId = '',
+    this.userData,
+    this.activeConversationId,
   });
 
   ChatState copyWith({
-    List<dynamic>? messages,
+    List? messages,
     bool? isLoading,
     bool? isFetchingMore,
-    bool? hasMore,
+    String? error,
     int? currentPage,
+    bool? hasMore,
     String? myId,
     Map<String, dynamic>? userData,
-    String? error,
+    String? activeConversationId,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
       isLoading: isLoading ?? this.isLoading,
       isFetchingMore: isFetchingMore ?? this.isFetchingMore,
-      hasMore: hasMore ?? this.hasMore,
+      error: error ?? this.error,
       currentPage: currentPage ?? this.currentPage,
+      hasMore: hasMore ?? this.hasMore,
       myId: myId ?? this.myId,
       userData: userData ?? this.userData,
-      error: error ?? this.error,
+      activeConversationId: activeConversationId ?? this.activeConversationId,
     );
   }
 }

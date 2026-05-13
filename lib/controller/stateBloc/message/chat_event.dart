@@ -16,22 +16,25 @@ class ChatMessageSent extends ChatEvent {
   final String text;
   final String conversationId;
   final String companyId;
-  final String senderId;
   final dynamic participants;
-  final Map<String, dynamic>? attachFiles;
-  final List<String>? tags;
-  final List<Map<String, dynamic>>? allAttachment;
   final String msgType;
+  final Map<String, dynamic>? attachFiles;
+  final dynamic tags;
+  final dynamic allAttachment;
 
   ChatMessageSent({
     required this.text,
     required this.conversationId,
     required this.companyId,
-    required this.senderId,
     required this.participants,
+    this.msgType = 'text',
     this.attachFiles,
     this.tags,
     this.allAttachment,
-    this.msgType = "text",
   });
+}
+
+class ChatXmppMessageReceived extends ChatEvent {
+  final Map<String, dynamic> message;
+  ChatXmppMessageReceived(this.message);
 }
