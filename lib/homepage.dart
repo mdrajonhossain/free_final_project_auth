@@ -297,7 +297,10 @@ class _HomePageState extends State<HomePage> {
               : Image.asset('assets/logo.webp', height: 45),
           actions: [
             IconButton(
-              icon: Icon(_isSearching ? Icons.close : Icons.search),
+              icon: Icon(
+                _isSearching ? Icons.close : Icons.search,
+                color: Colors.white,
+              ),
               onPressed: () => setState(() {
                 _isSearching = !_isSearching;
                 if (!_isSearching) _searchController.clear();
@@ -305,7 +308,7 @@ class _HomePageState extends State<HomePage> {
             ),
             Builder(
               builder: (context) => IconButton(
-                icon: const Icon(Icons.menu),
+                icon: const Icon(Icons.menu, color: Colors.white, size: 28),
                 onPressed: () => Scaffold.of(context).openEndDrawer(),
               ),
             ),
