@@ -23,6 +23,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) async {
     emit(
       state.copyWith(
+        isLoading: true,
         currentPage: 1,
         hasMore: true,
         messages: [], // Clear messages when fetching a new conversation

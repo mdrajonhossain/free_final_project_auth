@@ -81,7 +81,6 @@ class _HomePageState extends State<HomePage> {
           Map<String, dynamic> chatBlocFormattedMsg;
           bool hasPayloadConvId = false;
 
-          // Normalize IDs: extract UUID from JID (handle user$$$token@domain format)
           String senderJid = msg.from.split('/').first;
           String cleanSenderId = _getCleanId(senderJid);
 
@@ -112,7 +111,7 @@ class _HomePageState extends State<HomePage> {
                   msg.type;
 
               if (incomingType == 'chat' || incomingType == 'new_message') {
-                formattedMsg['msg_type'] = 'chat';
+                formattedMsg['msg_type'] = 'new_message';
               }
             }
 
@@ -147,8 +146,6 @@ class _HomePageState extends State<HomePage> {
                 final String sender = chatBlocFormattedMsg['sender'].toString();
 
                 // Strict search for room list update.
-                // 1. If payload has conversation_id, match strictly by ID.
-                // 2. If not (Direct Message fallback), match non-group rooms by sender participant.
                 final int index = conversationRooms!.indexWhere(
                   (room) =>
                       room['conversation_id']?.toString() == convId ||
