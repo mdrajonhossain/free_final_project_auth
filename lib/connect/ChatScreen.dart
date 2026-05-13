@@ -610,7 +610,7 @@ class _AttachmentList extends StatelessWidget {
                 // Tag Counter / Index Indicator
                 Column(
                   children: [
-                    _buildIndexTag(index),
+                    _buildIndexTag(file['tag_list']),
                     const SizedBox(height: 8),
                     _buildIndexStar(index),
                   ],
@@ -689,7 +689,8 @@ class _AttachmentList extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildIndexTag(index), // Now only has right: 8 margin
+                  _buildIndexStar(index),
+                  _buildIndexTag(file['tag_list']),
                   Flexible(
                     child: Container(
                       // Removed margin: const EdgeInsets.only(bottom: 6)
@@ -734,7 +735,7 @@ class _AttachmentList extends StatelessWidget {
     );
   }
 
-  Widget _buildIndexTag(int index) {
+  Widget _buildIndexTag(dynamic tagList) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -764,10 +765,10 @@ class _AttachmentList extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-            child: const Center(
+            child: Center(
               child: Text(
-                "0",
-                style: TextStyle(
+                (tagList is List ? tagList.length : 0).toString(),
+                style: const TextStyle(
                   color: Color.fromARGB(255, 6, 3, 53),
                   fontSize: 8,
                   fontWeight: FontWeight.bold,

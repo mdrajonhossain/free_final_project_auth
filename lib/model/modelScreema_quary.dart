@@ -261,7 +261,7 @@ query Messages(\$conversationId: String!, \$page: Int!) {
                 # is_secret
                 # created_at
                 # has_delete
-                # tag_list
+                tag_list
                 # mention_user
                 # secret_user
                 # participants
