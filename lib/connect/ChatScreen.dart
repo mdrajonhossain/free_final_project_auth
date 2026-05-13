@@ -796,7 +796,7 @@ class _AttachmentList extends StatelessWidget {
           child: const Icon(
             Icons.star_rounded,
             size: 20,
-            color: Color.fromARGB(179, 245, 245, 247),
+            color: Color.fromARGB(255, 245, 245, 247),
           ),
         ),
       ],
