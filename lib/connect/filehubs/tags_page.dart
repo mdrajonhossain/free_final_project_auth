@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:freeli/controller/api/api_service.dart';
+
+// IMPORTANT: ensure this import exists in your project
+// import 'api_server.dart';
 
 class TagsPage extends StatefulWidget {
   final bool isDark;
@@ -30,6 +34,10 @@ class _TagsPageState extends State<TagsPage> {
     }
   }
 
+  Future<void> get_tag_file(String tagId) async {
+    print("99999999999999999999999 $tagId");
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -45,7 +53,6 @@ class _TagsPageState extends State<TagsPage> {
     } else {
       results = widget.tags.where((tag) {
         final title = (tag['title'] ?? '').toString().toLowerCase();
-
         return title.contains(enteredKeyword.toLowerCase());
       }).toList();
     }
@@ -78,7 +85,6 @@ class _TagsPageState extends State<TagsPage> {
 
   @override
   Widget build(BuildContext context) {
-    /// COLORS
     final backgroundColor = widget.isDark
         ? const Color(0xFF1A3470)
         : const Color(0xFFF4F7FC);
@@ -112,25 +118,17 @@ class _TagsPageState extends State<TagsPage> {
                             color: textColor,
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -.5,
                           ),
                         ),
-
                         const SizedBox(height: 5),
-
                         Text(
                           "Manage all project tags professionally",
-                          style: TextStyle(
-                            color: subTextColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                          ),
+                          style: TextStyle(color: subTextColor, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
 
-                  /// TOTAL COUNT
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -140,7 +138,6 @@ class _TagsPageState extends State<TagsPage> {
                       color: widget.isDark
                           ? Colors.white.withOpacity(.06)
                           : Colors.blue.withOpacity(.08),
-
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Text(
@@ -155,55 +152,24 @@ class _TagsPageState extends State<TagsPage> {
               ),
             ),
 
-            /// SEARCH BOX
+            /// SEARCH
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
                 height: 58,
-
                 decoration: BoxDecoration(
                   color: surfaceColor,
-
                   borderRadius: BorderRadius.circular(20),
-
-                  border: Border.all(
-                    color: widget.isDark
-                        ? Colors.white.withOpacity(.05)
-                        : Colors.black.withOpacity(.04),
-                  ),
-
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(.06),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
                 ),
-
                 child: TextField(
                   controller: _searchController,
                   onChanged: _runFilter,
-
-                  style: TextStyle(color: textColor, fontSize: 15),
-
+                  style: TextStyle(color: textColor),
                   decoration: InputDecoration(
                     border: InputBorder.none,
-
                     hintText: "Search tags...",
-
-                    hintStyle: TextStyle(color: subTextColor, fontSize: 14),
-
+                    hintStyle: TextStyle(color: subTextColor),
                     prefixIcon: Icon(Icons.search_rounded, color: subTextColor),
-
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        _searchController.clear();
-                        _runFilter('');
-                      },
-                      icon: Icon(Icons.filter_alt_sharp, color: subTextColor),
-                    ),
-
                     contentPadding: const EdgeInsets.symmetric(vertical: 18),
                   ),
                 ),
@@ -212,167 +178,81 @@ class _TagsPageState extends State<TagsPage> {
 
             const SizedBox(height: 18),
 
-            /// TAG LIST
+            /// LIST
             Expanded(
-              child: _filteredTags.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+              child: ListView.builder(
+                itemCount: _filteredTags.length,
+                itemBuilder: (context, index) {
+                  final tag = _filteredTags[index];
+
+                  final String title = tag['title'] ?? 'Untitled';
+                  final int count = tag['i_connected'] ?? 0;
+                  final Color tagColor = _parseHexColor(tag['tag_color']);
+                  final String tagId = tag['tag_id'].toString();
+
+                  return GestureDetector(
+                    onTap: () {
+                      get_tag_file(tagId);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(
+                        bottom: 8,
+                        left: 10,
+                        right: 10,
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
                         children: [
-                          Icon(
-                            Icons.search_off_rounded,
-                            size: 60,
-                            color: subTextColor,
+                          Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: tagColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "$count connected files",
+                                  style: TextStyle(
+                                    color: subTextColor,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
 
-                          const SizedBox(height: 12),
-
-                          Text(
-                            "No tags found",
-                            style: TextStyle(
-                              color: subTextColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: subTextColor,
                           ),
                         ],
                       ),
-                    )
-                  : ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-
-                      itemCount: _filteredTags.length,
-
-                      itemBuilder: (context, index) {
-                        final tag = _filteredTags[index];
-
-                        final String title = tag['title'] ?? 'Untitled';
-
-                        final int count = tag['i_connected'] ?? 0;
-
-                        final Color tagColor = _parseHexColor(tag['tag_color']);
-
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 5),
-
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
-                          ),
-
-                          decoration: BoxDecoration(
-                            color: cardColor,
-
-                            borderRadius: BorderRadius.circular(24),
-
-                            border: Border.all(
-                              color: widget.isDark
-                                  ? Colors.white.withOpacity(.04)
-                                  : Colors.black.withOpacity(.03),
-                            ),
-
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(.08),
-
-                                blurRadius: 24,
-
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-
-                          child: Row(
-                            children: [
-                              /// TAG COLOR
-                              Container(
-                                width: 14,
-                                height: 14,
-
-                                decoration: BoxDecoration(
-                                  color: tagColor,
-                                  shape: BoxShape.circle,
-
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: tagColor.withOpacity(.45),
-                                      blurRadius: 10,
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(width: 16),
-
-                              /// TITLE
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-
-                                  children: [
-                                    Text(
-                                      title,
-
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-
-                                      style: TextStyle(
-                                        color: textColor,
-
-                                        fontSize: 15,
-
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 5),
-
-                                    Text(
-                                      "$count connected files",
-
-                                      style: TextStyle(
-                                        color: subTextColor,
-
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
-                              /// ACTION
-                              Container(
-                                height: 30,
-                                width: 30,
-
-                                decoration: BoxDecoration(
-                                  color: widget.isDark
-                                      ? Colors.white.withOpacity(.06)
-                                      : Colors.blue.withOpacity(.08),
-
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-
-                                child: Icon(
-                                  Icons.push_pin_rounded,
-
-                                  color: widget.isDark
-                                      ? Colors.white70
-                                      : Colors.blueGrey,
-
-                                  size: 18,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
                     ),
+                  );
+                },
+              ),
             ),
           ],
         ),
