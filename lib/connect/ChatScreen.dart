@@ -356,7 +356,15 @@ class _MessageBubble extends StatelessWidget {
             GestureDetector(
               onTap: () => UserProfilePopup.show(
                 context,
-                name: msg['sendername']?.toString() ?? "User",
+                // Checking multiple keys for sender name to avoid showing "User"
+                name:
+                    (msg['sendername'] ??
+                            msg['name'] ??
+                            msg['created_by_name'] ??
+                            msg['sender_name'] ??
+                            msg['username'] ??
+                            "User")
+                        .toString(),
                 email: msg['senderemail']?.toString() ?? "user@freeli.io",
                 imageUrl: userImage,
               ),
@@ -396,12 +404,26 @@ class _MessageBubble extends StatelessWidget {
                       context,
                       name: isMe
                           ? "You"
-                          : (msg['sendername']?.toString() ?? "User"),
+                          : (msg['sendername'] ??
+                                    msg['name'] ??
+                                    msg['created_by_name'] ??
+                                    msg['sender_name'] ??
+                                    msg['username'] ??
+                                    "User")
+                                .toString(),
                       email: msg['senderemail']?.toString() ?? "user@freeli.io",
                       imageUrl: userImage,
                     ),
                     child: Text(
-                      isMe ? "You" : (msg['sendername']?.toString() ?? "User"),
+                      isMe
+                          ? "You"
+                          : (msg['sendername'] ??
+                                    msg['name'] ??
+                                    msg['created_by_name'] ??
+                                    msg['sender_name'] ??
+                                    msg['username'] ??
+                                    "User")
+                                .toString(),
                       style: const TextStyle(
                         color: Colors.white60,
                         fontSize: 11,
@@ -450,7 +472,14 @@ class _MessageBubble extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (cleanText.isNotEmpty)
+                      // Filter out technical JSON strings or object data indicators
+                      if (cleanText.isNotEmpty &&
+                          !cleanText.trim().startsWith('{') &&
+                          !cleanText.trim().startsWith('[') &&
+                          !cleanText.contains('"location"') &&
+                          !cleanText.contains('"originalname"') &&
+                          !cleanText.contains('[object Object]') &&
+                          cleanText.toLowerCase() != "null")
                         Text(
                           cleanText,
                           style: const TextStyle(
@@ -546,6 +575,10 @@ class _AttachmentList extends StatelessWidget {
         ...attachments.map((file) {
           final String originalName = file['originalname'] ?? "File";
           final String location = file['location'] ?? "";
+
+          // Only show files that have a proper location and extension (containing a dot)
+          if (location.isEmpty || !location.contains('.'))
+            return const SizedBox.shrink();
 
           // More efficient extension extraction
           final String extension = location

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/crypto_utils.dart';
 import 'package:freeli/controller/api/api_service.dart';
@@ -170,18 +171,98 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (msgMap['sender'] == state.myId) return;
     if (state.messages.any((m) => m['msg_id'] == msgMap['msg_id'])) return;
 
+    // Normalize sender data from XMPP notification keys
+    msgMap['sender'] = msgMap['sender'] ?? msgMap['created_by_id'];
+    if (msgMap['created_by_name'] != null) {
+      msgMap['sendername'] = msgMap['created_by_name'];
+    }
+    if (msgMap['created_by_img'] != null) {
+      msgMap['senderimg'] = msgMap['created_by_img'];
+    }
+
     // 4. Decrypt body if it's an encrypted message
     final String rawBody = (msgMap['msg_body'] ?? msgMap['body'] ?? "")
         .toString();
-    if (rawBody.isNotEmpty && !rawBody.startsWith('{')) {
-      try {
-        msgMap['msg_body'] = CryptoUtils.decryptMessage(rawBody);
-      } catch (e) {
-        print('❌ Decryption failed in Bloc: $e');
+
+    if (rawBody.isNotEmpty) {
+      final String trimmedBody = rawBody.trim();
+      // Detect if the body is a JSON object or list (XMPP file metadata)
+      if (trimmedBody.startsWith('{') || trimmedBody.startsWith('[')) {
+        try {
+          final dynamic decoded = jsonDecode(trimmedBody);
+          final List listData = decoded is List ? decoded : [decoded];
+
+          // Process each attachment and construct the specific URL format
+          final List processedAttachments = listData.map((file) {
+            final String bucket = file['bucket']?.toString() ?? "";
+            final String originalname = file['originalname']?.toString() ?? "";
+            // Build URL: https://wfss001.freeli.io/{bucket}/{originalname}
+            file['location'] =
+                "https://wfss001.freeli.io/$bucket/$originalname";
+            return file;
+          }).toList();
+
+          msgMap['all_attachment'] = processedAttachments;
+          msgMap['msg_body'] = ""; // Hide JSON string from user UI
+        } catch (e) {
+          print('❌ JSON parse failed in Bloc: $e');
+          // Fallback decryption if it wasn't actually file JSON
+          _attemptDecryption(msgMap, rawBody);
+        }
+      } else {
+        _attemptDecryption(msgMap, rawBody);
       }
     }
 
     final updatedMessages = [msgMap, ...state.messages];
     emit(state.copyWith(messages: updatedMessages));
+  }
+
+  // Helper to attempt decryption and handle nested file metadata
+  void _attemptDecryption(Map<String, dynamic> msgMap, String body) {
+    try {
+      final String decrypted = CryptoUtils.decryptMessage(body);
+      msgMap['msg_body'] = decrypted;
+
+      // After decryption, check if the content is technical file metadata (JSON)
+      final String trimmedDecrypted = decrypted.trim();
+      if (trimmedDecrypted.startsWith('{') ||
+          trimmedDecrypted.startsWith('[')) {
+        _processJsonBody(msgMap, trimmedDecrypted);
+      }
+    } catch (e) {
+      // If not encrypted, check if it's already JSON
+      if (body.trim().startsWith('{') || body.trim().startsWith('[')) {
+        _processJsonBody(msgMap, body);
+      } else {
+        msgMap['msg_body'] = body;
+      }
+    }
+  }
+
+  // Centralized logic to parse JSON body and construct the specific XMPP file URL
+  void _processJsonBody(Map<String, dynamic> msgMap, String jsonStr) {
+    try {
+      final dynamic decoded = jsonDecode(jsonStr);
+      final List listData = decoded is List ? decoded : [decoded];
+
+      // Build URL format: https://wfss001.freeli.io/{bucket}/{originalname}
+      final List processedAttachments = listData.map((file) {
+        final String bucket = file['bucket']?.toString() ?? "";
+        final String originalname = file['originalname']?.toString() ?? "";
+        file['location'] = "https://wfss001.freeli.io/$bucket/$originalname";
+        return file;
+      }).toList();
+
+      msgMap['all_attachment'] = [
+        ...(msgMap['all_attachment'] ?? []),
+        ...processedAttachments,
+      ];
+      msgMap['msg_body'] =
+          ""; // Technical JSON data ইউজারকে টেক্সট হিসেবে দেখাবে না
+    } catch (e) {
+      // If it looks like technical data but fails to parse, hide the text
+      if (jsonStr.contains('"originalname"')) msgMap['msg_body'] = "";
+    }
   }
 }
