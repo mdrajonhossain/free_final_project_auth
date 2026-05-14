@@ -447,3 +447,19 @@ query Call_history_group(\$user_id: String) {
   }
 }
 """;
+
+const String jitsiCallAcceptdata = r"""
+query Jitsi_call_accept(
+  $user_id: String, $conversation_id: String, $token: String, $type: String, $device_type: String) {
+  jitsi_call_accept(
+    user_id: $user_id
+    conversation_id: $conversation_id
+    token: $token
+    type: $type
+    device_type: $device_type
+  ) {
+    status
+    jwt_token
+  }
+}
+""";

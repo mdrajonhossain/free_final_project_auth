@@ -408,5 +408,33 @@ class ApiServer {
     }
   }
 
+  Future<String?> jitsiCallAccept_Call(
+    String? userId,
+    String? conversationId,
+    String? token,
+  ) async {
+    try {
+      final data = await ApiServer.call(
+        jitsiCallAcceptdata,
+        variables: {
+          'user_id': userId,
+          'conversation_id': conversationId,
+          'token': token,
+          'type': 'accept',
+          'device_type': 'mobile',
+        },
+      );
+      final result = data['jitsi_call_accept'] as Map<String, dynamic>?;
+      return result?['jwt_token']?.toString();
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      throw GqlException("Failed to accept Jitsi call: ${e.toString()}");
+    }
+  }
+
   // =================== End Call history api===========================
 }

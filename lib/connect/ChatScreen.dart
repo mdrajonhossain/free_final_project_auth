@@ -14,6 +14,7 @@ import './chatMore_Screen.dart';
 import './chatFilter_Screen.dart';
 import './UserProfilePopup.dart';
 import './FullImageViewer.dart';
+import './jitsi_call_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;
@@ -134,8 +135,20 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(width: 12),
                 _buildRoomTitle(),
                 GestureDetector(
-                  onTap: () {
-                    print("Call button tapped");
+                  onTap: () async {
+                    final String? jwt = await ApiServer().jitsiCallAccept_Call(
+                      state.userData?['id']?.toString(),
+                      conversationId,
+                      ApiServer.token,
+                    );
+                    JitsiCallService.joinCall(
+                      conversationId: conversationId,
+                      jwtToken: jwt,
+                      userName: state.userData?['firstname'] ?? "User",
+                      userEmail: state.userData?['email'],
+                      userAvatar: state.userData?['img'],
+                      isVideo: false,
+                    );
                   },
                   child: Container(
                     margin: const EdgeInsets.only(left: 8),

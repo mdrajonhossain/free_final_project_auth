@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../controller/api/api_service.dart';
 import '../skeleton.dart';
 import 'format_utils.dart';
+import 'jitsi_call_service.dart';
 
 class CallsTab extends StatefulWidget {
   final String? userId;
@@ -16,14 +17,25 @@ class _CallsTabState extends State<CallsTab> {
   bool isLoading = true;
 
   List<dynamic> callHistory = [];
+  Map<String, dynamic>? myProfile;
 
   @override
   void initState() {
     super.initState();
-    getCallHistory();
+    _initializeData();
   }
 
-  void getCallHistory() async {
+  void _initializeData() async {
+    try {
+      final profile = await ApiServer().fetchMe();
+      setState(() => myProfile = profile);
+    } catch (e) {
+      debugPrint("Error fetching profile: $e");
+    }
+    await getCallHistory();
+  }
+
+  Future<void> getCallHistory() async {
     try {
       final data = await ApiServer().fetchCallHistory(widget.userId);
       if (mounted) {
@@ -68,6 +80,8 @@ class _CallsTabState extends State<CallsTab> {
                 itemCount: callHistory.length,
                 itemBuilder: (context, index) {
                   final room = callHistory[index];
+                  final String conversationId = (room['conversation_id'] ?? '')
+                      .toString();
                   final String title = (room['conv_title'] ?? 'No Title')
                       .toString();
                   final String imageUrl = (room['conv_img'] ?? '').toString();
@@ -102,6 +116,18 @@ class _CallsTabState extends State<CallsTab> {
                       border: Border.all(color: Colors.white.withOpacity(0.05)),
                     ),
                     child: ListTile(
+                      onTap: conversationId.isEmpty
+                          ? null
+                          : () {
+                              JitsiCallService.joinCall(
+                                conversationId: conversationId,
+                                userName: myProfile?['firstname'],
+                                userEmail: myProfile?['email'],
+                                userAvatar: myProfile?['img'],
+                                isVideo: callType == "video",
+                                onCallFinished: () => getCallHistory(),
+                              );
+                            },
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 8,
