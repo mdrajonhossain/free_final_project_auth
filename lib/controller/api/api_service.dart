@@ -387,4 +387,26 @@ class ApiServer {
       throw GqlException("Network error: Please check your connection.");
     }
   }
+
+  // ===================Start Call history api===========================
+  Future<List<Map<String, dynamic>>> fetchCallHistory(String? userId) async {
+    try {
+      final data = await ApiServer.call(
+        callHistoryGroup,
+        variables: {"user_id": userId},
+      );
+      final List<dynamic> history =
+          data['call_history_group']?['history_group'] ?? [];
+      return List<Map<String, dynamic>>.from(history);
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      throw GqlException("Failed to fetch call history: ${e.toString()}");
+    }
+  }
+
+  // =================== End Call history api===========================
 }

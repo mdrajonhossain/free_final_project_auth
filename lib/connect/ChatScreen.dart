@@ -640,7 +640,7 @@ class _AttachmentList extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Hero(
-                          tag: "$messageId-$fullUrl",
+                          tag: "hero-$messageId-$index-$fullUrl",
                           child: Image.network(
                             fullUrl,
                             fit: BoxFit.cover,

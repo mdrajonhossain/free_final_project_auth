@@ -1,100 +1,201 @@
 import 'package:flutter/material.dart';
+import '../controller/api/api_service.dart';
 import '../skeleton.dart';
 import 'format_utils.dart';
 
-class CallsTab extends StatelessWidget {
-  final List<dynamic>? conversationRooms;
+class CallsTab extends StatefulWidget {
+  final String? userId;
 
-  /// Pass the current user's ID to correctly identify their personal chat
-  final String? userMe;
+  const CallsTab({super.key, this.userId});
 
-  const CallsTab({super.key, this.conversationRooms, this.userMe});
+  @override
+  State<CallsTab> createState() => _CallsTabState();
+}
+
+class _CallsTabState extends State<CallsTab> {
+  bool isLoading = true;
+
+  List<dynamic> callHistory = [];
+
+  @override
+  void initState() {
+    super.initState();
+    getCallHistory();
+  }
+
+  void getCallHistory() async {
+    try {
+      final data = await ApiServer().fetchCallHistory(widget.userId);
+      if (mounted) {
+        setState(() {
+          callHistory = data;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+      debugPrint("Error fetching call history: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (conversationRooms == null) {
-      return const ChatSkeleton();
-    }
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: isLoading
+          ? const ChatSkeleton()
+          : callHistory.isEmpty
+          ? const Center(
+              child: Text(
+                "No call history yet",
+                style: TextStyle(color: Colors.white54, fontSize: 16),
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: () async => getCallHistory(),
+              color: Colors.greenAccent,
+              backgroundColor: const Color(0xff1B2335),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
+                ),
+                itemCount: callHistory.length,
+                itemBuilder: (context, index) {
+                  final room = callHistory[index];
+                  final String title = (room['conv_title'] ?? 'No Title')
+                      .toString();
+                  final String imageUrl = (room['conv_img'] ?? '').toString();
+                  final String createdAt = (room['created_at'] ?? '')
+                      .toString();
+                  final String callDuration = (room['call_duration'] ?? '00:00')
+                      .toString();
+                  final bool isRunning = room['call_running'] == true;
+                  final String callType = (room['msg_type'] ?? 'audio')
+                      .toString();
+                  final String callStatus = (room['call_status'] ?? '')
+                      .toString()
+                      .toLowerCase();
 
-    if (conversationRooms!.isEmpty) {
-      return const Center(
-        child: Text(
-          "No call history yet",
-          style: TextStyle(color: Colors.white70),
-        ),
-      );
-    }
+                  // Professional status color and icon logic
+                  Color statusColor = Colors.white38;
+                  IconData statusIcon = Icons.call_received;
 
-    // Create a mutable copy and sort to ensure "Me" is at the top
-    final List<dynamic> sortedRooms = List.from(conversationRooms!);
+                  if (isRunning) {
+                    statusColor = Colors.greenAccent;
+                    statusIcon = Icons.call_made_rounded;
+                  } else if (callStatus.contains('missed')) {
+                    statusColor = Colors.redAccent;
+                    statusIcon = Icons.call_missed_rounded;
+                  }
 
-    // Find the index of the "Me" user
-    final int meIndex = sortedRooms.indexWhere(
-      (room) =>
-          room['title']?.toString().toLowerCase() == 'me' ||
-          (userMe != null && room['conversation_id']?.toString() == userMe),
-    );
-
-    if (meIndex != -1 && meIndex != 0) {
-      final meRoom = sortedRooms.removeAt(meIndex);
-      sortedRooms.insert(0, meRoom);
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: sortedRooms.length,
-      itemBuilder: (context, index) {
-        final room = sortedRooms[index];
-        String title = room['title'] ?? 'No Title';
-
-        if (title.length > 12) {
-          title = '${title.substring(0, 12)}...';
-        }
-
-        // Fallbacks for common image keys
-        final String imageUrl =
-            (room['conv_img'] ?? room['img'] ?? room['image'] ?? '').toString();
-        final String lastTimeStr = room['last_msg_time'] ?? '';
-        String displayTime = lastTimeStr.split('T').first;
-
-        return Card(
-          color: Colors.green.withOpacity(
-            0.1,
-          ), // Green background for list items
-          margin: const EdgeInsets.only(bottom: 10),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.green.withOpacity(0.2),
-              backgroundImage: imageUrl.isNotEmpty
-                  ? NetworkImage(imageUrl)
-                  : null,
-              child: imageUrl.isEmpty
-                  ? const Icon(Icons.call, color: Colors.greenAccent)
-                  : null,
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      leading: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 26,
+                            backgroundColor: Colors.white10,
+                            backgroundImage: imageUrl.isNotEmpty
+                                ? NetworkImage(imageUrl)
+                                : null,
+                            child: imageUrl.isEmpty
+                                ? const Icon(
+                                    Icons.person,
+                                    color: Colors.white24,
+                                    size: 28,
+                                  )
+                                : null,
+                          ),
+                          if (isRunning)
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: Colors.greenAccent,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xff0B1120),
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      title: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Row(
+                          children: [
+                            Icon(statusIcon, size: 14, color: statusColor),
+                            const SizedBox(width: 6),
+                            Text(
+                              "${callStatus.toUpperCase()} • $callDuration",
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Icon(
+                            callType == "video"
+                                ? Icons.videocam_rounded
+                                : Icons.call_rounded,
+                            color: isRunning
+                                ? Colors.greenAccent
+                                : Colors.white24,
+                            size: 24,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            FormatUtils.formatTime(createdAt),
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-            title: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ), // White text for visibility
-            ),
-            subtitle: Text(
-              displayTime,
-              style: const TextStyle(
-                color: Colors.white70,
-              ), // Lighter text for visibility
-            ),
-            trailing: const Icon(
-              Icons.phone,
-              color: Colors.white54,
-            ), // Lighter icon for visibility
-          ),
-        );
-      },
     );
   }
 }

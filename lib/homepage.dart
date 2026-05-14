@@ -336,10 +336,7 @@ class _HomePageState extends State<HomePage> {
               conversationRooms: filteredRooms,
               userMe: userData?['id']?.toString(),
             ),
-            CallsTab(
-              conversationRooms: filteredRooms,
-              userMe: userData?['id']?.toString(),
-            ),
+            CallsTab(userId: userData?['id']?.toString()),
             DashboardTab(userMe: userData),
           ],
         ),
