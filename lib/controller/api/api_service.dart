@@ -410,21 +410,24 @@ class ApiServer {
 
   Future<String?> jitsiCallAccept_Call(
     String? userId,
+    String? companyId,
     String? conversationId,
-    String? token,
-  ) async {
+    String? token, {
+    String? conversation_type,
+  }) async {
     try {
       final data = await ApiServer.call(
-        jitsiCallAcceptdata,
+        jitsiRingCallingQuery,
         variables: {
           'user_id': userId,
           'conversation_id': conversationId,
+          'company_id': companyId,
           'token': token,
-          'type': 'accept',
-          'device_type': 'mobile',
+          'conversation_type': conversation_type,
         },
       );
-      final result = data['jitsi_call_accept'] as Map<String, dynamic>?;
+      final result = data['jitsi_ring_calling'] as Map<String, dynamic>?;
+      print("Jitsi call accept response: $result");
       return result?['jwt_token']?.toString();
     } on GqlException catch (e) {
       if (e.message == "Authorization error") {

@@ -32,6 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String conversationId = "";
   String company_id = "";
   dynamic participants;
+  String conversation_type = "private";
   String roomTitle = "Chat";
   String convImg = "";
 
@@ -47,6 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (args != null) {
         setState(() {
           conversationId = args['conversation_id']?.toString() ?? "";
+          conversation_type = args['group'] == true ? "group" : "private";
           company_id = args['company_id']?.toString() ?? "";
           participants = args['participants'];
           roomTitle = args['title']?.toString() ?? "Chat";
@@ -136,11 +138,19 @@ class _ChatScreenState extends State<ChatScreen> {
                 _buildRoomTitle(),
                 GestureDetector(
                   onTap: () async {
+                    final userId = state.userData?['id']?.toString();
+                    final companyId = state.userData?['company_id']?.toString();
+
+                    if (userId == null || companyId == null) return;
+
                     final String? jwt = await ApiServer().jitsiCallAccept_Call(
-                      state.userData?['id']?.toString(),
+                      userId,
+                      companyId,
                       conversationId,
                       ApiServer.token,
+                      conversation_type: conversation_type,
                     );
+
                     JitsiCallService.joinCall(
                       conversationId: conversationId,
                       jwtToken: jwt,

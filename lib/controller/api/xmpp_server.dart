@@ -67,7 +67,7 @@ class XmppService {
         final bool isSuccess =
             result['status'] == "success" || result['status'] == true;
 
-        print("444444444444444444444444444444444, $result");
+        print("444444444444444444444444444444444, $token");
         return {
           "status": isSuccess,
           "xmpp_user": result['xmpp_user'],

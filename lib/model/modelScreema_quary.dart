@@ -448,17 +448,22 @@ query Call_history_group(\$user_id: String) {
 }
 """;
 
-const String jitsiCallAcceptdata = r"""
-query Jitsi_call_accept(
-  $user_id: String, $conversation_id: String, $token: String, $type: String, $device_type: String) {
-  jitsi_call_accept(
+const String jitsiRingCallingQuery = r"""
+query Jitsi_ring_calling(
+  $user_id: String!,
+  $conversation_id: String!,
+  $company_id: String!,
+  $token: String,
+  $conversation_type: String
+) {
+  jitsi_ring_calling(
     user_id: $user_id
     conversation_id: $conversation_id
+    company_id: $company_id
     token: $token
-    type: $type
-    device_type: $device_type
+    conversation_type: $conversation_type
   ) {
-    status
+    status    
     jwt_token
   }
 }
