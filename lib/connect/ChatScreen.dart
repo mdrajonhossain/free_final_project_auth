@@ -143,22 +143,40 @@ class _ChatScreenState extends State<ChatScreen> {
 
                     if (userId == null || companyId == null) return;
 
-                    final String? jwt = await ApiServer().jitsiCallAccept_Call(
-                      userId,
-                      companyId,
-                      conversationId,
-                      ApiServer.token,
-                      conversation_type: conversation_type,
+                    // Show loading animation
+                    if (!context.mounted) return;
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) => const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
                     );
 
-                    JitsiCallService.joinCall(
-                      conversationId: conversationId,
-                      jwtToken: jwt,
-                      userName: state.userData?['firstname'] ?? "User",
-                      userEmail: state.userData?['email'],
-                      userAvatar: state.userData?['img'],
-                      isVideo: false,
-                    );
+                    try {
+                      await JitsiCallService.joinCall(
+                        userId: userId,
+                        companyId: companyId,
+                        conversationId: conversationId,
+                        conversationType: conversation_type,
+                        roomTitle: roomTitle,
+                        userName: state.userData?['firstname'] ?? "User",
+                        userEmail: state.userData?['email'],
+                        userAvatar: state.userData?['img'],
+                        isVideo: false,
+                      );
+
+                      // Dismiss loading animation
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (e) {
+                      // Dismiss loading animation on error
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Call Error: $e")),
+                        );
+                      }
+                    }
                   },
                   child: Container(
                     margin: const EdgeInsets.only(left: 8),

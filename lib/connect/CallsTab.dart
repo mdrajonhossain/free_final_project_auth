@@ -120,7 +120,10 @@ class _CallsTabState extends State<CallsTab> {
                           ? null
                           : () {
                               JitsiCallService.joinCall(
+                                userId: widget.userId,
                                 conversationId: conversationId,
+                                conversationType: callType,
+                                roomTitle: title,
                                 userName: myProfile?['firstname'],
                                 userEmail: myProfile?['email'],
                                 userAvatar: myProfile?['img'],
