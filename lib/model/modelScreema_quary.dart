@@ -418,3 +418,32 @@ const String xmppRegisterUserQuery = """
   }
 }
 """;
+
+const String callHistoryGroup = """
+query Call_history_group(\$user_id: String) {
+  call_history_group(user_id: \$user_id) {
+    status
+    history_group {
+      conversation_id
+      sender
+      call_duration
+      call_status
+      call_sender_ip
+      call_sender_device
+      call_receiver_ip
+      call_receiver_device
+      call_server_addr
+      msg_type
+      activity_id
+      url_image
+      img_url
+      company_id
+      call_running
+      created_at
+      conv_title
+      conv_img
+      short_id
+    }
+  }
+}
+""";
