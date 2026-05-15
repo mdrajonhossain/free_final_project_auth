@@ -11,12 +11,14 @@ class JitsiCallService {
     String? companyId,
     required String conversationId,
     String? conversationType,
+    required List<Map<String, dynamic>> participants,
     String? roomTitle,
     String? userName,
     String? userEmail,
     String? userAvatar,
     bool isVideo = false,
     VoidCallback? onCallFinished,
+    Function(String participantId)? onConferenceJoined,
   }) async {
     // Request necessary permissions before launching the call
     Map<Permission, PermissionStatus> statuses = await [
@@ -41,6 +43,13 @@ class JitsiCallService {
           ApiServer.token,
           conversation_type: conversationType,
         );
+
+        // Mandatory JWT Check: Wait until data is received. If null, abort.
+        if (jwt == null || jwt.isEmpty) {
+          throw Exception(
+            "Mandatory JWT token is missing. Call cannot be initiated.",
+          );
+        }
       }
 
       var options = JitsiMeetConferenceOptions(
@@ -76,6 +85,7 @@ class JitsiCallService {
       await jitsiMeet.join(
         options,
         JitsiMeetEventListener(
+          conferenceJoined: (url) => onConferenceJoined?.call("local-user"),
           conferenceTerminated: (url, error) => onCallFinished?.call(),
         ),
       );

@@ -154,11 +154,27 @@ class _ChatScreenState extends State<ChatScreen> {
                     );
 
                     try {
+                      print("""
+userId: $userId
+companyId: $companyId
+conversationId: $conversationId
+conversationType: $conversation_type
+roomTitle: $roomTitle
+userName: ${state.userData?['firstname'] ?? "User"}
+userEmail: ${state.userData?['email']}
+userAvatar: ${state.userData?['img']}
+isVideo: false
+participants: $participants
+""");
                       await JitsiCallService.joinCall(
                         userId: userId,
                         companyId: companyId,
                         conversationId: conversationId,
                         conversationType: conversation_type,
+                        participants:
+                            (participants as List?)
+                                ?.cast<Map<String, dynamic>>() ??
+                            [],
                         roomTitle: roomTitle,
                         userName: state.userData?['firstname'] ?? "User",
                         userEmail: state.userData?['email'],

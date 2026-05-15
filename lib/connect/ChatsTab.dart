@@ -208,6 +208,7 @@ class _ChatsTabState extends State<ChatsTab>
                   'company_id': room['company_id'],
                   'participants': room['participants'],
                   'title': room['title'] ?? 'No Title',
+                  'group': room['group'] == 'yes',
                   'conv_img': room['conv_img'],
                 },
               );

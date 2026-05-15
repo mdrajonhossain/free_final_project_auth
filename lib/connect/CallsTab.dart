@@ -123,6 +123,10 @@ class _CallsTabState extends State<CallsTab> {
                                 userId: widget.userId,
                                 conversationId: conversationId,
                                 conversationType: callType,
+                                participants:
+                                    (room['participants'] as List?)
+                                        ?.cast<Map<String, dynamic>>() ??
+                                    [],
                                 roomTitle: title,
                                 userName: myProfile?['firstname'],
                                 userEmail: myProfile?['email'],
