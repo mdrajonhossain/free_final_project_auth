@@ -408,7 +408,7 @@ class ApiServer {
     }
   }
 
-  Future<String?> jitsiCallAccept_Call(
+  Future<Map<String, dynamic>?> jitsiCallAccept_Call(
     String? userId,
     String? companyId,
     String? conversationId,
@@ -428,7 +428,7 @@ class ApiServer {
       );
       final result = data['jitsi_ring_calling'] as Map<String, dynamic>?;
       print("Jitsi call accept response: $result");
-      return result?['jwt_token']?.toString();
+      return result;
     } on GqlException catch (e) {
       if (e.message == "Authorization error") {
         await ApiServer.clearAuthToken();
@@ -436,6 +436,37 @@ class ApiServer {
       rethrow;
     } catch (e) {
       throw GqlException("Failed to accept Jitsi call: ${e.toString()}");
+    }
+  }
+
+  Future<void> jitsiCallJoin_Call({
+    required String userId,
+    required String conversationId,
+    required String token,
+  }) async {
+    try {
+      await ApiServer.call(
+        r'''
+        mutation JitsiJoinCalling($user_id: String, $conversation_id: String, $token: String) {
+          jitsi_join_calling(user_id: $user_id, conversation_id: $conversation_id, token: $token) {
+            status
+            message
+          }
+        }
+        ''',
+        variables: {
+          'user_id': userId,
+          'conversation_id': conversationId,
+          'token': token,
+        },
+      );
+    } on GqlException catch (e) {
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      throw GqlException("Failed to join Jitsi call: ${e.toString()}");
     }
   }
 

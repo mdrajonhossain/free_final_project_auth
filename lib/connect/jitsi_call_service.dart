@@ -35,14 +35,24 @@ class JitsiCallService {
     try {
       // Fetch JWT Token internally if user/company IDs are provided
       String? jwt;
+      String? serverRoomName;
+      Map<String, dynamic>? callResponse;
+
       if (userId != null && companyId != null) {
-        jwt = await ApiServer().jitsiCallAccept_Call(
+        callResponse = await ApiServer().jitsiCallAccept_Call(
           userId,
           companyId,
           conversationId,
           ApiServer.token,
           conversation_type: conversationType,
         );
+
+        jwt = callResponse?['jwt_token']?.toString();
+
+        // IMPORTANT: Web (React.js) uses the room name assigned in the JWT.
+        // We must use the room_name returned by the server,
+        // or fall back to conversationId if the server doesn't provide one.
+        serverRoomName = callResponse?['room_name']?.toString();
 
         // Mandatory JWT Check: Wait until data is received. If null, abort.
         if (jwt == null || jwt.isEmpty) {
@@ -52,19 +62,42 @@ class JitsiCallService {
         }
       }
 
+      // If serverRoomName is available, use it. Otherwise, use conversationId.
+      String finalRoomName =
+          (serverRoomName != null && serverRoomName.isNotEmpty)
+          ? serverRoomName
+          : conversationId;
+
+      // Sanitize room name to match React.js behavior (remove hyphens)
+      finalRoomName = finalRoomName.replaceAll('-', '');
+
       var options = JitsiMeetConferenceOptions(
         serverURL: serverUrl,
-        room: conversationId,
-        token: jwt,
+        room: finalRoomName,
         configOverrides: {
           "startWithAudioMuted": false,
           "startWithVideoMuted": !isVideo,
           "prejoinPageEnabled": false,
           "prejoinConfig.enabled": false,
           "requireDisplayName": false,
-          "subject":
-              roomTitle ?? "Meeting", // This shows the Room Name in the UI
+          "subject": roomTitle ?? "Meeting",
+          "p2p.enabled":
+              false, // Bridge mode is REQUIRED for group calls and Tile View
+          "disableTileView": false, // Ensure Tile View is not disabled
+          "enableLayerSuspension": true,
+          "tileViewRequired": true,
+          "enableWelcomePage": false,
+          "filmstrip.enabled": true,
+          "filmstrip.disableResizable": true,
+          "preferredLayout":
+              "tile-view", // Matches React.js behavior to force Tile View
+          "disableDeepLinking": true,
+          "disableThirdPartyRequests": true,
+          "enableNoAudioDetection": false,
+          "enableNoisyMicDetection": false,
+          "disableAudioLevels": true,
         },
+        token: jwt,
         featureFlags: {
           "add-people.enabled": true,
           "welcomepage.enabled": false,
@@ -73,6 +106,10 @@ class JitsiCallService {
           "invite.enabled": true,
           "raise-hand.enabled": true,
           "recording.enabled": true,
+          "tile-view.enabled": true,
+          "filmstrip.enabled": true,
+          "conference-timer.enabled": true,
+          "pip.enabled": true,
         },
         userInfo: JitsiMeetUserInfo(
           displayName: userName ?? "User",
@@ -85,7 +122,20 @@ class JitsiCallService {
       await jitsiMeet.join(
         options,
         JitsiMeetEventListener(
-          conferenceJoined: (url) => onConferenceJoined?.call("local-user"),
+          conferenceJoined: (url) async {
+            debugPrint("Conference Joined: $url");
+            onConferenceJoined?.call("local-user");
+
+            // Send Join Signal to bridge participants (matches React.js behavior)
+            // IMPORTANT: Use finalRoomName so backend matches Rajon and Motaleb in the same session
+            if (userId != null && callResponse != null) {
+              await ApiServer().jitsiCallJoin_Call(
+                userId: userId,
+                conversationId: finalRoomName,
+                token: ApiServer.token ?? "",
+              );
+            }
+          },
           conferenceTerminated: (url, error) => onCallFinished?.call(),
         ),
       );
