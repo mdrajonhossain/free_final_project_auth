@@ -124,14 +124,13 @@ class _CallsTabState extends State<CallsTab> {
                                 conversationId: conversationId,
                                 conversationType: callType,
                                 participants:
-                                    (room['participants'] as List?)
-                                        ?.cast<Map<String, dynamic>>() ??
+                                    (room['participants'] as List?)?.toList() ??
                                     [],
                                 roomTitle: title,
                                 userName: myProfile?['firstname'],
                                 userEmail: myProfile?['email'],
                                 userAvatar: myProfile?['img'],
-                                isVideo: callType == "video",
+                                isVideo: callType == "accept",
                                 onCallFinished: () => getCallHistory(),
                               );
                             },
@@ -206,7 +205,7 @@ class _CallsTabState extends State<CallsTab> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Icon(
-                            callType == "video"
+                            callType == "accept"
                                 ? Icons.videocam_rounded
                                 : Icons.call_rounded,
                             color: isRunning

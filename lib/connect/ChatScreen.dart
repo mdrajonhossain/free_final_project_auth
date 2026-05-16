@@ -171,14 +171,11 @@ participants: $participants
                         companyId: companyId,
                         conversationId: conversationId,
                         conversationType: conversation_type,
-                        participants:
-                            (participants as List?)
-                                ?.cast<Map<String, dynamic>>() ??
-                            [],
+                        participants: (participants as List?)?.toList() ?? [],
                         roomTitle: roomTitle,
                         userName: state.userData?['firstname'] ?? "User",
                         userEmail: state.userData?['email'],
-                        userAvatar: state.userData?['img'],
+                        userAvatar: state.userData?['img']?.toString(),
                         isVideo: false,
                       );
 
@@ -366,6 +363,7 @@ participants: $participants
           key: ValueKey(msg['id'] ?? index),
           msg: msg,
           isMe: isMe,
+          index: index,
         );
       },
     );
@@ -375,8 +373,14 @@ participants: $participants
 class _MessageBubble extends StatelessWidget {
   final dynamic msg;
   final bool isMe;
+  final int index;
 
-  const _MessageBubble({super.key, required this.msg, required this.isMe});
+  const _MessageBubble({
+    super.key,
+    required this.msg,
+    required this.isMe,
+    required this.index,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -391,6 +395,11 @@ class _MessageBubble extends StatelessWidget {
 
     final String cleanText = FormatUtils.stripHtml(decryptedText);
     final String userImage = msg['senderimg']?.toString() ?? "";
+
+    // Generate a unique ID for Hero tags.
+    // Incorporating index ensures uniqueness even if the message object is duplicated in the list state.
+    final String messageId =
+        "${msg['msg_id'] ?? msg['id'] ?? 'msg'}-$index-${msg['created_at'] ?? DateTime.now().millisecondsSinceEpoch}-${msg.hashCode}";
 
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -547,10 +556,7 @@ class _MessageBubble extends StatelessWidget {
                         ),
                       _AttachmentList(
                         attachments: msg['all_attachment'],
-                        messageId:
-                            msg['msg_id']?.toString() ??
-                            msg['id']?.toString() ??
-                            'unknown',
+                        messageId: messageId,
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -697,7 +703,8 @@ class _AttachmentList extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Hero(
-                          tag: "hero-$messageId-$index-$fullUrl",
+                          // Unique tag per message attachment
+                          tag: "hero-$messageId-attachment-$index",
                           child: Image.network(
                             fullUrl,
                             fit: BoxFit.cover,

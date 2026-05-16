@@ -11,7 +11,7 @@ class JitsiCallService {
     String? companyId,
     required String conversationId,
     String? conversationType,
-    required List<Map<String, dynamic>> participants,
+    required List<dynamic> participants,
     String? roomTitle,
     String? userName,
     String? userEmail,
@@ -37,22 +37,49 @@ class JitsiCallService {
       String? jwt;
       String? serverRoomName;
       Map<String, dynamic>? callResponse;
+      String signalingToken = "";
 
       if (userId != null && companyId != null) {
+        // Construct payload similar to React.js initiation logic
+        final int expireUnix = DateTime.now().millisecondsSinceEpoch + 60000;
+        final String callLink = "https://work.freeli.io/call/$conversationId";
+
+        // Use a persistent signaling token instead of the full JWT to match web client signaling
+        signalingToken = await ApiServer.getSignalingToken();
+
         callResponse = await ApiServer().jitsiCallAccept_Call(
           userId,
           companyId,
           conversationId,
-          ApiServer.token,
+          signalingToken,
           conversation_type: conversationType,
+          participantsAll: participants,
+          participantsAdmin: [userId], // Pass current user as admin
+          arrParticipants: participants, // Ring all group members
+          convname: roomTitle ?? "Meeting",
+          callLink: callLink,
+          expireUnix: expireUnix,
         );
 
-        jwt = callResponse?['jwt_token']?.toString();
-
-        // IMPORTANT: Web (React.js) uses the room name assigned in the JWT.
-        // We must use the room_name returned by the server,
-        // or fall back to conversationId if the server doesn't provide one.
-        serverRoomName = callResponse?['room_name']?.toString();
+        // If initiation fails (status: false), fallback to fetching existing session JWT via query
+        if (callResponse?['status'] != true) {
+          debugPrint("Initiation status false. Fetching existing session...");
+          final queryResponse = await ApiServer().jitsi_ring_users(
+            userId: userId,
+            conversationId: conversationId,
+            token: signalingToken,
+          );
+          if (queryResponse != null && queryResponse['status'] == true) {
+            jwt = queryResponse['jwt_token']?.toString();
+            serverRoomName = queryResponse['voip_conv']?['room_name']
+                ?.toString();
+          }
+        } else {
+          jwt = callResponse?['jwt_token']?.toString();
+          // IMPORTANT: Web (React.js) uses the room name assigned in the JWT.
+          // We must use the room_name returned by the server.
+          serverRoomName = callResponse?['room_name']?.toString();
+        }
 
         // Mandatory JWT Check: Wait until data is received. If null, abort.
         if (jwt == null || jwt.isEmpty) {
@@ -70,6 +97,17 @@ class JitsiCallService {
 
       // Sanitize room name to match React.js behavior (remove hyphens)
       finalRoomName = finalRoomName.replaceAll('-', '');
+
+      // Ensure avatar URL is absolute (matches React.js behavior)
+      String? finalAvatar = userAvatar;
+      if (finalAvatar != null &&
+          finalAvatar.isNotEmpty &&
+          !finalAvatar.startsWith('http')) {
+        finalAvatar =
+            "https://wfss001.freeli.io/profile-pic/Photos/$finalAvatar";
+      } else if (finalAvatar == null || finalAvatar.isEmpty) {
+        finalAvatar = "https://wfss001.freeli.io/profile-pic/Photos/img.png";
+      }
 
       var options = JitsiMeetConferenceOptions(
         serverURL: serverUrl,
@@ -114,7 +152,7 @@ class JitsiCallService {
         userInfo: JitsiMeetUserInfo(
           displayName: userName ?? "User",
           email: userEmail,
-          avatar: userAvatar,
+          avatar: finalAvatar,
         ),
       );
 
@@ -127,12 +165,12 @@ class JitsiCallService {
             onConferenceJoined?.call("local-user");
 
             // Send Join Signal to bridge participants (matches React.js behavior)
-            // IMPORTANT: Use finalRoomName so backend matches Rajon and Motaleb in the same session
+            // IMPORTANT: Use the original UUID (conversationId) for the backend API signal
             if (userId != null && callResponse != null) {
               await ApiServer().jitsiCallJoin_Call(
                 userId: userId,
-                conversationId: finalRoomName,
-                token: ApiServer.token ?? "",
+                conversationId: conversationId,
+                token: signalingToken,
               );
             }
           },

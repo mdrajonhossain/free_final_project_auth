@@ -454,7 +454,14 @@ query Jitsi_ring_calling(
   $conversation_id: String!,
   $company_id: String!,
   $token: String,
-  $conversation_type: String
+  $conversation_type: String,
+  $participants_all: [String],
+  $participants_admin: [String],
+  $arr_participants: [String],
+  $convname: String,
+  $call_link: String,
+  $call_option: String,
+  $expire_unix: Float
 ) {
   jitsi_ring_calling(
     user_id: $user_id
@@ -462,6 +469,13 @@ query Jitsi_ring_calling(
     company_id: $company_id
     token: $token
     conversation_type: $conversation_type
+    participants_all: $participants_all
+    participants_admin: $participants_admin
+    arr_participants: $arr_participants
+    convname: $convname
+    call_link: $call_link
+    call_option: $call_option
+    expire_unix: $expire_unix
   ) {
     status    
     jwt_token

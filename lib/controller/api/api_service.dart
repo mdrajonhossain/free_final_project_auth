@@ -25,6 +25,20 @@ class ApiServer {
     _token = prefs.getString("token");
   }
 
+  /// Generates or retrieves a unique signaling token for this device session,
+  /// matching the 'getXmppToken' behavior in React.js.
+  static Future<String> getSignalingToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? sigToken = prefs.getString("signaling_token");
+    if (sigToken == null || sigToken.isEmpty) {
+      sigToken =
+          DateTime.now().millisecondsSinceEpoch.toRadixString(36) +
+          DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+      await prefs.setString("signaling_token", sigToken);
+    }
+    return sigToken;
+  }
+
   static Future<void> setAuthToken(String? token) async {
     _token = token;
     final prefs = await SharedPreferences.getInstance();
@@ -414,6 +428,13 @@ class ApiServer {
     String? conversationId,
     String? token, {
     String? conversation_type,
+    List<dynamic>? participantsAll,
+    List<dynamic>? participantsAdmin,
+    List<dynamic>? arrParticipants,
+    String? convname,
+    String? callLink,
+    String? callOption = "mobile",
+    int? expireUnix,
   }) async {
     try {
       final data = await ApiServer.call(
@@ -424,10 +445,17 @@ class ApiServer {
           'company_id': companyId,
           'token': token,
           'conversation_type': conversation_type,
+          if (participantsAll != null) 'participants_all': participantsAll,
+          if (participantsAdmin != null)
+            'participants_admin': participantsAdmin,
+          if (arrParticipants != null) 'arr_participants': arrParticipants,
+          if (convname != null) 'convname': convname,
+          if (callLink != null) 'call_link': callLink,
+          if (callOption != null) 'call_option': callOption,
+          if (expireUnix != null) 'expire_unix': expireUnix,
         },
       );
       final result = data['jitsi_ring_calling'] as Map<String, dynamic>?;
-      print("Jitsi call accept response: $result");
       return result;
     } on GqlException catch (e) {
       if (e.message == "Authorization error") {
@@ -436,6 +464,42 @@ class ApiServer {
       rethrow;
     } catch (e) {
       throw GqlException("Failed to accept Jitsi call: ${e.toString()}");
+    }
+  }
+
+  /// Fetches conference metadata and JWT, matching React's 'getRingUser' logic.
+  Future<Map<String, dynamic>?> jitsi_ring_users({
+    required String userId,
+    required String conversationId,
+    required String token,
+  }) async {
+    try {
+      final data = await ApiServer.call(
+        r'''
+        query JitsiRingUsers($user_id: String, $conversation_id: String, $token: String) {
+          jitsi_ring_users(user_id: $user_id, conversation_id: $conversation_id, token: $token) {
+            status
+            jwt_token
+            msg
+            voip_conv {
+              room_name
+              conversation_type
+              participants_all
+              participants_admin
+              convname
+            }
+          }
+        }
+        ''',
+        variables: {
+          'user_id': userId,
+          'conversation_id': conversationId,
+          'token': token,
+        },
+      );
+      return data['jitsi_ring_users'] as Map<String, dynamic>?;
+    } catch (e) {
+      throw GqlException("Failed to fetch Jitsi session: ${e.toString()}");
     }
   }
 
