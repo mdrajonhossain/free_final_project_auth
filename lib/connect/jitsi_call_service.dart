@@ -134,6 +134,7 @@ class JitsiCallService {
           "enableNoAudioDetection": false,
           "enableNoisyMicDetection": false,
           "disableAudioLevels": true,
+          "defaultBackground": "#19619c", // Professional deep blue background
         },
         token: jwt,
         featureFlags: {
