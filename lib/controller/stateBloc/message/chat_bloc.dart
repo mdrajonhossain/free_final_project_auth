@@ -118,7 +118,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     try {
       // 2. Network Call
-      final serverMsg = await apiServer.sendMessage(
+      final response = await apiServer.sendMessage(
         msgBody: event.msgType == "text" ? encryptedText : event.text,
         conversationId: event.conversationId,
         companyId: event.companyId,
@@ -132,9 +132,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         allAttachment: event.allAttachment,
       );
 
+      if (response == null) throw Exception("Empty response from server");
+
       // 3. Update State: Replace optimistic message with real server response
       final List finalMessages = state.messages
-          .map((m) => m['msg_id'] == tempId ? serverMsg : m)
+          .map((m) => m['msg_id'] == tempId ? response : m)
           .toList();
 
       emit(state.copyWith(messages: finalMessages, error: null));
@@ -147,75 +149,88 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ChatXmppMessageReceived event,
     Emitter<ChatState> emit,
   ) {
-    // The message is already normalized into a Map in the HomePage XMPP listener
-    final Map<String, dynamic> msgMap = Map<String, dynamic>.from(
-      event.message,
-    );
+    try {
+      if (event.message == null || event.message is! Map) return;
 
-    // 2. Filter: Only process 'chat' or 'new_message' for the current active room
-    // 2. Filter: Only process chat messages or explicit 'new_message' events for the current active room
-    final String type = (msgMap['msg_type'] ?? msgMap['type'] ?? 'chat')
-        .toString();
-    final bool isChatMessage =
-        type == 'chat' || type == 'new_message' || type == 'text';
+      // The message is already normalized into a Map in the HomePage XMPP listener
+      Map<String, dynamic> msgMap;
+      msgMap = Map<String, dynamic>.from(event.message as Map);
 
-    if (!isChatMessage) return;
+      // 2. Filter: Only process chat messages or explicit 'new_message' events for the current active room
+      final String type = (msgMap['msg_type'] ?? msgMap['type'] ?? 'chat')
+          .toString();
+      final bool isChatMessage =
+          type == 'chat' || type == 'new_message' || type == 'text';
 
-    final String? incomingConvId = msgMap['conversation_id']?.toString();
-    final String? activeConvId = state.activeConversationId?.toString();
+      if (!isChatMessage) return;
 
-    // Strict filtering: Only accept messages that belong to the active room
-    if (activeConvId == null || incomingConvId != activeConvId) return;
+      final String? incomingConvId = msgMap['conversation_id']?.toString();
+      final String? activeConvId = state.activeConversationId?.toString();
 
-    // 3. Prevent duplicates and ignore self-messages (handled by optimistic UI)
-    if (msgMap['sender'] == state.myId) return;
-    if (state.messages.any((m) => m['msg_id'] == msgMap['msg_id'])) return;
+      // Strict filtering: Only accept messages that belong to the active room
+      if (activeConvId == null || incomingConvId != activeConvId) return;
 
-    // Normalize sender data from XMPP notification keys
-    msgMap['sender'] = msgMap['sender'] ?? msgMap['created_by_id'];
-    if (msgMap['created_by_name'] != null) {
-      msgMap['sendername'] = msgMap['created_by_name'];
-    }
-    if (msgMap['created_by_img'] != null) {
-      msgMap['senderimg'] = msgMap['created_by_img'];
-    }
+      // 3. Prevent duplicates and ignore self-messages (handled by optimistic UI)
+      if (msgMap['sender'] == state.myId) return;
+      if (state.messages.any((m) => m['msg_id'] == msgMap['msg_id'])) return;
 
-    // 4. Decrypt body if it's an encrypted message
-    final String rawBody = (msgMap['msg_body'] ?? msgMap['body'] ?? "")
-        .toString();
+      // Normalize sender data from XMPP notification keys
+      msgMap['sender'] = msgMap['sender'] ?? msgMap['created_by_id'];
+      if (msgMap['created_by_name'] != null) {
+        msgMap['sendername'] = msgMap['created_by_name'];
+      }
+      if (msgMap['created_by_img'] != null) {
+        msgMap['senderimg'] = msgMap['created_by_img'];
+      }
 
-    if (rawBody.isNotEmpty) {
-      final String trimmedBody = rawBody.trim();
-      // Detect if the body is a JSON object or list (XMPP file metadata)
-      if (trimmedBody.startsWith('{') || trimmedBody.startsWith('[')) {
-        try {
-          final dynamic decoded = jsonDecode(trimmedBody);
-          final List listData = decoded is List ? decoded : [decoded];
+      // 4. Decrypt body if it's an encrypted message
+      final String rawBody = (msgMap['msg_body'] ?? msgMap['body'] ?? "")
+          .toString();
 
-          // Process each attachment and construct the specific URL format
-          final List processedAttachments = listData.map((file) {
-            final String bucket = file['bucket']?.toString() ?? "";
-            final String originalname = file['originalname']?.toString() ?? "";
-            // Build URL: https://wfss001.freeli.io/{bucket}/{originalname}
-            file['location'] =
-                "https://wfss001.freeli.io/$bucket/$originalname";
-            return file;
-          }).toList();
+      if (rawBody.isNotEmpty) {
+        final String trimmedBody = rawBody.trim();
+        // Detect if the body is a JSON object or list (XMPP file metadata)
+        if (trimmedBody.startsWith('{') || trimmedBody.startsWith('[')) {
+          try {
+            final dynamic decoded = jsonDecode(trimmedBody);
+            final List listData = decoded is List
+                ? decoded
+                : (decoded != null ? [decoded] : []);
 
-          msgMap['all_attachment'] = processedAttachments;
-          msgMap['msg_body'] = ""; // Hide JSON string from user UI
-        } catch (e) {
-          print('❌ JSON parse failed in Bloc: $e');
-          // Fallback decryption if it wasn't actually file JSON
+            // Process each attachment and construct the specific URL format
+            final List
+            processedAttachments = listData.where((item) => item is Map).map((
+              item,
+            ) {
+              final Map<String, dynamic> file = Map<String, dynamic>.from(item);
+              final String bucket = (file['bucket'] ?? "").toString();
+              final String originalname = (file['originalname'] ?? "")
+                  .toString();
+              // Build URL: https://wfss001.freeli.io/{bucket}/{originalname}
+              file['location'] =
+                  "https://wfss001.freeli.io/$bucket/$originalname";
+              return file;
+            }).toList();
+
+            msgMap['all_attachment'] = processedAttachments;
+            msgMap['msg_body'] = ""; // Hide JSON string from user UI
+          } catch (e) {
+            print('❌ JSON parse failed in Bloc: $e');
+            // Fallback decryption if it wasn't actually file JSON
+            _attemptDecryption(msgMap, rawBody);
+          }
+        } else {
           _attemptDecryption(msgMap, rawBody);
         }
-      } else {
-        _attemptDecryption(msgMap, rawBody);
       }
-    }
 
-    final updatedMessages = [msgMap, ...state.messages];
-    emit(state.copyWith(messages: updatedMessages));
+      final updatedMessages = [msgMap, ...state.messages];
+      emit(state.copyWith(messages: updatedMessages));
+    } catch (e, stack) {
+      print('❌ Fatal error in _onXmppMessageReceived: $e');
+      print(stack);
+      // Catching all errors here prevents the entire Bloc from crashing
+    }
   }
 
   // Helper to attempt decryption and handle nested file metadata
@@ -244,19 +259,30 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   void _processJsonBody(Map<String, dynamic> msgMap, String jsonStr) {
     try {
       final dynamic decoded = jsonDecode(jsonStr);
-      final List listData = decoded is List ? decoded : [decoded];
+      final List listData = decoded is List
+          ? decoded
+          : (decoded != null ? [decoded] : []);
 
       // Build URL format: https://wfss001.freeli.io/{bucket}/{originalname}
-      final List processedAttachments = listData.map((file) {
-        final String bucket = file['bucket']?.toString() ?? "";
-        final String originalname = file['originalname']?.toString() ?? "";
-        file['location'] = "https://wfss001.freeli.io/$bucket/$originalname";
-        return file;
-      }).toList();
+      final List processedAttachments = listData
+          .where((item) => item is Map)
+          .map((item) {
+            final Map<String, dynamic> file = Map<String, dynamic>.from(item);
+            final String bucket = (file['bucket'] ?? "").toString();
+            final String originalname = (file['originalname'] ?? "").toString();
+            file['location'] =
+                "https://wfss001.freeli.io/$bucket/$originalname";
+            return file;
+          })
+          .toList();
+
+      final List existingAttachments = msgMap['all_attachment'] is List
+          ? msgMap['all_attachment']
+          : [];
 
       msgMap['all_attachment'] = [
-        ...(msgMap['all_attachment'] ?? []),
-        ...processedAttachments,
+        ...existingAttachments,
+        ...(processedAttachments ?? []),
       ];
       msgMap['msg_body'] =
           ""; // Technical JSON data ইউজারকে টেক্সট হিসেবে দেখাবে না

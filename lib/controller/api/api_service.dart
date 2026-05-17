@@ -185,9 +185,9 @@ class ApiServer {
   Future<Map<String, dynamic>> fetchMe() async {
     try {
       final data = await ApiServer.call(myQuery);
-      final meData = data['me'];
-      if (meData != null) {
-        return Map<String, dynamic>.from(meData);
+      final dynamic meData = data['me'];
+      if (meData is Map) {
+        return meData.cast<String, dynamic>();
       }
       throw const GqlException("User profile not found or session expired");
     } on GqlException catch (e) {
@@ -209,8 +209,13 @@ class ApiServer {
         Get_tag_public,
         variables: {"company_id": companyId},
       );
-      final List<dynamic> publicTags = data['tags']?['public'] ?? [];
-      return List<Map<String, dynamic>>.from(publicTags);
+      final dynamic tagsData = data['tags'];
+      final List publicTags =
+          (tagsData is Map ? tagsData['public'] : null) ?? [];
+      return publicTags
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     } on GqlException catch (e) {
       if (e.message == "Authorization error") {
         await ApiServer.clearAuthToken();
@@ -265,8 +270,8 @@ class ApiServer {
         messagesQuery,
         variables: {"conversationId": conversationId, "page": page},
       );
-      final messages = data['messages'];
-      if (messages != null) {
+      final dynamic messages = data['messages'];
+      if (messages != null && messages is Map) {
         return Map<String, dynamic>.from(messages);
       }
       throw const GqlException("Messages data not found");
@@ -408,11 +413,11 @@ class ApiServer {
         variables: variables,
       );
 
-      final result = data['send_msg'];
+      final dynamic result = data['send_msg'];
 
-      if (result != null && result['msg'] != null) {
+      if (result != null && result is Map && result['msg'] is Map) {
         fetchRooms(senderId);
-        return Map<String, dynamic>.from(result['msg']);
+        return Map<String, dynamic>.from(result['msg'] as Map);
       }
 
       throw const GqlException("Failed to send message: Empty response");
@@ -433,9 +438,12 @@ class ApiServer {
         callHistoryGroup,
         variables: {"user_id": userId},
       );
-      final List<dynamic> history =
-          data['call_history_group']?['history_group'] ?? [];
-      return List<Map<String, dynamic>>.from(history);
+      final dynamic group = data['call_history_group'];
+      final List history = (group is Map ? group['history_group'] : null) ?? [];
+      return history
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     } on GqlException catch (e) {
       if (e.message == "Authorization error") {
         await ApiServer.clearAuthToken();
@@ -521,7 +529,8 @@ class ApiServer {
           'token': token,
         },
       );
-      return data['jitsi_ring_users'] as Map<String, dynamic>?;
+      final dynamic result = data['jitsi_ring_users'];
+      return result is Map ? Map<String, dynamic>.from(result) : null;
     } catch (e) {
       throw GqlException("Failed to fetch Jitsi session: ${e.toString()}");
     }
