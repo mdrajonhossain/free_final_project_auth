@@ -123,14 +123,35 @@ class _HomePageState extends State<HomePage> {
             // Force 'new_message' internally for notification/list logic
             formattedMsg['type'] = 'new_message';
 
+            // Normalize sender name for instant snippet update
+            formattedMsg['sendername'] =
+                formattedMsg['sendername'] ??
+                formattedMsg['created_by_name'] ??
+                formattedMsg['name'] ??
+                "User";
+
             print('🔔 XMPP Message Processed: ${formattedMsg['msg_id']}');
           } catch (e) {
             print('❌ Error parsing XMPP message: $e');
             return;
           }
 
-          // For Bloc and List state, keep msg_body ENCRYPTED as it comes from XMPP.
-          // Bubbles in ChatScreen and snippet in ChatsTab will handle decryption.
+          // Process readable body for instant Last Message snippet
+          String displayBody = (formattedMsg['msg_body'] ?? "").toString();
+          try {
+            String decrypted = CryptoUtils.decryptMessage(displayBody);
+            displayBody =
+                (decrypted.trim().startsWith('{') ||
+                    decrypted.trim().startsWith('['))
+                ? "📁 Attachment"
+                : decrypted;
+          } catch (_) {
+            if (displayBody.trim().startsWith('{') ||
+                displayBody.trim().startsWith('[')) {
+              displayBody = "📁 Attachment";
+            }
+          }
+
           chatBlocFormattedMsg = Map<String, dynamic>.from(formattedMsg);
 
           if (mounted) {
@@ -162,7 +183,8 @@ class _HomePageState extends State<HomePage> {
                   );
 
                   // Update snippet
-                  updatedRoom['last_msg'] = chatBlocFormattedMsg['msg_body'];
+                  updatedRoom['last_msg'] =
+                      displayBody; // Show readable text instantly
                   updatedRoom['last_msg_time'] =
                       chatBlocFormattedMsg['created_at']?.toString() ??
                       DateTime.now().toIso8601String();
