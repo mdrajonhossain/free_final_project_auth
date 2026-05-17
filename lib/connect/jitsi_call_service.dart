@@ -1,12 +1,172 @@
 import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../controller/api/api_service.dart';
 
 class JitsiCallService {
   static const String serverUrl = "https://wfvs001.freeli.io/";
 
+  static void _showConnectingLoader(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Color(0xff0B1120),
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: Dialog(
+          elevation: 0,
+          backgroundColor: Color.fromARGB(255, 29, 43, 78),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF16213E),
+                  Color(0xFF1E3A70),
+                  Color(0xFF233B6E),
+                ],
+              ),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.35),
+                  blurRadius: 30,
+                  offset: const Offset(0, 14),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                /// ANIMATED ICON
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      height: 90,
+                      width: 90,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.05),
+                      ),
+                    ),
+
+                    Container(
+                      height: 68,
+                      width: 68,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.blueAccent,
+                            Colors.cyanAccent.withOpacity(0.9),
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.cyanAccent.withOpacity(0.4),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.video_call_rounded,
+                        color: Colors.white,
+                        size: 36,
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 105,
+                      width: 105,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.cyanAccent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 30),
+
+                /// TITLE
+                const Text(
+                  "Connecting you to your Meeting",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// SUBTITLE
+                Text(
+                  "Please wait while we establish\nsecure connection with server...",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.72),
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                /// STATUS BOX
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 10,
+                        width: 10,
+                        decoration: const BoxDecoration(
+                          color: Colors.greenAccent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        "Securing connection...",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   static Future<void> joinCall({
+    required BuildContext context,
     String? userId,
     String? companyId,
     required String conversationId,
@@ -20,6 +180,8 @@ class JitsiCallService {
     VoidCallback? onCallFinished,
     Function(String participantId)? onConferenceJoined,
   }) async {
+    _showConnectingLoader(context);
+
     // Request necessary permissions before launching the call
     Map<Permission, PermissionStatus> statuses = await [
       Permission.camera,
@@ -28,6 +190,7 @@ class JitsiCallService {
 
     if (statuses[Permission.camera]!.isDenied ||
         statuses[Permission.microphone]!.isDenied) {
+      if (context.mounted) Navigator.of(context).pop();
       debugPrint("Call permissions denied by user.");
       return;
     }
@@ -158,6 +321,9 @@ class JitsiCallService {
       );
 
       var jitsiMeet = JitsiMeet();
+
+      if (context.mounted) Navigator.of(context).pop();
+
       await jitsiMeet.join(
         options,
         JitsiMeetEventListener(
@@ -179,6 +345,7 @@ class JitsiCallService {
         ),
       );
     } catch (error) {
+      if (context.mounted) Navigator.of(context).pop();
       debugPrint("Jitsi Join Error: $error");
     }
   }

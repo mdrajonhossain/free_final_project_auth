@@ -150,16 +150,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
                     if (userId == null || companyId == null) return;
 
-                    // Show loading animation
-                    if (!context.mounted) return;
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) => const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      ),
-                    );
-
                     try {
                       print("""
 userId: $userId
@@ -174,6 +164,7 @@ isVideo: false
 participants: $participants
 """);
                       await JitsiCallService.joinCall(
+                        context: context,
                         userId: userId,
                         companyId: companyId,
                         conversationId: conversationId,
@@ -185,13 +176,9 @@ participants: $participants
                         userAvatar: state.userData?['img']?.toString(),
                         isVideo: false,
                       );
-
-                      // Dismiss loading animation
-                      if (context.mounted) Navigator.pop(context);
                     } catch (e) {
                       // Dismiss loading animation on error
                       if (context.mounted) {
-                        Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text("Call Error: $e")),
                         );
