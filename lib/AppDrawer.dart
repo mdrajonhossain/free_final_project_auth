@@ -20,7 +20,8 @@ class AppDrawer extends StatelessWidget {
     final String name = (userData != null && userData!['firstname'] != null)
         ? "${userData!['firstname']} ${userData!['lastname'] ?? ''}".trim()
         : "Guest User";
-    final String email = userData?['email'] ?? "Sign in to sync your data";
+    final String? email = userData?['email'];
+    final String? teamName = userData?['company_name'];
     final String? imgUrl = userData?['img'];
 
     const Color primaryBlue = Color(0xFF0C1F5E);
@@ -71,11 +72,24 @@ class AppDrawer extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                if (email != null)
+                  Text(
+                    email,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.85),
+                      fontSize: 13,
+                    ),
+                  ),
                 Text(
-                  email,
+                  teamName ??
+                      (userData == null
+                          ? "Sign in to sync your data"
+                          : "No Team"),
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 13,
+                    color: email != null
+                        ? Colors.white.withOpacity(0.6)
+                        : Colors.white.withOpacity(0.7),
+                    fontSize: 12,
                   ),
                 ),
               ],
