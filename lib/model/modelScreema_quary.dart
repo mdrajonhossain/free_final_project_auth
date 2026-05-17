@@ -482,3 +482,46 @@ query Jitsi_ring_calling(
   }
 }
 """;
+
+const String filehubs_Links = """
+    query Hub_all_link_msgs(\$conversation_ids: [String!], \$from: String, \$to: String, \$url: String, \$user_ids: [String!], \$sort_by: String, \$sort_style: String, \$page: Int, \$timezone: String) {
+      hub_all_link_msgs(
+        conversation_ids: \$conversation_ids
+        from: \$from
+        to: \$to
+        url: \$url
+        user_ids: \$user_ids
+        sort_by: \$sort_by
+        sort_style: \$sort_style
+        page: \$page
+        timezone: \$timezone
+      ) {
+        conversation_id_in_link
+        uploaded_by_in_link
+        links {
+          url_id
+          created_at
+          msg_id
+          conversation_id
+          company_id
+          user_id
+          url
+          title
+          has_hide
+          has_delete
+          root_conv_id
+          is_delete
+          secret_user
+          other_user
+          participants
+          conversation_title
+          uploaded_by
+        }
+        pagination {
+          page
+          totalPages
+          total
+        }
+      }
+    }
+""";

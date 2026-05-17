@@ -265,7 +265,7 @@ class _FileHubPageState extends State<FileHubPage> {
         ? const Color(0xFF1A3470)
         : const Color(0xFFF4F7FC);
 
-    final surfaceColor = isDark ? const Color(0xFF16213E) : Colors.white;
+    final surfaceColor = isDark ? const Color(0xFF132850) : Colors.white;
 
     final cardColor = isDark ? const Color(0xFF1B2945) : Colors.white;
 

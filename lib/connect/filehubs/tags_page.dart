@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import '../file_utils.dart';
+import 'FileHubSkeleton.dart';
 
 // IMPORTANT: ensure this import exists in your project
 // import 'api_server.dart';
@@ -558,7 +559,10 @@ class _TagsPageState extends State<TagsPage> {
             /// LIST
             Expanded(
               child: _isLoadingFiles
-                  ? const Center(child: CircularProgressIndicator())
+                  ? FileHubSkeleton(
+                      isDark: widget.isDark,
+                      type: _isShowingFiles ? 'file' : 'tag',
+                    )
                   : _isShowingFiles
                   ? ListView.builder(
                       physics: const BouncingScrollPhysics(),

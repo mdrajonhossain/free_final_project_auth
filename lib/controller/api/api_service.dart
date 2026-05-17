@@ -559,4 +559,40 @@ class ApiServer {
   }
 
   // =================== End Call history api===========================
+
+  // ===================== Start Filehubs Links ========================
+  Future<List<Map<String, dynamic>>> fetchFilehubs_Link() async {
+    try {
+      // The original query had 'conversation_ids: nul', which is not valid GraphQL.
+      // Assuming the intention was to pass an empty list or null,
+      // and the new query explicitly defines it as `[String!]`.
+      // Defaulting to an empty list for conversation_ids and other common filters.
+      final variables = {
+        "conversation_ids": [],
+        "sort_by": "created_at",
+        "sort_style": "-1",
+        // Add other variables as needed, e.g.,
+        // "from": null,
+        // "to": null,
+        // "url": null,
+        // "user_ids": null,
+        // "page": 1,
+        // "timezone": null,
+      };
+
+      final data = await ApiServer.call(filehubs_Links, variables: variables);
+      final List<dynamic> history = data['hub_all_link_msgs']?['links'] ?? [];
+      return List<Map<String, dynamic>>.from(history);
+    } on GqlException catch (e) {
+      // Handle authorization errors by clearing the token
+      if (e.message == "Authorization error") {
+        await ApiServer.clearAuthToken();
+      }
+      rethrow;
+    } catch (e) {
+      throw GqlException("Failed to fetch filehubs links: ${e.toString()}");
+    }
+  }
+
+  // ===================== End Filehubs Links ========================
 }
