@@ -344,6 +344,30 @@ class ApiServer {
 
   // ==================End
 
+  // ==========================get_files_by_tag==============================
+  Future<List<dynamic>?> getFilesByTag(String tagId) async {
+    try {
+      final data = await ApiServer.call(
+        Get_file_galleryQuery,
+        variables: {
+          "conversation_ids": null,
+          "file_type": "all",
+          "tab": "file",
+          "tag_id": [tagId],
+          "conversation_id": null,
+        },
+      );
+      final galleryData = data['get_file_gallery'];
+      if (galleryData != null && galleryData['files'] != null) {
+        return galleryData['files'] as List<dynamic>;
+      }
+      return [];
+    } catch (e) {
+      print("[API ERROR] getFilesByTag: $e");
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>> sendMessage({
     required String msgBody,
     required String conversationId,
