@@ -138,8 +138,15 @@ class _ChatScreenState extends State<ChatScreen> {
                 _buildRoomTitle(),
                 GestureDetector(
                   onTap: () async {
-                    final userId = state.userData?['id']?.toString();
-                    final companyId = state.userData?['company_id']?.toString();
+                    final args =
+                        ModalRoute.of(context)?.settings.arguments as Map?;
+                    final userId =
+                        state.userData?['id']?.toString() ??
+                        args?['user_id']?.toString();
+                    final companyId = company_id.isNotEmpty
+                        ? company_id
+                        : (state.userData?['company_id']?.toString() ??
+                              args?['company_id']?.toString());
 
                     if (userId == null || companyId == null) return;
 

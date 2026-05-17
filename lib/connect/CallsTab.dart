@@ -6,8 +6,9 @@ import 'jitsi_call_service.dart';
 
 class CallsTab extends StatefulWidget {
   final String? userId;
+  final String? companyId;
 
-  const CallsTab({super.key, this.userId});
+  const CallsTab({super.key, this.userId, this.companyId});
 
   @override
   State<CallsTab> createState() => _CallsTabState();
@@ -37,7 +38,10 @@ class _CallsTabState extends State<CallsTab> {
 
   Future<void> getCallHistory() async {
     try {
-      final data = await ApiServer().fetchCallHistory(widget.userId);
+      final data = await ApiServer().fetchCallHistory(
+        widget.userId,
+        companyId: widget.companyId,
+      );
       if (mounted) {
         setState(() {
           callHistory = data;
@@ -121,6 +125,7 @@ class _CallsTabState extends State<CallsTab> {
                           : () {
                               JitsiCallService.joinCall(
                                 userId: widget.userId,
+                                companyId: widget.companyId,
                                 conversationId: conversationId,
                                 conversationType: callType,
                                 participants:

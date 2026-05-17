@@ -9,8 +9,16 @@ import 'createRoom.dart';
 class ChatsTab extends StatefulWidget {
   final List<dynamic>? conversationRooms;
   final String? userMe;
+  final String? userId;
+  final String? companyId;
 
-  const ChatsTab({super.key, this.conversationRooms, this.userMe});
+  const ChatsTab({
+    super.key,
+    this.conversationRooms,
+    this.userMe,
+    this.userId,
+    this.companyId,
+  });
 
   @override
   State<ChatsTab> createState() => _ChatsTabState();
@@ -205,7 +213,8 @@ class _ChatsTabState extends State<ChatsTab>
                 '/chat',
                 arguments: {
                   'conversation_id': room['conversation_id'],
-                  'company_id': room['company_id'],
+                  'company_id': room['company_id'] ?? widget.companyId,
+                  'user_id': widget.userId ?? widget.userMe,
                   'participants': room['participants'],
                   'title': room['title'] ?? 'No Title',
                   'group': room['group'] == 'yes',

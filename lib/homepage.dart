@@ -357,8 +357,13 @@ class _HomePageState extends State<HomePage> {
             ChatsTab(
               conversationRooms: filteredRooms,
               userMe: userData?['id']?.toString(),
+              userId: userData?['id']?.toString(),
+              companyId: userData?['company_id']?.toString(),
             ),
-            CallsTab(userId: userData?['id']?.toString()),
+            CallsTab(
+              userId: userData?['id']?.toString(),
+              companyId: userData?['company_id']?.toString(),
+            ),
             DashboardTab(userMe: userData),
           ],
         ),

@@ -432,11 +432,17 @@ class ApiServer {
   }
 
   // ===================Start Call history api===========================
-  Future<List<Map<String, dynamic>>> fetchCallHistory(String? userId) async {
+  Future<List<Map<String, dynamic>>> fetchCallHistory(
+    String? userId, {
+    String? companyId,
+  }) async {
     try {
       final data = await ApiServer.call(
         callHistoryGroup,
-        variables: {"user_id": userId},
+        variables: {
+          "user_id": userId,
+          if (companyId != null) "company_id": companyId,
+        },
       );
       final dynamic group = data['call_history_group'];
       final List history = (group is Map ? group['history_group'] : null) ?? [];
