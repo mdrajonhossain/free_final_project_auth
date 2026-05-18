@@ -610,10 +610,11 @@ class _MessageBubble extends StatelessWidget {
                               );
                             },
                             onError: (error) {
+                              final errorMessage =
+                                  error?.toString() ??
+                                  "Failed to delete message.";
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Failed to delete message."),
-                                ),
+                                SnackBar(content: Text(errorMessage)),
                               );
                             },
                           ),

@@ -493,7 +493,6 @@ class ApiServer {
       if (result != null && result['status'] == true) {
         return Map<String, dynamic>.from(result);
       }
-      // Extract actual server message for GqlException
       final String serverMessage =
           result?['message']?.toString() ?? 'Unknown server response';
       print('[API ERROR] deleteMessage failed: $serverMessage');

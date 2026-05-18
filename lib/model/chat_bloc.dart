@@ -5,9 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/crypto_utils.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/api/xmpp_server.dart';
+import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 
-part 'chat_event.dart';
-part 'chat_state.dart';
+// part 'chat_event.dart';
+// part 'chat_state.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final ApiServer apiServer = ApiServer();
@@ -223,6 +224,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
     } catch (e) {
       event.onError?.call(e);
+      print('[ChatBloc] Error deleting message: $e');
       emit(state.copyWith(error: e.toString()));
     }
   }

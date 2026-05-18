@@ -76,9 +76,9 @@ mutation Login(
 }
 """;
 
-const String sendMessageMutation = r"""
-mutation send_msg($input: msgInput!) {
-  send_msg(input: $input) {
+const String sendMessageMutation = """
+mutation send_msg(\$input: msgInput!) {
+  send_msg(input: \$input) {
     msg {
       conversation_id
       msg_id
@@ -234,6 +234,48 @@ mutation send_msg($input: msgInput!) {
         user_id
       }
     }
+  }
+}
+""";
+
+const String editMessageMutation = """
+mutation Edit_msg(\$input: editInput!) {
+  edit_msg(input: \$input) {
+    status
+    msg {
+      conversation_id
+      msg_id
+      sender
+      senderemail
+      senderimg
+      fnln
+      sendername
+      msg_body
+      unread_reply
+      msg_type
+      reply_for_msgid
+      last_reply_name
+      is_reply_msg
+      edit_status
+      edit_history
+      created_at
+      last_reply_time
+      last_update_time
+      conv_title
+      conv_img
+      short_id
+    }
+  }
+}
+""";
+
+const String deleteMessageMutation = """
+mutation Delete_msg(\$input: deleteInput!) {
+  delete_msg(input: \$input) {
+    status
+    data
+    message
+    __typename
   }
 }
 """;
