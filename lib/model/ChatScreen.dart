@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/connect/ChatInput.dart';
+import 'package:freeli/connect/ChatSkeleton.dart';
+import 'package:freeli/connect/FullImageViewer.dart';
+import 'package:freeli/connect/UserProfilePopup.dart';
+import 'package:freeli/connect/chatFilter_Screen.dart';
+import 'package:freeli/connect/chatMore_Screen.dart';
+import 'package:freeli/connect/chat_service.dart';
+import 'package:freeli/connect/crypto_utils.dart';
+import 'package:freeli/connect/file_utils.dart';
+import 'package:freeli/connect/format_utils.dart';
+import 'package:freeli/connect/jitsi_call_service.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import '../controller/stateBloc/message/chat_bloc.dart';
 import '../AppColors.dart';
-import 'ChatSkeleton.dart';
-import './crypto_utils.dart';
-import './format_utils.dart';
-import './file_utils.dart';
-import './chat_service.dart';
-import './attchmentPopup.dart';
-import './ChatInput.dart';
-import './chatMore_Screen.dart';
-import './chatFilter_Screen.dart';
-import './UserProfilePopup.dart';
-import './FullImageViewer.dart';
-import './jitsi_call_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;

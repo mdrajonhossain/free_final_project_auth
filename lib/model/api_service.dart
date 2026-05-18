@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:freeli/model/modelScreema_quary.dart';
 import '../../model/modelScreema_mutation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'gql_exception.dart';
 import '../../config/config.dart';
+import '../controller/api/gql_exception.dart';
 
 class ApiServer {
   // Singleton instance

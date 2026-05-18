@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:dio/dio.dart'; // Import Dio
 import 'package:flutter/foundation.dart';
@@ -95,11 +96,19 @@ class ApiServer {
       }
 
       final data = (body['data'] as Map?)?.cast<String, dynamic>() ?? {};
-      print('[GQL OK] op=$operationName keys=${data.keys.toList()}');
+      debugPrint('[GQL OK] op=$operationName keys=${data.keys.toList()}');
       return data;
-    } on GqlException {
+    } on GqlException catch (e) {
+      // Centralized Auth Error Handling
+      if (e.message == "Authorization error" ||
+          e.message.contains("Unauthorized")) {
+        await ApiServer.clearAuthToken();
+      }
       rethrow;
     } on DioException catch (e) {
+      debugPrint(
+        '[DIO ERROR] op=$operationName status=${e.response?.statusCode} data=${e.response?.data}',
+      );
       final detail =
           e.response?.data?.toString() ??
           e.message ??
@@ -142,39 +151,21 @@ class ApiServer {
     variables.removeWhere((key, value) => value == null);
 
     try {
-      final response = await _dio.post(
-        _graphqlUrl,
-        data: {"query": loginMutation, "variables": variables},
-        options: Options(headers: {"Content-Type": "application/json"}),
-      );
+      // Use the existing call helper for login too
+      final data = await ApiServer.call(loginMutation, variables: variables);
+      final loginData = data['login'];
 
-      final responseData = response.data;
-
-      if (responseData is! Map) {
-        throw const GqlException('Unexpected response format from server.');
-      }
-
-      if (responseData['errors'] != null) {
-        throw GqlException(responseData['errors'][0]['message']);
-      }
-
-      final loginData = responseData['data']['login'];
-
-      if (loginData['status'] == true) {
+      if (loginData != null && loginData['status'] == true) {
         final String? token = loginData['token'];
         if (token != null && token.isNotEmpty) {
           await ApiServer.setAuthToken(token); // Store the token
         }
         return Map<String, dynamic>.from(loginData);
       } else {
-        throw GqlException(loginData['message'] ?? "Login failed");
+        throw GqlException(loginData?['message'] ?? "Login failed");
       }
-    } on DioException catch (e) {
-      final detail =
-          e.response?.data?.toString() ??
-          e.message ??
-          'Network error. Check your connection.';
-      throw GqlException(detail);
+    } on GqlException {
+      rethrow;
     } catch (e) {
       throw GqlException(e.toString());
     }
@@ -189,11 +180,6 @@ class ApiServer {
         return meData.cast<String, dynamic>();
       }
       throw const GqlException("User profile not found or session expired");
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       throw GqlException("Network error: Please check your connection.");
     }
@@ -215,12 +201,6 @@ class ApiServer {
           .whereType<Map>()
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-
-      rethrow;
     } catch (e) {
       throw GqlException("Failed to fetch public tags: ${e.toString()}");
     }
@@ -249,11 +229,6 @@ class ApiServer {
         return data;
       }
       throw const GqlException("Rooms data not found");
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       throw GqlException("Network error: Please check your connection.");
     }
@@ -274,11 +249,6 @@ class ApiServer {
         return Map<String, dynamic>.from(messages);
       }
       throw const GqlException("Messages data not found");
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       throw GqlException("Network error: Please check your connection.");
     }
@@ -303,11 +273,6 @@ class ApiServer {
         return Map<String, dynamic>.from(galleryData);
       }
       throw const GqlException("File gallery data not found");
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       print("[API ERROR] get_tag_gallery: $e");
       throw GqlException("Failed to fetch gallery: ${e.toString()}");
@@ -335,11 +300,6 @@ class ApiServer {
         return Map<String, dynamic>.from(galleryData);
       }
       throw const GqlException("File gallery data not found");
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       print("[API ERROR] get_file_gallery: $e");
       throw GqlException("Failed to fetch gallery: ${e.toString()}");
@@ -415,16 +375,12 @@ class ApiServer {
       final dynamic result = data['send_msg'];
 
       if (result != null && result is Map && result['msg'] is Map) {
-        fetchRooms(senderId);
-        return Map<String, dynamic>.from(result['msg'] as Map);
+        // unawaited from dart:async marks that we don't need to wait for the refresh to finish
+        unawaited(fetchRooms(senderId));
+        return Map<String, dynamic>.from(result['msg']);
       }
 
       throw const GqlException("Failed to send message: Empty response");
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       throw GqlException("Network error: Please check your connection.");
     }
@@ -522,11 +478,6 @@ class ApiServer {
           .whereType<Map>()
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       throw GqlException("Failed to fetch call history: ${e.toString()}");
     }
@@ -567,11 +518,6 @@ class ApiServer {
       );
       final result = data['jitsi_ring_calling'] as Map<String, dynamic>?;
       return result;
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       throw GqlException("Failed to accept Jitsi call: ${e.toString()}");
     }
@@ -635,11 +581,6 @@ class ApiServer {
           'token': token,
         },
       );
-    } on GqlException catch (e) {
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       throw GqlException("Failed to join Jitsi call: ${e.toString()}");
     }
@@ -670,12 +611,6 @@ class ApiServer {
       final data = await ApiServer.call(filehubs_Links, variables: variables);
       final List<dynamic> history = data['hub_all_link_msgs']?['links'] ?? [];
       return List<Map<String, dynamic>>.from(history);
-    } on GqlException catch (e) {
-      // Handle authorization errors by clearing the token
-      if (e.message == "Authorization error") {
-        await ApiServer.clearAuthToken();
-      }
-      rethrow;
     } catch (e) {
       throw GqlException("Failed to fetch filehubs links: ${e.toString()}");
     }
