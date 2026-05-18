@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/PopUpFile/ForwardMessageScreen.dart';
 import 'package:freeli/connect/PopUpFile/UserProfilePopup.dart';
+import 'package:freeli/connect/PopUpFile/PublicTag.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import '../controller/stateBloc/message/chat_bloc.dart';
@@ -461,6 +462,7 @@ participants: $participants
           isMe: isMe,
           index: index,
           conversationId: conversationId,
+          company_id: company_id,
           onEdit: () {
             String decryptedText = "";
             try {
@@ -485,6 +487,7 @@ class _MessageBubble extends StatelessWidget {
   final bool isMe;
   final int index;
   final String conversationId;
+  final String company_id;
   final VoidCallback? onEdit;
 
   const _MessageBubble({
@@ -493,6 +496,7 @@ class _MessageBubble extends StatelessWidget {
     required this.isMe,
     required this.index,
     required this.conversationId,
+    required this.company_id,
     this.onEdit,
   });
 
@@ -783,6 +787,8 @@ class _MessageBubble extends StatelessWidget {
                         _AttachmentList(
                           attachments: msg['all_attachment'],
                           messageId: messageId,
+                          msg: msg,
+                          company_id: company_id,
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -912,8 +918,15 @@ class _MessageBubble extends StatelessWidget {
 class _AttachmentList extends StatelessWidget {
   final dynamic attachments;
   final String messageId;
+  final dynamic msg;
+  final String company_id;
 
-  const _AttachmentList({required this.attachments, required this.messageId});
+  const _AttachmentList({
+    required this.attachments,
+    required this.messageId,
+    required this.msg,
+    required this.company_id,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -963,7 +976,7 @@ class _AttachmentList extends StatelessWidget {
                 // Tag Counter / Index Indicator
                 Column(
                   children: [
-                    _buildIndexTag(file['tag_list']),
+                    _buildIndexTag(context, file['tag_list'], company_id),
                     const SizedBox(height: 8),
                     _buildIndexStar(index),
                   ],
@@ -1044,7 +1057,7 @@ class _AttachmentList extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildIndexStar(index),
-                  _buildIndexTag(file['tag_list']),
+                  _buildIndexTag(context, file['tag_list'], company_id),
                   Flexible(
                     child: Container(
                       // Removed margin: const EdgeInsets.only(bottom: 6)
@@ -1089,49 +1102,67 @@ class _AttachmentList extends StatelessWidget {
     );
   }
 
-  Widget _buildIndexTag(dynamic tagList) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white12),
+  Widget _buildIndexTag(
+    BuildContext context,
+    dynamic tagList,
+    String companyId,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.white,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: const Icon(
-            Icons.local_offer_rounded,
-            size: 18,
-            color: Colors.white70,
-          ),
-        ),
-
-        /// Top Right Counter
-        Positioned(
-          top: -2,
-          right: 4,
-          child: Container(
-            padding: const EdgeInsets.all(2),
+          builder: (ctx) =>
+              PublicTag(messageToForward: {'company_id': companyId}),
+        );
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 245, 245, 247),
-              borderRadius: BorderRadius.circular(10),
+              color: Colors.white.withOpacity(0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white12),
             ),
-            constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-            child: Center(
-              child: Text(
-                (tagList is List ? tagList.length : 0).toString(),
-                style: const TextStyle(
-                  color: Color.fromARGB(255, 6, 3, 53),
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
+            child: const Icon(
+              Icons.local_offer_rounded,
+              size: 18,
+              color: Colors.white70,
+            ),
+          ),
+
+          /// Top Right Counter
+          Positioned(
+            top: -2,
+            right: 4,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 245, 245, 247),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+              child: Center(
+                child: Text(
+                  (tagList is List ? tagList.length : 0).toString(),
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 6, 3, 53),
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
