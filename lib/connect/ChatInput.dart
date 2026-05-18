@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:freeli/connect/PopUpFile/EmojiPickerPopup.dart';
+import 'package:freeli/connect/PopUpFile/attchmentPopup.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 import '../AppColors.dart';
-import 'attchmentPopup.dart';
-import 'EmojiPickerPopup.dart';
 
 class ChatInput extends StatefulWidget {
   final TextEditingController controller;

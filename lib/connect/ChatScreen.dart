@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/connect/PopUpFile/ForwardMessageScreen.dart';
+import 'package:freeli/connect/PopUpFile/UserProfilePopup.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import '../controller/stateBloc/message/chat_bloc.dart';
@@ -9,12 +11,9 @@ import './crypto_utils.dart';
 import './format_utils.dart';
 import './file_utils.dart';
 import './chat_service.dart';
-import './ForwardMessageScreen.dart';
-import './attchmentPopup.dart';
 import './ChatInput.dart';
 import './chatMore_Screen.dart';
 import './chatFilter_Screen.dart';
-import './UserProfilePopup.dart';
 import './FullImageViewer.dart';
 import './jitsi_call_service.dart';
 

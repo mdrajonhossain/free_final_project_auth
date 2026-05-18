@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../AppColors.dart';
-import '../controller/stateBloc/message/chat_bloc.dart';
-import '../connect/crypto_utils.dart';
-import '../controller/api/api_service.dart'; // Ensure ApiServer is accessible
+import 'package:freeli/AppColors.dart';
+import 'package:freeli/controller/api/api_service.dart';
+import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 
 class ForwardMessageScreen extends StatefulWidget {
   final Map<String, dynamic> messageToForward;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../AppColors.dart';
+import 'package:freeli/AppColors.dart';
 
 class DirectMessagePopup {
   static void show(BuildContext context, List<dynamic>? conversationRooms) {

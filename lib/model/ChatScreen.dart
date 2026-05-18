@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/ChatInput.dart';
 import 'package:freeli/connect/ChatSkeleton.dart';
-import 'package:freeli/connect/ForwardMessageScreen.dart'; // Import the new screen
 import 'package:freeli/connect/FullImageViewer.dart';
-import 'package:freeli/connect/UserProfilePopup.dart';
+import 'package:freeli/connect/PopUpFile/ForwardMessageScreen.dart';
+import 'package:freeli/connect/PopUpFile/UserProfilePopup.dart';
 import 'package:freeli/connect/chatFilter_Screen.dart';
 import 'package:freeli/connect/chatMore_Screen.dart';
 import 'package:freeli/connect/chat_service.dart';
