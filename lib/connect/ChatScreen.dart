@@ -9,6 +9,7 @@ import './crypto_utils.dart';
 import './format_utils.dart';
 import './file_utils.dart';
 import './chat_service.dart';
+import './ForwardMessageScreen.dart';
 import './attchmentPopup.dart';
 import './ChatInput.dart';
 import './chatMore_Screen.dart';
@@ -577,14 +578,23 @@ class _MessageBubble extends StatelessWidget {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Message forwarded! (Not implemented yet)",
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(24),
                             ),
                           ),
+                          builder: (ctx) => ForwardMessageScreen(
+                            messageToForward: {
+                              ...msg,
+                              'conversation_id':
+                                  msg['conversation_id'] ?? conversationId,
+                            },
+                          ),
                         );
-                        // TODO: Implement actual message forwarding logic here
                       },
                     ),
                     ListTile(

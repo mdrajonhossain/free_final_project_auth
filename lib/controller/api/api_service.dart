@@ -586,6 +586,33 @@ class ApiServer {
     }
   }
 
+  Future<Map<String, dynamic>> forwardMessage({
+    required String originalConversationId,
+    required String msgId,
+    required String isReplyMsg,
+    required List<String> targetConversationIds,
+  }) async {
+    try {
+      final variables = {
+        "conversation_id": originalConversationId,
+        "msg_id": msgId,
+        "is_reply_msg": isReplyMsg,
+        "conversation_lists": targetConversationIds,
+      };
+
+      final data = await ApiServer.call(forwardMutation, variables: variables);
+
+      final result = data['forward'];
+      if (result != null && result is Map) {
+        return Map<String, dynamic>.from(result);
+      }
+      throw const GqlException("Failed to forward message: Empty response");
+    } catch (e) {
+      throw GqlException(
+        "Network error: Please check your connection. ${e.toString()}",
+      );
+    }
+  }
   // =================== End Call history api===========================
 
   // ===================== Start Filehubs Links ========================

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/ChatInput.dart';
 import 'package:freeli/connect/ChatSkeleton.dart';
+import 'package:freeli/connect/ForwardMessageScreen.dart'; // Import the new screen
 import 'package:freeli/connect/FullImageViewer.dart';
 import 'package:freeli/connect/UserProfilePopup.dart';
 import 'package:freeli/connect/chatFilter_Screen.dart';
@@ -576,14 +577,18 @@ class _MessageBubble extends StatelessWidget {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Message forwarded! (Not implemented yet)",
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(24),
                             ),
                           ),
+                          builder: (ctx) =>
+                              ForwardMessageScreen(messageToForward: msg),
                         );
-                        // TODO: Implement actual message forwarding logic here
                       },
                     ),
                     ListTile(

@@ -279,3 +279,25 @@ mutation Delete_msg(\$input: deleteInput!) {
   }
 }
 """;
+
+const String forwardMutation = """
+mutation Forward(
+  \$conversation_id: String!,
+  \$msg_id: String!,
+  \$is_reply_msg: String!,
+  \$conversation_lists: [String!]!
+) {
+  forward(
+    input: {
+      conversation_id: \$conversation_id
+      msg_id: \$msg_id
+      is_reply_msg: \$is_reply_msg
+      conversation_lists: \$conversation_lists
+    }
+  ) {
+    status
+    message
+    data
+  }
+}
+""";
