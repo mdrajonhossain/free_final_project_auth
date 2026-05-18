@@ -185,7 +185,17 @@ class _ChatsTabState extends State<ChatsTab>
 
         final String rawLastMsg = room['last_msg'] ?? '';
         final String decryptedLastMsg = CryptoUtils.decryptMessage(rawLastMsg);
-        final String lastMsg = FormatUtils.stripHtml(decryptedLastMsg);
+        String lastMsg = FormatUtils.stripHtml(decryptedLastMsg);
+
+        // JSON ডেটা (ফাইল বা কল) শনাক্ত করে সুন্দর প্রিভিউ দেখানো
+        final String trimmed = lastMsg.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          if (trimmed.contains('"sdp"') || trimmed.contains('"call_id"')) {
+            lastMsg = "📞 Voice/Video Call";
+          } else {
+            lastMsg = "📎 Attachment";
+          }
+        }
 
         // Fallbacks for common image keys
         final String imageUrl =

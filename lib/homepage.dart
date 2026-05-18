@@ -115,6 +115,15 @@ class _HomePageState extends State<HomePage> {
               }
             }
 
+            // কল সিগন্যাল, টেকনিক্যাল ডেটা বা 'admin' মেসেজ আসলে লিস্ট আপডেট করব না
+            if (formattedMsg['type'] == 'call' ||
+                formattedMsg['sender'] == 'admin' ||
+                formattedMsg['msg_body'].toString().contains('"candidate"') ||
+                formattedMsg['msg_body'].toString().contains('"sdp"') ||
+                formattedMsg['msg_body'].toString().contains('"call_id"')) {
+              return;
+            }
+
             // Ensure basic routing fields exist
             formattedMsg['conversation_id'] ??= cleanSenderId;
             formattedMsg['msg_body'] ??= formattedMsg['body'] ?? msg.body;
@@ -127,7 +136,8 @@ class _HomePageState extends State<HomePage> {
             formattedMsg['sendername'] =
                 formattedMsg['sendername'] ??
                 formattedMsg['created_by_name'] ??
-                formattedMsg['name'] ??
+                formattedMsg['sender_name'] ??
+                (formattedMsg['sender']?.toString().split('@').first) ??
                 "User";
 
             print('🔔 XMPP Message Processed: ${formattedMsg['msg_id']}');
@@ -140,14 +150,18 @@ class _HomePageState extends State<HomePage> {
           String displayBody = (formattedMsg['msg_body'] ?? "").toString();
           try {
             String decrypted = CryptoUtils.decryptMessage(displayBody);
-            displayBody =
-                (decrypted.trim().startsWith('{') ||
-                    decrypted.trim().startsWith('['))
-                ? "📁 Attachment"
-                : decrypted;
+            final String trimmed = decrypted.trim();
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+              if (trimmed.contains('"sdp"') || trimmed.contains('"call_id"')) {
+                displayBody = "📞 Voice/Video Call";
+              } else {
+                displayBody = "📁 Attachment";
+              }
+            } else {
+              displayBody = decrypted;
+            }
           } catch (_) {
-            if (displayBody.trim().startsWith('{') ||
-                displayBody.trim().startsWith('[')) {
+            if (displayBody.trim().startsWith('{')) {
               displayBody = "📁 Attachment";
             }
           }
