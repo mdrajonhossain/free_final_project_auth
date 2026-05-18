@@ -203,6 +203,14 @@ class _HomePageState extends State<HomePage> {
                       chatBlocFormattedMsg['created_at']?.toString() ??
                       DateTime.now().toIso8601String();
 
+                  // Increment unread count locally for instant UI update
+                  int currentUnread =
+                      int.tryParse(
+                        updatedRoom['unread_count']?.toString() ?? '0',
+                      ) ??
+                      0;
+                  updatedRoom['unread_count'] = (currentUnread + 1).toString();
+
                   // Remove and insert at top to show most recent first
                   conversationRooms!.removeAt(index);
                   conversationRooms!.insert(0, updatedRoom);
@@ -305,6 +313,17 @@ class _HomePageState extends State<HomePage> {
       }).toList();
     }
 
+    // Calculate total unread messages from all conversation rooms
+    int totalUnread = 5;
+    if (conversationRooms != null) {
+      for (var room in conversationRooms!) {
+        final count = room['unread_count'];
+        if (count != null) {
+          totalUnread += int.tryParse(count.toString()) ?? 0;
+        }
+      }
+    }
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -350,19 +369,26 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             indicatorColor: Colors.white,
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
             dividerColor: Colors.transparent,
-            indicator: UnderlineTabIndicator(
+            indicator: const UnderlineTabIndicator(
               borderSide: BorderSide(color: Colors.white, width: 2),
             ),
 
             tabs: [
-              Tab(icon: Icon(Icons.chat), text: "Chats"),
-              Tab(icon: Icon(Icons.call), text: "Calls"),
-              Tab(icon: Icon(Icons.dashboard), text: "Dashboard"),
+              Tab(
+                icon: Badge(
+                  label: Text(totalUnread.toString()),
+                  isLabelVisible: totalUnread > 0,
+                  child: const Icon(Icons.chat),
+                ),
+                text: "Chats",
+              ),
+              const Tab(icon: Icon(Icons.call), text: "Calls"),
+              const Tab(icon: Icon(Icons.dashboard), text: "Dashboard"),
             ],
           ),
         ),
