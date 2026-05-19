@@ -666,4 +666,32 @@ class ApiServer {
       return {"status": false, "message": e.toString()};
     }
   }
+
+  /// Rejects an incoming call.
+  Future<void> rejectCall({
+    required String userId,
+    required String conversationId,
+    required String token,
+  }) async {
+    try {
+      await ApiServer.call(
+        r'''
+        query JitsiCallReject($user_id: String, $conversation_id: String, $token: String, $type: String) {
+          jitsi_call_reject(user_id: $user_id, conversation_id: $conversation_id, token: $token, type: $type) {
+            status
+            message
+          }
+        }
+        ''',
+        variables: {
+          'user_id': userId,
+          'conversation_id': conversationId,
+          'token': token,
+          'type': 'reject',
+        },
+      );
+    } catch (e) {
+      debugPrint("[API ERROR] rejectCall: $e");
+    }
+  }
 }

@@ -9,11 +9,13 @@ import 'package:freeli/config/config.dart';
 import 'connect/ChatsTab.dart';
 import 'connect/CallsTab.dart';
 import 'connect/DashboardTab.dart';
+import 'connect/jitsi_call_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'AppDrawer.dart';
 import 'dart:ui';
 import 'package:freeli/connect/crypto_utils.dart';
 import 'dart:convert';
+import 'IncomingCallPopup.dart';
 
 class HomePage extends StatefulWidget {
   final bool isDark;
@@ -36,7 +38,8 @@ class _HomePageState extends State<HomePage> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'all';
-  String? _activeConversationId; // Tracks currently open chat
+  bool _isCallPopupShowing = false;
+  String? _activeConversationId;
 
   @override
   void initState() {
@@ -116,30 +119,50 @@ class _HomePageState extends State<HomePage> {
               }
             }
 
-            // কল সিগন্যাল, টেকনিক্যাল ডেটা বা 'admin' মেসেজ আসলে লিস্ট আপডেট করব না
-            if (formattedMsg['type'] == 'call' ||
-                formattedMsg['sender'] == 'admin' ||
-                formattedMsg['msg_body'].toString().contains('"candidate"') ||
-                formattedMsg['msg_body'].toString().contains('"sdp"') ||
-                formattedMsg['msg_body'].toString().contains('"call_id"')) {
-              return;
-            }
-
-            // Ensure basic routing fields exist
+            // Ensure basic routing fields exist before signal checks
             formattedMsg['conversation_id'] ??= cleanSenderId;
             formattedMsg['msg_body'] ??= formattedMsg['body'] ?? msg.body;
             formattedMsg['sender'] ??= cleanSenderId;
 
-            // Force 'new_message' internally for notification/list logic
-            formattedMsg['type'] = 'new_message';
-
-            // Normalize sender name for instant snippet update
+            // Normalize sender name and image for instant snippet update or call popups
             formattedMsg['sendername'] =
                 formattedMsg['sendername'] ??
                 formattedMsg['created_by_name'] ??
                 formattedMsg['sender_name'] ??
                 (formattedMsg['sender']?.toString().split('@').first) ??
                 "User";
+            formattedMsg['senderimg'] =
+                formattedMsg['senderimg'] ??
+                formattedMsg['created_by_img'] ??
+                formattedMsg['sender_img'] ??
+                "";
+
+            // কল সিগন্যাল, টেকনিক্যাল ডেটা বা 'admin' মেসেজ আসলে লিস্ট আপডেট করব না
+            final bool isCallSignal =
+                formattedMsg['type'] == 'call' ||
+                formattedMsg['xmpp_type'] == 'jitsi_ring_calling' ||
+                formattedMsg['xmpp_type'] == 'jitsi_ring_send' ||
+                formattedMsg['msg_body'].toString().contains('"call_id"');
+
+            if (isCallSignal || formattedMsg['sender'] == 'admin') {
+              _handleIncomingCall(formattedMsg);
+              return;
+            }
+
+            // কল হ্যাংআপ বা রিজেক্ট সিগন্যাল আসলে পপআপ বন্ধ করে দেব
+            if (formattedMsg['xmpp_type'] == 'jitsi_send_hangup' ||
+                formattedMsg['xmpp_type'] == 'jitsi_call_reject') {
+              if (_isCallPopupShowing && mounted) {
+                Navigator.of(context, rootNavigator: true).pop();
+                setState(() {
+                  _isCallPopupShowing = false;
+                });
+              }
+              return;
+            }
+
+            // Force 'new_message' internally for notification/list logic
+            formattedMsg['type'] = 'new_message';
 
             print('🔔 XMPP Message Processed: ${formattedMsg['msg_id']}');
           } catch (e) {
@@ -197,8 +220,6 @@ class _HomePageState extends State<HomePage> {
                     conversationRooms![index],
                   );
 
-                  bool isActive = _activeConversationId == convId;
-
                   // Update snippet
                   updatedRoom['last_msg'] =
                       displayBody; // Show readable text instantly
@@ -207,15 +228,12 @@ class _HomePageState extends State<HomePage> {
                       DateTime.now().toIso8601String();
 
                   // Increment unread count locally for instant UI update
-                  if (!isActive) {
-                    int currentUnread =
-                        int.tryParse(
-                          updatedRoom['unread_count']?.toString() ?? '0',
-                        ) ??
-                        0;
-                    updatedRoom['unread_count'] = (currentUnread + 1)
-                        .toString();
-                  }
+                  int currentUnread =
+                      int.tryParse(
+                        updatedRoom['unread_count']?.toString() ?? '0',
+                      ) ??
+                      0;
+                  updatedRoom['unread_count'] = (currentUnread + 1).toString();
 
                   // Remove and insert at top to show most recent first
                   conversationRooms!.removeAt(index);
@@ -287,6 +305,71 @@ class _HomePageState extends State<HomePage> {
         }
       }
     });
+  }
+
+  /// Handles incoming call signals by showing a popup dialog
+  void _handleIncomingCall(Map<String, dynamic> msg) {
+    // Only show popup for actual ringing signals, ignore candidates/SDP packets
+    final bool isRingSignal =
+        msg['xmpp_type'] == 'jitsi_ring_calling' ||
+        msg['xmpp_type'] == 'jitsi_ring_send' ||
+        (msg['type'] == 'call' &&
+            msg['msg_body'].toString().contains('"call_id"')) ||
+        msg['msg_body'].toString().contains('"participants_all"');
+
+    if (!isRingSignal || _isCallPopupShowing || !mounted) return;
+
+    final String convId = msg['conversation_id']?.toString() ?? "";
+    // Prioritize user_fullname to ensure the caller's actual name is shown
+    final String callerName =
+        msg['user_fullname'] ??
+        msg['sendername'] ??
+        msg['sender_name'] ??
+        "Someone";
+    final String callerImage = msg['senderimg']?.toString() ?? "";
+    final String callType = msg['msg_type'] ?? "audio";
+    final String token = msg['token']?.toString() ?? "";
+
+    if (convId.isEmpty) return;
+
+    setState(() => _isCallPopupShowing = true);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => IncomingCallPopup(
+        callerName: callerName,
+        callerImage: callerImage,
+        isVideoCall: callType == 'video' || callType == 'accept',
+        onDecline: () {
+          Navigator.pop(context);
+          setState(() => _isCallPopupShowing = false);
+          ApiServer().rejectCall(
+            userId: userData?['id']?.toString() ?? "",
+            conversationId: convId,
+            token: token,
+          );
+        },
+        onAccept: () async {
+          Navigator.pop(context);
+          setState(() => _isCallPopupShowing = false);
+
+          await JitsiCallService.joinCall(
+            context: context,
+            userId: userData?['id']?.toString() ?? "",
+            companyId: userData?['company_id']?.toString() ?? "",
+            conversationId: convId,
+            conversationType: callType,
+            participants: [],
+            roomTitle: callerName,
+            userName: userData?['firstname'],
+            userEmail: userData?['email'],
+            userAvatar: userData?['img']?.toString(),
+            isVideo: callType == 'video' || callType == 'accept',
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _handleLogout() async {
@@ -420,11 +503,13 @@ class _HomePageState extends State<HomePage> {
               userMe: userData?['id']?.toString(),
               userId: userData?['id']?.toString(),
               companyId: userData?['company_id']?.toString(),
+              isDark: widget.isDark,
               onRoomTap: _markRoomAsRead,
             ),
             CallsTab(
               userId: userData?['id']?.toString(),
               companyId: userData?['company_id']?.toString(),
+              isDark: widget.isDark,
             ),
             DashboardTab(userMe: userData),
           ],

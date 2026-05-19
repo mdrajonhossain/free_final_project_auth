@@ -2,166 +2,174 @@ import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../controller/api/api_service.dart';
+import 'dart:async';
 
 class JitsiCallService {
   static const String serverUrl = "https://wfvs001.freeli.io/";
 
-  static void _showConnectingLoader(BuildContext context) {
+  static void _showConnectingLoader(
+    BuildContext context,
+    Completer<BuildContext> contextCompleter,
+  ) {
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Color(0xff0B1120),
-      builder: (context) => WillPopScope(
-        onWillPop: () async => false,
-        child: Dialog(
-          elevation: 0,
-          backgroundColor: Color.fromARGB(255, 29, 43, 78),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF16213E),
-                  Color(0xFF1E3A70),
-                  Color(0xFF233B6E),
-                ],
-              ),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.35),
-                  blurRadius: 30,
-                  offset: const Offset(0, 14),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                /// ANIMATED ICON
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: 90,
-                      width: 90,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.05),
-                      ),
-                    ),
-
-                    Container(
-                      height: 68,
-                      width: 68,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.blueAccent,
-                            Colors.cyanAccent.withOpacity(0.9),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.cyanAccent.withOpacity(0.4),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.video_call_rounded,
-                        color: Colors.white,
-                        size: 36,
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 105,
-                      width: 105,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.cyanAccent,
-                        ),
-                      ),
-                    ),
+      barrierColor: Color(0xff0B1180),
+      builder: (dialogContext) {
+        if (!contextCompleter.isCompleted)
+          contextCompleter.complete(dialogContext);
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: Dialog(
+            elevation: 0,
+            backgroundColor: Color.fromARGB(255, 29, 43, 78),
+            insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF16213E),
+                    Color(0xFF1E3A70),
+                    Color(0xFF233B6E),
                   ],
                 ),
-
-                const SizedBox(height: 30),
-
-                /// TITLE
-                const Text(
-                  "Connecting you to your Meeting",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.4,
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.35),
+                    blurRadius: 30,
+                    offset: const Offset(0, 14),
                   ),
-                ),
-
-                const SizedBox(height: 10),
-
-                /// SUBTITLE
-                Text(
-                  "Please wait while we establish\nsecure connection with server...",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.72),
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                /// STATUS BOX
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.06),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  /// ANIMATED ICON
+                  Stack(
+                    alignment: Alignment.center,
                     children: [
                       Container(
-                        height: 10,
-                        width: 10,
-                        decoration: const BoxDecoration(
-                          color: Colors.greenAccent,
+                        height: 90,
+                        width: 90,
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.05),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        "Securing connection...",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+
+                      Container(
+                        height: 68,
+                        width: 68,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.blueAccent,
+                              Colors.cyanAccent.withOpacity(0.9),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.cyanAccent.withOpacity(0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.video_call_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        height: 105,
+                        width: 105,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.cyanAccent,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 30),
+
+                  /// TITLE
+                  const Text(
+                    "Connecting you to your Meeting",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 21,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  /// SUBTITLE
+                  Text(
+                    "Please wait while we establish\nsecure connection with server...",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.72),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  /// STATUS BOX
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          height: 10,
+                          width: 10,
+                          decoration: const BoxDecoration(
+                            color: Colors.greenAccent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          "Securing connection...",
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -180,7 +188,17 @@ class JitsiCallService {
     VoidCallback? onCallFinished,
     Function(String participantId)? onConferenceJoined,
   }) async {
-    _showConnectingLoader(context);
+    // Use a completer to get the dialog's own context for safe dismissal
+    final Completer<BuildContext> loaderCompleter = Completer<BuildContext>();
+    _showConnectingLoader(context, loaderCompleter);
+
+    // Helper to dismiss the loader using the captured dialog context
+    Future<void> dismissLoader() async {
+      final dialogCtx = await loaderCompleter.future;
+      if (dialogCtx.mounted) {
+        Navigator.of(dialogCtx).pop();
+      }
+    }
 
     // Request necessary permissions before launching the call
     Map<Permission, PermissionStatus> statuses = await [
@@ -190,7 +208,7 @@ class JitsiCallService {
 
     if (statuses[Permission.camera]!.isDenied ||
         statuses[Permission.microphone]!.isDenied) {
-      if (context.mounted) Navigator.of(context).pop();
+      await dismissLoader();
       debugPrint("Call permissions denied by user.");
       return;
     }
@@ -210,19 +228,21 @@ class JitsiCallService {
         // Use a persistent signaling token instead of the full JWT to match web client signaling
         signalingToken = await ApiServer.getSignalingToken();
 
-        callResponse = await ApiServer().jitsiCallAccept_Call(
-          userId,
-          companyId,
-          conversationId,
-          signalingToken,
-          conversation_type: conversationType,
-          participantsAll: participants,
-          participantsAdmin: [userId], // Pass current user as admin
-          arrParticipants: participants, // Ring all group members
-          convname: roomTitle ?? "Meeting",
-          callLink: callLink,
-          expireUnix: expireUnix,
-        );
+        callResponse = await ApiServer()
+            .jitsiCallAccept_Call(
+              userId,
+              companyId,
+              conversationId,
+              signalingToken,
+              conversation_type: conversationType,
+              participantsAll: participants,
+              participantsAdmin: [userId], // Pass current user as admin
+              arrParticipants: participants, // Ring all group members
+              convname: roomTitle ?? "Meeting",
+              callLink: callLink,
+              expireUnix: expireUnix,
+            )
+            .timeout(const Duration(seconds: 20));
 
         // If initiation fails (status: false), fallback to fetching existing session JWT via query
         if (callResponse?['status'] != true) {
@@ -322,7 +342,8 @@ class JitsiCallService {
 
       var jitsiMeet = JitsiMeet();
 
-      if (context.mounted) Navigator.of(context).pop();
+      // Dismiss loader BEFORE joining the meeting as requested
+      await dismissLoader();
 
       await jitsiMeet.join(
         options,
@@ -345,7 +366,7 @@ class JitsiCallService {
         ),
       );
     } catch (error) {
-      if (context.mounted) Navigator.of(context).pop();
+      await dismissLoader();
       debugPrint("Jitsi Join Error: $error");
     }
   }
