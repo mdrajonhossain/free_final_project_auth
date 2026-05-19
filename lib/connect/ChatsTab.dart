@@ -183,6 +183,13 @@ class _ChatsTabState extends State<ChatsTab>
           title = '${title.substring(0, 12)}...';
         }
 
+        final bool isGroup = room['group'] == 'yes';
+        final bool roomIsOnline =
+            !isGroup &&
+            (room['is_online'] == true ||
+                room['is_online'] == 'yes' ||
+                room['online'] == true);
+
         final String rawLastMsg = room['last_msg'] ?? '';
         final String decryptedLastMsg = CryptoUtils.decryptMessage(rawLastMsg);
         String lastMsg = FormatUtils.stripHtml(decryptedLastMsg);
@@ -206,6 +213,9 @@ class _ChatsTabState extends State<ChatsTab>
         final String displayTime = lastTimeStr.length >= 10
             ? lastTimeStr.substring(0, 10)
             : lastTimeStr;
+
+        final int unreadCount =
+            int.tryParse(room['unread_count']?.toString() ?? '0') ?? 0;
 
         return Card(
           color: Colors.green.withOpacity(
@@ -232,14 +242,35 @@ class _ChatsTabState extends State<ChatsTab>
                 },
               );
             },
-            leading: CircleAvatar(
-              backgroundColor: AppColors.accentColor,
-              backgroundImage: imageUrl.isNotEmpty
-                  ? NetworkImage(imageUrl)
-                  : null,
-              child: imageUrl.isEmpty
-                  ? const Icon(Icons.person, color: Colors.white)
-                  : null,
+            leading: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: AppColors.accentColor,
+                  backgroundImage: imageUrl.isNotEmpty
+                      ? NetworkImage(imageUrl)
+                      : null,
+                  child: imageUrl.isEmpty
+                      ? const Icon(Icons.person, color: Colors.white)
+                      : null,
+                ),
+
+                // Online / Offline Indicator (Top Right)
+                if (!isGroup)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: roomIsOnline ? Colors.green : Colors.grey,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             title: Text(
               title,
@@ -265,7 +296,7 @@ class _ChatsTabState extends State<ChatsTab>
                   style: const TextStyle(color: Colors.white54, fontSize: 11),
                 ),
                 const SizedBox(height: 5),
-                if (false) // Placeholder for unread count logic
+                if (unreadCount > 0)
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: const BoxDecoration(
@@ -273,7 +304,7 @@ class _ChatsTabState extends State<ChatsTab>
                       shape: BoxShape.circle,
                     ),
                     child: Text(
-                      '0', // Placeholder since unread count logic is not yet implemented
+                      unreadCount.toString(),
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 10,
