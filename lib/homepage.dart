@@ -36,6 +36,7 @@ class _HomePageState extends State<HomePage> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'all';
+  String? _activeConversationId; // Tracks currently open chat
 
   @override
   void initState() {
@@ -196,6 +197,8 @@ class _HomePageState extends State<HomePage> {
                     conversationRooms![index],
                   );
 
+                  bool isActive = _activeConversationId == convId;
+
                   // Update snippet
                   updatedRoom['last_msg'] =
                       displayBody; // Show readable text instantly
@@ -204,12 +207,15 @@ class _HomePageState extends State<HomePage> {
                       DateTime.now().toIso8601String();
 
                   // Increment unread count locally for instant UI update
-                  int currentUnread =
-                      int.tryParse(
-                        updatedRoom['unread_count']?.toString() ?? '0',
-                      ) ??
-                      0;
-                  updatedRoom['unread_count'] = (currentUnread + 1).toString();
+                  if (!isActive) {
+                    int currentUnread =
+                        int.tryParse(
+                          updatedRoom['unread_count']?.toString() ?? '0',
+                        ) ??
+                        0;
+                    updatedRoom['unread_count'] = (currentUnread + 1)
+                        .toString();
+                  }
 
                   // Remove and insert at top to show most recent first
                   conversationRooms!.removeAt(index);
@@ -266,6 +272,21 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       print("Error fetching rooms: $e");
     }
+  }
+
+  /// Marks a specific room as read locally and sets it as the active chat
+  void _markRoomAsRead(String convId) {
+    setState(() {
+      _activeConversationId = convId.isEmpty ? null : convId;
+      if (conversationRooms != null && convId.isNotEmpty) {
+        final index = conversationRooms!.indexWhere(
+          (room) => room['conversation_id']?.toString() == convId,
+        );
+        if (index != -1) {
+          conversationRooms![index]['unread_count'] = '0';
+        }
+      }
+    });
   }
 
   Future<void> _handleLogout() async {
@@ -399,6 +420,7 @@ class _HomePageState extends State<HomePage> {
               userMe: userData?['id']?.toString(),
               userId: userData?['id']?.toString(),
               companyId: userData?['company_id']?.toString(),
+              onRoomTap: _markRoomAsRead,
             ),
             CallsTab(
               userId: userData?['id']?.toString(),

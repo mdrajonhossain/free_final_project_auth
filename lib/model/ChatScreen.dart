@@ -60,6 +60,10 @@ class _ChatScreenState extends State<ChatScreen> {
           convImg =
               (args['conv_img'] ?? args['img'] ?? args['image'])?.toString() ??
               "";
+
+          // Synchronize with server to mark messages as read
+          ApiServer().markAsRead(conversationId);
+
           _chatBloc.add(ChatFetchRequested(conversationId));
         });
       }
@@ -1109,9 +1113,11 @@ class _AttachmentList extends StatelessWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           builder: (ctx) => PublicTag(
-            messageToForward: msg is Map<String, dynamic>
-                ? msg
-                : Map<String, dynamic>.from(msg),
+            messageToForward: {
+              'company_id': company_id,
+              'conversation_id': msg['conversation_id'],
+              'msg_id': msg['msg_id'] ?? msg['id'],
+            },
           ),
         );
       },

@@ -60,6 +60,10 @@ class _ChatScreenState extends State<ChatScreen> {
           convImg =
               (args['conv_img'] ?? args['img'] ?? args['image'])?.toString() ??
               "";
+
+          // Synchronize with server to mark messages as read
+          ApiServer().markAsRead(conversationId);
+
           _chatBloc.add(ChatFetchRequested(conversationId));
         });
       }

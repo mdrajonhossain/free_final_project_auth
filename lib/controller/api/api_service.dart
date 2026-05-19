@@ -644,4 +644,26 @@ class ApiServer {
   }
 
   // ===================== End Filehubs Links ========================
+
+  /// Marks all messages in a conversation as read on the server.
+  Future<Map<String, dynamic>> markAsRead(String conversationId) async {
+    try {
+      final data = await ApiServer.call(
+        r'''
+        mutation MarkAsRead($conversation_id: String) {
+          mark_as_read(conversation_id: $conversation_id) {
+            status
+            message
+          }
+        }
+        ''',
+        variables: {"conversation_id": conversationId},
+      );
+      final result = data['mark_as_read'];
+      return result is Map ? Map<String, dynamic>.from(result) : {};
+    } catch (e) {
+      debugPrint("[API ERROR] markAsRead: $e");
+      return {"status": false, "message": e.toString()};
+    }
+  }
 }

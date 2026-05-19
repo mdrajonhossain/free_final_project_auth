@@ -12,6 +12,7 @@ class ChatsTab extends StatefulWidget {
   final String? userId;
   final String? companyId;
   final bool isDark;
+  final Function(String)? onRoomTap; // Callback to HomePage
 
   const ChatsTab({
     super.key,
@@ -20,6 +21,7 @@ class ChatsTab extends StatefulWidget {
     this.userId,
     this.companyId,
     this.isDark = true,
+    this.onRoomTap,
   });
 
   @override
@@ -231,8 +233,13 @@ class _ChatsTabState extends State<ChatsTab>
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
-            onTap: () {
-              Navigator.pushNamed(
+            onTap: () async {
+              final convId = room['conversation_id']?.toString() ?? "";
+              if (widget.onRoomTap != null) {
+                widget.onRoomTap!(convId); // Clear counter immediately
+              }
+
+              await Navigator.pushNamed(
                 context,
                 '/chat',
                 arguments: {
@@ -245,6 +252,11 @@ class _ChatsTabState extends State<ChatsTab>
                   'conv_img': room['conv_img'],
                 },
               );
+
+              // Reset active chat status when returning
+              if (widget.onRoomTap != null) {
+                widget.onRoomTap!("");
+              }
             },
             leading: Stack(
               children: [
