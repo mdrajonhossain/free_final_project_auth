@@ -3,12 +3,14 @@ import '../controller/api/api_service.dart';
 import '../skeleton.dart';
 import 'format_utils.dart';
 import 'jitsi_call_service.dart';
+import '../AppColors.dart';
 
 class CallsTab extends StatefulWidget {
   final String? userId;
   final String? companyId;
+  final bool isDark;
 
-  const CallsTab({super.key, this.userId, this.companyId});
+  const CallsTab({super.key, this.userId, this.companyId, this.isDark = true});
 
   @override
   State<CallsTab> createState() => _CallsTabState();
@@ -61,7 +63,7 @@ class _CallsTabState extends State<CallsTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.getBackgroundColor(widget.isDark),
       body: isLoading
           ? const ChatSkeleton()
           : callHistory.isEmpty

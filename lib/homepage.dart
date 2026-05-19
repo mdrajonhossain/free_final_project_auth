@@ -314,7 +314,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     // Calculate total unread messages from all conversation rooms
-    int totalUnread = 5;
+    int totalUnread = 0;
     if (conversationRooms != null) {
       for (var room in conversationRooms!) {
         final count = room['unread_count'];

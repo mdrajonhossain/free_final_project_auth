@@ -11,6 +11,7 @@ class ChatsTab extends StatefulWidget {
   final String? userMe;
   final String? userId;
   final String? companyId;
+  final bool isDark;
 
   const ChatsTab({
     super.key,
@@ -18,6 +19,7 @@ class ChatsTab extends StatefulWidget {
     this.userMe,
     this.userId,
     this.companyId,
+    this.isDark = true,
   });
 
   @override
@@ -55,7 +57,7 @@ class _ChatsTabState extends State<ChatsTab>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.getBackgroundColor(widget.isDark),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(
           bottom: 80, // bottom space
@@ -139,6 +141,10 @@ class _ChatsTabState extends State<ChatsTab>
   }
 
   Widget _buildTabContent(BuildContext context) {
+    final cardColor = widget.isDark
+        ? Colors.white.withOpacity(0.05)
+        : Colors.black.withOpacity(0.05);
+
     if (widget.conversationRooms == null) {
       return const ChatSkeleton(); // Show skeleton instead of loader
     }
@@ -218,10 +224,8 @@ class _ChatsTabState extends State<ChatsTab>
             int.tryParse(room['unread_count']?.toString() ?? '0') ?? 0;
 
         return Card(
-          color: Colors.green.withOpacity(
-            0.1,
-          ), // Green background for list items
-          elevation: 2,
+          color: cardColor,
+          elevation: 0,
           margin: const EdgeInsets.only(bottom: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
