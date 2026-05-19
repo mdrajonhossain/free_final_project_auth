@@ -357,6 +357,7 @@ participants: $participants
                   controller: _messageController,
                   onSend: _sendMessage,
                   companyId: company_id,
+                  group: conversation_type == "group",
                   userEmail: state.userData?['email'],
                   conversationId: conversationId,
                   participants: participants,

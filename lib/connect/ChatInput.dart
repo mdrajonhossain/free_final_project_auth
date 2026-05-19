@@ -13,8 +13,8 @@ class ChatInput extends StatefulWidget {
   final dynamic participants;
   final ChatBloc chatBloc;
   final Function(List<Map<String, dynamic>>) onAttachmentsPicked;
-  final bool
-  showAttachmentIcon; // New parameter to control attachment icon visibility
+  final bool showAttachmentIcon;
+  final bool group;
 
   const ChatInput({
     super.key,
@@ -25,8 +25,9 @@ class ChatInput extends StatefulWidget {
     required this.conversationId,
     required this.participants,
     required this.chatBloc,
+    this.group = false,
     this.userEmail,
-    this.showAttachmentIcon = true, // Default to true
+    this.showAttachmentIcon = true,
   });
 
   @override
@@ -41,6 +42,7 @@ class _ChatInputState extends State<ChatInput> {
     setState(() {
       _showEmoji = !_showEmoji;
     });
+
     if (_showEmoji) {
       _focusNode.unfocus();
     } else {
@@ -58,6 +60,7 @@ class _ChatInputState extends State<ChatInput> {
             controller: widget.controller,
             onClose: () => setState(() => _showEmoji = false),
           ),
+
         SafeArea(
           child: Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 14, 14),
@@ -71,6 +74,7 @@ class _ChatInputState extends State<ChatInput> {
               children: [
                 Expanded(
                   child: Container(
+                    height: 56,
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(28),
@@ -78,13 +82,38 @@ class _ChatInputState extends State<ChatInput> {
                     ),
                     child: Row(
                       children: [
+                        // LOCK ICON
+                        widget.group
+                            ? Row(
+                                children: [
+                                  const SizedBox(width: 14),
+                                  Container(
+                                    height: 34,
+                                    width: 34,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.08),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.lock_rounded,
+                                      color: Colors.white.withOpacity(0.7),
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                ],
+                              )
+                            : const SizedBox(width: 18),
+
+                        // TEXT FIELD
                         Expanded(
                           child: TextField(
                             focusNode: _focusNode,
                             controller: widget.controller,
                             onTap: () {
-                              if (_showEmoji)
+                              if (_showEmoji) {
                                 setState(() => _showEmoji = false);
+                              }
                             },
                             style: const TextStyle(
                               color: Colors.white,
@@ -93,16 +122,14 @@ class _ChatInputState extends State<ChatInput> {
                             minLines: 1,
                             maxLines: 5,
                             decoration: const InputDecoration(
-                              hintText: "Type message...",
+                              hintText: "Message...",
                               hintStyle: TextStyle(color: Colors.white38),
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 14,
-                              ),
                             ),
                           ),
                         ),
+
+                        // ATTACHMENT ICON
                         if (widget.showAttachmentIcon)
                           IconButton(
                             onPressed: () async {
@@ -114,6 +141,7 @@ class _ChatInputState extends State<ChatInput> {
                                 participants: widget.participants,
                                 chatBloc: widget.chatBloc,
                               );
+
                               if (results != null && results.isNotEmpty) {
                                 widget.onAttachmentsPicked(results);
                               }
@@ -125,6 +153,8 @@ class _ChatInputState extends State<ChatInput> {
                             ),
                             visualDensity: VisualDensity.compact,
                           ),
+
+                        // EMOJI ICON
                         IconButton(
                           onPressed: _toggleEmoji,
                           icon: Icon(
@@ -138,12 +168,16 @@ class _ChatInputState extends State<ChatInput> {
                           ),
                           visualDensity: VisualDensity.compact,
                         ),
+
                         const SizedBox(width: 4),
                       ],
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 12),
+
+                // SEND BUTTON
                 GestureDetector(
                   onTap: widget.onSend,
                   child: Container(
@@ -154,6 +188,13 @@ class _ChatInputState extends State<ChatInput> {
                       gradient: const LinearGradient(
                         colors: [Color(0xff7C5CFF), Color(0xff5B4DFF)],
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xff7C5CFF).withOpacity(0.35),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: const Icon(
                       Icons.send_rounded,
