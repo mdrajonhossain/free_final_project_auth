@@ -19,40 +19,56 @@ class Filehubs extends StatefulWidget {
   });
 
   @override
-  State<Filehubs> createState() => _FilehubsState();
+  State<Filehubs> createState() => FilehubsState();
 }
 
-class _FilehubsState extends State<Filehubs> {
+class FilehubsState extends State<Filehubs> {
   int _currentIndex = 0; // Default to Tags tab to show API data
   Map<String, dynamic>? userData;
-  Map<String, dynamic>? galleryData;
+  List<dynamic> tagsList = [];
+  List<dynamic> filesList = [];
+  List<dynamic> linksList = [];
   bool isLoading = true;
+  String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    get_tagData();
+    fetchFilehubData();
   }
 
-  Future<void> get_tagData() async {
+  Future<void> fetchFilehubData() async {
     try {
       if (!mounted) return;
-      setState(() => isLoading = true);
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
       final results = await Future.wait([
         ApiServer().fetchMe(),
         ApiServer().get_tag_gallery(),
+        ApiServer().fetchFilehubs_Link(),
       ]);
 
       if (!mounted) return;
       setState(() {
-        userData = results[0] as Map<String, dynamic>?;
-        galleryData = results[1] as Map<String, dynamic>?;
+        userData = results[0] as Map<String, dynamic>?; // User data
+        final galleryResult =
+            results[1] as Map<String, dynamic>?; // Tags and files
+        final linksResult = results[2] as List<Map<String, dynamic>>?; // Links
+
+        tagsList = galleryResult?['tags'] ?? [];
+        filesList = galleryResult?['files'] ?? [];
+        linksList = linksResult ?? [];
         isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => isLoading = false);
-      debugPrint("Error fetching data: $e");
+      setState(() {
+        isLoading = false;
+        errorMessage = "Error fetching data: ${e.toString()}";
+        debugPrint(errorMessage);
+      });
     }
   }
 
@@ -68,12 +84,17 @@ class _FilehubsState extends State<Filehubs> {
   @override
   Widget build(BuildContext context) {
     // Extract tags from galleryData
-    final List<dynamic> tagsList = galleryData?['tags'] ?? [];
-
     final List<Widget> pages = [
       TagsPage(isDark: widget.isDark, tags: tagsList),
-      FileHubPage(isDark: widget.isDark),
-      LinksPage(isDark: widget.isDark),
+      FileHubPage(
+        isDark: widget.isDark,
+        files: filesList,
+      ), // Assuming FileHubPage takes files
+      LinksPage(
+        isDark: widget.isDark,
+        links: linksList,
+        onRefresh: fetchFilehubData,
+      ), // Assuming LinksPage takes links
     ];
 
     final Color primaryColor = widget.isDark
@@ -122,7 +143,17 @@ class _FilehubsState extends State<Filehubs> {
 
       /// ================= BODY =================
       body: isLoading
-          ? FileHubSkeleton(isDark: widget.isDark)
+          ? FileHubSkeleton(
+              isDark: widget.isDark,
+            ) // Show skeleton while loading
+          : errorMessage != null
+          ? Center(
+              child: Text(
+                errorMessage!,
+                style: const TextStyle(color: Colors.redAccent),
+                textAlign: TextAlign.center,
+              ),
+            )
           : pages[_currentIndex],
 
       /// ================= BOTTOM NAV =================

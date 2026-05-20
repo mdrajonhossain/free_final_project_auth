@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'FileHubSkeleton.dart';
+import 'package:url_launcher/url_launcher.dart'; // For opening links
 
 class LinksPage extends StatefulWidget {
   final bool isDark;
+  final List<dynamic> links; // New parameter
+  final Future<void> Function() onRefresh;
 
-  const LinksPage({super.key, required this.isDark});
+  const LinksPage({
+    super.key,
+    required this.isDark,
+    required this.links, // Mark as required
+    required this.onRefresh,
+  });
 
   @override
   State<LinksPage> createState() => _LinksPageState();
@@ -14,29 +22,23 @@ class LinksPage extends StatefulWidget {
 class _LinksPageState extends State<LinksPage> {
   bool isLoading = true;
 
-  List<Map<String, dynamic>> links = [];
-
   final TextEditingController _searchController = TextEditingController();
   String _searchText = "";
 
   @override
   void initState() {
     super.initState();
-    getLinkData();
+    // Data is now passed via widget.links, so no need to fetch again here.
+    isLoading = false; // Assuming data is loaded by parent
   }
 
-  Future<void> getLinkData() async {
-    try {
-      final data = await ApiServer().fetchFilehubs_Link();
+  @override
+  void didUpdateWidget(covariant LinksPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.links != oldWidget.links) {
+      // If the parent passes new links, update the state
       setState(() {
-        links = data;
-        isLoading = false;
-      });
-    } catch (e) {
-      debugPrint("Error fetching link data: $e");
-
-      setState(() {
-        isLoading = false;
+        isLoading = false; // Data is updated, so not loading
       });
     }
   }
@@ -79,7 +81,7 @@ class _LinksPageState extends State<LinksPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> filteredLinks = links.where((link) {
+    final List<dynamic> filteredLinks = widget.links.where((link) {
       final String title = _getTitle(link).toLowerCase();
 
       final String url = (link['url'] ?? '').toString().toLowerCase();
@@ -108,7 +110,10 @@ class _LinksPageState extends State<LinksPage> {
       backgroundColor: backgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: getLinkData,
+          // Keep RefreshIndicator for manual refresh
+          onRefresh: () async {
+            await widget.onRefresh();
+          },
           color: primaryColor,
           backgroundColor: cardColor,
           child: Column(
@@ -342,9 +347,16 @@ class _LinksPageState extends State<LinksPage> {
                                 /// OPEN BUTTON
                                 InkWell(
                                   borderRadius: BorderRadius.circular(12),
-                                  onTap: () {
-                                    // TODO: Add url_launcher logic here
-                                    debugPrint("Opening URL: $url");
+                                  onTap: () async {
+                                    final Uri uri = Uri.parse(url);
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                    } else {
+                                      debugPrint("Could not launch $url");
+                                    }
                                   },
                                   child: Container(
                                     height: 42,

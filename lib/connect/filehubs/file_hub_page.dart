@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import '../file_utils.dart';
 import 'FileHubSkeleton.dart';
+import 'package:url_launcher/url_launcher.dart'; // For opening files
 
 class FileHubPage extends StatefulWidget {
   final bool isDark;
+  final List<dynamic> files; // New parameter
 
-  const FileHubPage({super.key, this.isDark = true});
+  const FileHubPage({
+    super.key,
+    this.isDark = true,
+    required this.files, // Mark as required
+  });
 
   @override
   State<FileHubPage> createState() => _FileHubPageState();
@@ -14,9 +20,6 @@ class FileHubPage extends StatefulWidget {
 
 class _FileHubPageState extends State<FileHubPage> {
   int selectedCategory = 0;
-
-  Map<String, dynamic>? userData;
-  Map<String, dynamic>? galleryData;
 
   bool isLoading = true;
 
@@ -27,33 +30,19 @@ class _FileHubPageState extends State<FileHubPage> {
   @override
   void initState() {
     super.initState();
-    get_fileData();
+    // Data is now passed via widget.files, so no need to fetch again here.
+    // We just need to ensure the initial state reflects the passed data.
+    isLoading = false; // Assuming data is loaded by parent
   }
 
-  Future<void> get_fileData() async {
-    try {
-      if (!mounted) return;
-
-      setState(() => isLoading = true);
-
-      final results = await Future.wait([
-        ApiServer().fetchMe(),
-        ApiServer().get_file_gallery(),
-      ]);
-
-      if (!mounted) return;
-
+  @override
+  void didUpdateWidget(covariant FileHubPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.files != oldWidget.files) {
+      // If the parent passes new files, update the state
       setState(() {
-        userData = results[0] as Map<String, dynamic>?;
-        galleryData = results[1] as Map<String, dynamic>?;
-        isLoading = false;
+        isLoading = false; // Data is updated, so not loading
       });
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() => isLoading = false);
-
-      debugPrint("Error fetching data: $e");
     }
   }
 
@@ -61,200 +50,6 @@ class _FileHubPageState extends State<FileHubPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  /// FORMAT FILE SIZE
-  String formatFileSize(dynamic bytes) {
-    if (bytes == null) return "0 B";
-
-    final int size = int.tryParse(bytes.toString()) ?? 0;
-
-    if (size >= 1024 * 1024 * 1024) {
-      return "${(size / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB";
-    } else if (size >= 1024 * 1024) {
-      return "${(size / (1024 * 1024)).toStringAsFixed(1)} MB";
-    } else if (size >= 1024) {
-      return "${(size / 1024).toStringAsFixed(1)} KB";
-    }
-
-    return "$size B";
-  }
-
-  /// FILE ITEM
-  Widget _buildFileItem(
-    dynamic file,
-    bool isDark,
-    Color textColor,
-    Color subTextColor,
-    Color cardColor,
-  ) {
-    final String originalName =
-        file['originalname'] ??
-        file['original_name'] ??
-        file['name'] ??
-        "Unknown File";
-
-    final String location = file['location'] ?? "";
-
-    final String fileSize = formatFileSize(
-      file['file_size'] ?? file['filesize'] ?? 0,
-    );
-
-    final String createdAt = file['created_at'] ?? "";
-
-    String date = "";
-
-    if (createdAt.isNotEmpty && createdAt.contains("T")) {
-      date = createdAt.split("T").first;
-    }
-
-    final String extension = location.contains(".")
-        ? location.split('.').last.split('?').first.toLowerCase()
-        : "";
-
-    final bool isImage = [
-      "jpg",
-      "jpeg",
-      "png",
-      "gif",
-      "webp",
-    ].contains(extension);
-
-    final String fullUrl = location.startsWith("http")
-        ? location
-        : "https://wfss001.freeli.io/$location";
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.05)
-              : Colors.grey.withOpacity(0.08),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.18 : 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-
-      child: Row(
-        children: [
-          /// FILE IMAGE / ICON
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.08)
-                  : const Color(0xFF4C8DFF).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-
-            child: isImage
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      fullUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(
-                          Icons.broken_image_rounded,
-                          color: subTextColor,
-                        );
-                      },
-                    ),
-                  )
-                : Icon(
-                    FileUtils.getFileIcon(location),
-                    color: isDark ? Colors.white70 : const Color(0xFF4C8DFF),
-                    size: 24,
-                  ),
-          ),
-
-          const SizedBox(width: 16),
-
-          /// FILE INFO
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  originalName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                Row(
-                  children: [
-                    Text(
-                      fileSize,
-                      style: TextStyle(color: subTextColor, fontSize: 12),
-                    ),
-
-                    if (date.isNotEmpty) ...[
-                      const SizedBox(width: 10),
-
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: subTextColor.withOpacity(0.5),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-
-                      const SizedBox(width: 10),
-
-                      Expanded(
-                        child: Text(
-                          date,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: subTextColor, fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          /// MENU
-          Container(
-            height: 32,
-            width: 32,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.grey.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.more_vert_rounded,
-              color: subTextColor.withOpacity(0.8),
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -274,7 +69,7 @@ class _FileHubPageState extends State<FileHubPage> {
     final subTextColor = isDark ? Colors.white70 : Colors.black54;
 
     /// API FILES
-    final List<dynamic> allFiles = galleryData?['files'] ?? [];
+    final List<dynamic> allFiles = widget.files;
 
     /// FILTER CATEGORY
     List<dynamic> filteredFiles = allFiles.where((file) {
@@ -344,6 +139,131 @@ class _FileHubPageState extends State<FileHubPage> {
     final int videoCount = allFiles.where((file) {
       return (file['file_category'] ?? "").toString().toLowerCase() == "video";
     }).length;
+
+    /// FORMAT FILE SIZE
+    String formatFileSize(dynamic bytes) {
+      if (bytes == null) return "0 B";
+      final int size = int.tryParse(bytes.toString()) ?? 0;
+      if (size >= 1024 * 1024 * 1024) {
+        return "${(size / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB";
+      } else if (size >= 1024 * 1024) {
+        return "${(size / (1024 * 1024)).toStringAsFixed(1)} MB";
+      } else if (size >= 1024) {
+        return "${(size / 1024).toStringAsFixed(1)} KB";
+      }
+      return "$size B";
+    }
+
+    /// FILE ITEM BUILDER (Professional View)
+    Widget buildFileItem(dynamic file) {
+      final String originalName =
+          file['originalname'] ??
+          file['original_name'] ??
+          file['name'] ??
+          "Unknown File";
+      final String location = file['location'] ?? "";
+      final String fileSize = formatFileSize(
+        file['file_size'] ?? file['filesize'] ?? 0,
+      );
+      final String createdAt = file['created_at'] ?? "";
+      final String date = createdAt.isNotEmpty && createdAt.contains("T")
+          ? createdAt.split("T").first
+          : "N/A";
+
+      final String fullUrl = location.startsWith("http")
+          ? location
+          : "https://wfss001.freeli.io/$location";
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.grey.withOpacity(0.08),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 48,
+              width: 48,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : const Color(0xFF4C8DFF).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(
+                FileUtils.getFileIcon(location),
+                color: isDark ? Colors.white70 : const Color(0xFF4C8DFF),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    originalName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "$fileSize • $date",
+                    style: TextStyle(color: subTextColor, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () async {
+                  final Uri uri = Uri.parse(fullUrl);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    debugPrint('Could not launch $fullUrl');
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4C8DFF).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.download_rounded,
+                    color: Color(0xFF4C8DFF),
+                    size: 20,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     Widget buildCategoryChip(String label, int index, int count) {
       final bool isSelected = selectedCategory == index;
@@ -535,39 +455,25 @@ class _FileHubPageState extends State<FileHubPage> {
                   const SizedBox(height: 24),
 
                   /// FILE LIST
-                  Expanded(
-                    child: filteredFiles.isEmpty
-                        ? Center(
-                            child: Text(
-                              "No items found",
-                              style: TextStyle(
-                                color: subTextColor,
-                                fontSize: 14,
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            physics: const BouncingScrollPhysics(),
-
-                            padding: const EdgeInsets.only(
-                              left: 20,
-                              right: 20,
-                              bottom: 30,
-                            ),
-
-                            itemCount: filteredFiles.length,
-
-                            itemBuilder: (context, index) {
-                              return _buildFileItem(
-                                filteredFiles[index],
-                                isDark,
-                                textColor,
-                                subTextColor,
-                                cardColor,
-                              );
-                            },
+                  filteredFiles.isEmpty
+                      ? Center(
+                          child: Text(
+                            "No items found",
+                            style: TextStyle(color: subTextColor, fontSize: 14),
                           ),
-                  ),
+                        )
+                      : Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                            child: ListView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: filteredFiles.length,
+                              itemBuilder: (context, index) {
+                                return buildFileItem(filteredFiles[index]);
+                              },
+                            ),
+                          ),
+                        ),
                 ],
               ),
       ),

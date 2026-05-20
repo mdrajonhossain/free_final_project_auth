@@ -8,16 +8,20 @@ class FileHubSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color shimmerColor = isDark
-        ? const Color(0xFF1B2945)
-        : Colors.grey.withOpacity(0.1);
-    final Color highlightColor = isDark
-        ? const Color(0xFF132850)
-        : Colors.grey.withOpacity(0.05);
+    final Color shimmerColor =
+        isDark // Color for the actual skeleton elements
+        ? const Color(0xFF1B2945) // Darker blue-grey for dark mode
+        : const Color(0xFFE0E0E0); // Light grey for light mode
+    final Color highlightColor =
+        isDark // Background color for the item container
+        ? const Color(
+            0xFF0F1B35,
+          ) // Deeper, more professional blue for dark mode
+        : const Color(0xFFF5F5F5); // Very light grey for light mode
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      itemCount: 8,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      itemCount: 10, // Increased count for better initial fill
       itemBuilder: (context, index) {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -26,110 +30,82 @@ class FileHubSkeleton extends StatelessWidget {
             color: highlightColor,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: _buildSkeletonItem(shimmerColor),
+          child: _buildUnifiedSkeletonItem(shimmerColor, type),
         );
       },
     );
   }
 
-  Widget _buildSkeletonItem(Color color) {
-    if (type == 'tag') {
-      return Row(
-        children: [
-          Container(
-            height: 14,
-            width: 14,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  Widget _buildUnifiedSkeletonItem(Color color, String itemType) {
+    // Define common dimensions and border radii for a professional and consistent look
+    const double leadingShapeSize = 44.0;
+    const double trailingShapeSize = 24.0;
+    const double commonBorderRadius = 12.0;
+    const double textLineBorderRadius = 4.0;
+
+    // Design is now identical for all types (file, tag, link)
+    // to maintain a professional, unified interface.
+    const BoxShape leadingShapeBoxShape = BoxShape.rectangle;
+
+    return Row(
+      crossAxisAlignment:
+          CrossAxisAlignment.center, // Align items vertically in the center
+      children: [
+        // Leading placeholder shape (e.g., icon, avatar, tag indicator)
+        Container(
+          height: leadingShapeSize,
+          width: leadingShapeSize,
+          decoration: BoxDecoration(
+            color: color,
+            shape: leadingShapeBoxShape,
+            borderRadius: BorderRadius.circular(commonBorderRadius),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(height: 14, width: 120, color: color),
-                const SizedBox(height: 6),
-                Container(height: 10, width: 80, color: color),
-              ],
-            ),
-          ),
-          Container(height: 16, width: 16, color: color),
-        ],
-      );
-    } else if (type == 'link') {
-      return Row(
-        children: [
-          Container(
-            height: 42,
-            width: 42,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(flex: 3, child: Container(height: 14, color: color)),
-          const SizedBox(width: 10),
-          Expanded(flex: 5, child: Container(height: 12, color: color)),
-          const SizedBox(width: 10),
-          Container(
-            height: 42,
-            width: 42,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ],
-      );
-    } else {
-      // Default 'file' skeleton
-      return Row(
-        children: [
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(height: 15, width: 150, color: color),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(height: 10, width: 40, color: color),
-                    const SizedBox(width: 10),
-                    Container(
-                      width: 4,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(height: 10, width: 60, color: color),
-                  ],
+        ),
+        const SizedBox(
+          width: 16,
+        ), // Spacing between leading shape and text content
+        // Main content area with two lines of text placeholders
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Primary text line placeholder
+              Container(
+                height: 16, // Height for the primary text line
+                width: double.infinity, // Takes full available width
+                margin: const EdgeInsets.only(
+                  right: 50,
+                ), // Makes it appear shorter than full width
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(textLineBorderRadius),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 10), // Precise spacing between text lines
+              // Secondary text line placeholder
+              Container(
+                height: 11, // Slightly thinner secondary line
+                width: 120, // Fixed width for metadata feel
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(textLineBorderRadius),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Container(
-            height: 32,
-            width: 32,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(12),
-            ),
+        ),
+        const SizedBox(width: 12), // Spacing before trailing shape
+        // Trailing placeholder shape (e.g., action button, status indicator)
+        Container(
+          height: trailingShapeSize,
+          width: trailingShapeSize,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape
+                .circle, // Consistently a circle for the trailing element
           ),
-        ],
-      );
-    }
+        ),
+      ],
+    );
   }
 }
