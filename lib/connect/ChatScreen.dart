@@ -1162,28 +1162,29 @@ class _AttachmentList extends StatelessWidget {
           ),
 
           /// Top Right Counter
-          Positioned(
-            top: -2,
-            right: 4,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 245, 245, 247),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-              child: Center(
-                child: Text(
-                  (tagList is List ? tagList.length : 0).toString(),
-                  style: const TextStyle(
-                    color: Color.fromARGB(255, 6, 3, 53),
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
+          if (tagList is List && tagList.isNotEmpty)
+            Positioned(
+              top: -2,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 245, 245, 247),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                child: Center(
+                  child: Text(
+                    tagList.length.toString(),
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 6, 3, 53),
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
