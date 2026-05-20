@@ -20,6 +20,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatXmppMessageReceived>(_onXmppMessageReceived);
     on<ChatMessageEdited>(_onMessageEdited);
     on<ChatMessageDeleted>(_onMessageDeleted);
+    on<ChatFileStarred>(_onFileStarred);
   }
 
   Future<void> _onFetchRequested(
@@ -191,6 +192,34 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       print('[ChatBloc] Error editing message: $e');
       event.onError?.call(e); // Call the error callback with the error object
       emit(state.copyWith(error: e.toString()));
+    }
+  }
+
+  void _onFileStarred(ChatFileStarred event, Emitter<ChatState> emit) {
+    final List updatedMessages = List.from(state.messages);
+    final int msgIndex = updatedMessages.indexWhere(
+      (m) => (m['msg_id'] ?? m['id']).toString() == event.msgId,
+    );
+
+    if (msgIndex != -1) {
+      final Map<String, dynamic> msg = Map<String, dynamic>.from(
+        updatedMessages[msgIndex],
+      );
+      final List attachments = List.from(msg['all_attachment'] ?? []);
+
+      final int fileIndex = attachments.indexWhere(
+        (f) => (f['id'] ?? f['msg_id']).toString() == event.fileId,
+      );
+
+      if (fileIndex != -1) {
+        attachments[fileIndex] = {
+          ...attachments[fileIndex],
+          'star': event.star,
+        };
+        msg['all_attachment'] = attachments;
+        updatedMessages[msgIndex] = msg;
+        emit(state.copyWith(messages: updatedMessages));
+      }
     }
   }
 

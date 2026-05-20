@@ -1192,7 +1192,6 @@ class _AttachmentList extends StatelessWidget {
 
   Widget _buildIndexStar(BuildContext context, dynamic file) {
     final String fId = file['id']?.toString() ?? "";
-    final String isReply = msg['is_reply_msg']?.toString() ?? "no";
     final dynamic starList = file['star'];
 
     // Get my ID from the Bloc state
@@ -1206,19 +1205,15 @@ class _AttachmentList extends StatelessWidget {
         GestureDetector(
           onTap: () async {
             try {
-              final result = await ApiServer().toggleFileStar(
-                fileId: fId,
-                isReplyMsg: isReply,
-              );
+              final result = await ApiServer().toggleFileStar(fileId: fId);
+              final String mId = (msg['msg_id'] ?? msg['id'])?.toString() ?? "";
 
               if (result.isNotEmpty && context.mounted) {
-                // Dispatch an event to update the local state in ChatBloc
                 context.read<ChatBloc>().add(
                   ChatFileStarred(
-                    msgId: msg['msg_id'] ?? msg['id'],
                     fileId: fId,
-                    star: result['star'],
-                    isReply: isReply == "yes",
+                    msgId: mId,
+                    star: result['star'] ?? [],
                   ),
                 );
               }
@@ -1234,18 +1229,14 @@ class _AttachmentList extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: isStarred
-                  ? const Color(0xffFFD700)
-                  : const Color.fromARGB(179, 38, 28, 134),
+              color: Colors.white.withOpacity(0.1),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white12),
             ),
             child: Icon(
-              Icons.star_rounded,
+              isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
               size: 20,
-              color: isStarred
-                  ? const Color.fromARGB(255, 6, 3, 53)
-                  : const Color.fromARGB(255, 245, 245, 247),
+              color: isStarred ? Colors.red : Colors.white70,
             ),
           ),
         ),

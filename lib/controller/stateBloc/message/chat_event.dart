@@ -97,15 +97,12 @@ class ChatMessageDeleted extends ChatEvent {
 }
 
 class ChatFileStarred extends ChatEvent {
-  final String msgId;
   final String fileId;
+  final String msgId;
   final List<dynamic> star;
-  final bool isReply;
-
   ChatFileStarred({
-    required this.msgId,
     required this.fileId,
+    required this.msgId,
     required this.star,
-    required this.isReply,
   });
 }
