@@ -16,9 +16,11 @@ class PublicTag extends StatefulWidget {
 class _PublicTagState extends State<PublicTag> {
   String searchQuery = "";
   final Set<String> _selectedTagIds = {};
+  final Set<String> _initialSelectedTagIds = {}; // To track original selections
   List<Map<String, dynamic>>? _availableTags;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _hasChanges = false;
   String? _error;
 
   @override
@@ -50,11 +52,13 @@ class _PublicTagState extends State<PublicTag> {
         for (var item in rawCurrentTags) {
           if (item is Map) {
             final String? id = item['tag_id']?.toString();
-            if (id != null) {
+            if (id != null && id.isNotEmpty) {
               _selectedTagIds.add(id);
+              _initialSelectedTagIds.add(id); // Store initial selection
             }
           } else if (item is String) {
             _selectedTagIds.add(item);
+            _initialSelectedTagIds.add(item); // Store initial selection
           }
         }
       }
@@ -85,10 +89,124 @@ class _PublicTagState extends State<PublicTag> {
     }
   }
 
-  void _handleApply() {
-    print("44444444444444444, $_availableTags");
+  List<Map<String, dynamic>> _sanitizeTags(List<Map<String, dynamic>> tags) {
+    return tags
+        .map(
+          (tag) => {
+            'tag_id': tag['tag_id']?.toString(),
+            'tagged_by': tag['tagged_by']?.toString(),
+            'title': tag['title']?.toString(),
+            'company_id': tag['company_id']?.toString(),
+            'type': tag['type']?.toString(),
+            'tag_type': tag['tag_type']?.toString(),
+            'tag_color': tag['tag_color']?.toString(),
+          },
+        )
+        .toList();
+  }
 
-    // Navigator.pop(context, _selectedTagIds.toList());
+  void _handleApply() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final String conversationId =
+          widget.tagList['conversation_id']?.toString() ?? '';
+      final String fileId = widget.tagList['file_id']?.toString() ?? '';
+      final String msgId = widget.tagList['msg_id']?.toString() ?? '';
+      final String isReply = widget.tagList['is_reply']?.toString() ?? 'no';
+      final dynamic rawParticipants = widget.tagList['participants'];
+      final List<String> participants = (rawParticipants is List)
+          ? List<String>.from(rawParticipants.map((p) => p.toString()))
+          : (rawParticipants != null ? [rawParticipants.toString()] : []);
+
+      // Calculate tags to add and remove (IDs only)
+      Set<String> currentSelectedIds = Set.from(_selectedTagIds);
+      Set<String> initialSelectedIds = Set.from(_initialSelectedTagIds);
+
+      List<String> tagsToAddIds = currentSelectedIds
+          .difference(initialSelectedIds)
+          .toList();
+      List<String> tagsToRemoveIds = initialSelectedIds
+          .difference(currentSelectedIds)
+          .toList();
+
+      // Get full tag data for newtag_tag_data and removetag_tag_data
+      List<Map<String, dynamic>> newTagData = [];
+      List<Map<String, dynamic>> removeTagData = [];
+
+      if (_availableTags != null) {
+        newTagData = _availableTags!
+            .where((tag) => tagsToAddIds.contains(tag['tag_id']?.toString()))
+            .toList();
+        removeTagData = _availableTags!
+            .where((tag) => tagsToRemoveIds.contains(tag['tag_id']?.toString()))
+            .toList();
+      }
+
+      final Map<String, dynamic> response = await ApiServer()
+          .addRemoveTagIntoFile(
+            conversationId: conversationId,
+            fileId: fileId,
+            isReply: isReply,
+            msgId: msgId,
+            newTags: tagsToAddIds,
+            newTagData: _sanitizeTags(newTagData),
+            removetag: tagsToRemoveIds,
+            removetagData: _sanitizeTags(removeTagData),
+            participants: participants,
+          );
+
+      print("88888888888888888888 $response");
+
+      if (mounted) {
+        if (response['status'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response['message'] ?? "Tags updated successfully!",
+              ),
+            ),
+          );
+          context.read<ChatBloc>().add(
+            ChatMessageTagsUpdated(
+              conversationId: conversationId,
+              msgId: msgId,
+              fileId: fileId,
+              newTagIds: _selectedTagIds.toList(),
+              newTagDetails:
+                  _availableTags
+                      ?.where(
+                        (tag) =>
+                            _selectedTagIds.contains(tag['tag_id']?.toString()),
+                      )
+                      .toList() ??
+                  [],
+            ),
+          );
+          Navigator.pop(context); // Close the popup on success
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['message'] ?? "Failed to update tags."),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to update tags: ${e.toString()}")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -137,8 +255,9 @@ class _PublicTagState extends State<PublicTag> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (_selectedTagIds.isNotEmpty)
+                if (_hasChanges)
                   TextButton.icon(
+                    // Enable button only if there are changes
                     onPressed: _isSaving ? null : _handleApply,
                     icon: _isSaving
                         ? const SizedBox(
@@ -236,6 +355,13 @@ class _PublicTagState extends State<PublicTag> {
                               } else {
                                 _selectedTagIds.add(tagId);
                               }
+                              _hasChanges =
+                                  _selectedTagIds
+                                      .difference(_initialSelectedTagIds)
+                                      .isNotEmpty ||
+                                  _initialSelectedTagIds
+                                      .difference(_selectedTagIds)
+                                      .isNotEmpty;
                             });
                           }
                         },

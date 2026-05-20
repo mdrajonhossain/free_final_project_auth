@@ -301,3 +301,14 @@ mutation Forward(
   }
 }
 """;
+
+const String AddRemove_Tag_Into_File = """
+mutation Add_remove_tag_into_file(\$input: addRemoveTagIntoFile!) {
+  add_remove_tag_into_file(input: \$input) {
+    status
+    message
+    data
+    __typename
+  }
+}
+""";

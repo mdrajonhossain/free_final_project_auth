@@ -19,6 +19,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatXmppMessageReceived>(_onXmppMessageReceived);
     on<ChatMessageEdited>(_onMessageEdited);
     on<ChatMessageDeleted>(_onMessageDeleted);
+    on<ChatMessageTagsUpdated>(_onMessageTagsUpdated); // Add this handler
   }
 
   Future<void> _onFetchRequested(
@@ -224,6 +225,50 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     } catch (e) {
       event.onError?.call(e);
       emit(state.copyWith(error: e.toString()));
+    }
+  }
+
+  Future<void> _onMessageTagsUpdated(
+    ChatMessageTagsUpdated event,
+    Emitter<ChatState> emit,
+  ) async {
+    final List<Map<String, dynamic>> updatedMessages = List.from(
+      state.messages,
+    );
+    final int msgIndex = updatedMessages.indexWhere(
+      (m) => (m['msg_id'] ?? m['id']).toString() == event.msgId,
+    );
+
+    if (msgIndex != -1) {
+      final Map<String, dynamic> messageToUpdate = Map.from(
+        updatedMessages[msgIndex],
+      );
+      List<dynamic> allAttachments = List.from(
+        messageToUpdate['all_attachment'] ?? [],
+      );
+
+      final int fileIndex = allAttachments.indexWhere(
+        (file) => file['id']?.toString() == event.fileId,
+      );
+
+      if (fileIndex != -1) {
+        final Map<String, dynamic> fileToUpdate = Map.from(
+          allAttachments[fileIndex],
+        );
+        fileToUpdate['tag_list'] = event.newTagIds; // Update with new tag IDs
+        // Assuming tag_list_details is where full tag objects are stored
+        fileToUpdate['tag_list_details'] = event.newTagDetails;
+        allAttachments[fileIndex] = fileToUpdate;
+        messageToUpdate['all_attachment'] = allAttachments;
+        updatedMessages[msgIndex] = messageToUpdate;
+        // Emit a new state to trigger UI rebuild
+        emit(state.copyWith(messages: updatedMessages));
+        event.onSuccess?.call();
+      } else {
+        event.onError?.call("File not found in message attachments.");
+      }
+    } else {
+      event.onError?.call("Message not found.");
     }
   }
 

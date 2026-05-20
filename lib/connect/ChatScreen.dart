@@ -981,7 +981,7 @@ class _AttachmentList extends StatelessWidget {
                 // Tag Counter / Index Indicator
                 Column(
                   children: [
-                    tagPopUpListUpdate(context, file['tag_list'], company_id),
+                    tagPopUpListUpdate(context, file, company_id),
                     const SizedBox(height: 8),
                     _buildIndexStar(index),
                   ],
@@ -1061,7 +1061,7 @@ class _AttachmentList extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  tagPopUpListUpdate(context, file['tag_list'], company_id),
+                  tagPopUpListUpdate(context, file, company_id),
                   _buildIndexStar(index),
                   Flexible(
                     child: Container(
@@ -1109,9 +1109,16 @@ class _AttachmentList extends StatelessWidget {
 
   Widget tagPopUpListUpdate(
     BuildContext context,
-    dynamic tagList,
+    dynamic file,
     String companyId,
   ) {
+    final String convId = msg['conversation_id']?.toString() ?? "";
+    final String mId = (msg['msg_id'] ?? msg['id'])?.toString() ?? "";
+    final String fId = file['id']?.toString() ?? "";
+    final dynamic tagList = file['tag_list'];
+    final String isReply = msg['is_reply_msg']?.toString() ?? "no";
+    final dynamic participantsData = msg['participants'];
+
     return GestureDetector(
       onTap: () {
         showModalBottomSheet(
@@ -1121,8 +1128,19 @@ class _AttachmentList extends StatelessWidget {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          builder: (ctx) =>
-              PublicTag(tagList: {'company_id': companyId, 'tagList': tagList}),
+          builder: (ctx) => PublicTag(
+            tagList: {
+              'company_id': companyId,
+              'tagList': tagList,
+              'conversation_id': convId,
+              'file_id': fId,
+              'is_reply': isReply,
+              'msg_id': mId,
+              'participants': participantsData is List
+                  ? participantsData
+                  : [participantsData],
+            },
+          ),
         );
       },
       child: Stack(

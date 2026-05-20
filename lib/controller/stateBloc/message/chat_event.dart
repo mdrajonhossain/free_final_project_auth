@@ -40,6 +40,26 @@ class ChatXmppMessageReceived extends ChatEvent {
   ChatXmppMessageReceived(this.message);
 }
 
+class ChatMessageTagsUpdated extends ChatEvent {
+  final String conversationId;
+  final String msgId;
+  final String fileId;
+  final List<String> newTagIds;
+  final List<Map<String, dynamic>> newTagDetails;
+  final VoidCallback? onSuccess;
+  final Function(dynamic error)? onError;
+
+  ChatMessageTagsUpdated({
+    required this.conversationId,
+    required this.msgId,
+    required this.fileId,
+    required this.newTagIds,
+    required this.newTagDetails,
+    this.onSuccess,
+    this.onError,
+  });
+}
+
 class ChatMessageEdited extends ChatEvent {
   final String conversationId;
   final String msgId;

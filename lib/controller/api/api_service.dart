@@ -694,4 +694,45 @@ class ApiServer {
       debugPrint("[API ERROR] rejectCall: $e");
     }
   }
+
+  Future<Map<String, dynamic>> addRemoveTagIntoFile({
+    required String conversationId,
+    required String msgId,
+    required String fileId, // Ensure fileId is passed here
+    required List<String> newTags, // List of new tag IDs
+    required List<Map<String, dynamic>> newTagData, // List of new tag objects
+    required List<String> removetag, // List of tag IDs to remove
+    required List<Map<String, dynamic>>
+    removetagData, // List of tag objects to remove
+    required List<String> participants,
+    String isReply = "no",
+  }) async {
+    try {
+      final variables = {
+        // Wrap all fields under a single 'input' key
+        "input": {
+          "conversation_id": conversationId,
+          "file_id": fileId,
+          "is_reply": isReply,
+          "msg_id": msgId,
+          "newtag": newTags,
+          "newtag_tag_data":
+              newTagData, // Pass directly as List<Map<String, dynamic>>
+          "removetag": removetag,
+          "removetag_tag_data":
+              removetagData, // Pass directly as List<Map<String, dynamic>>
+          "participants": participants,
+        },
+      };
+      final data = await ApiServer.call(
+        AddRemove_Tag_Into_File,
+        variables: variables,
+      );
+      return Map<String, dynamic>.from(data['add_remove_tag_into_file'] ?? {});
+    } catch (e) {
+      throw GqlException("Failed to update tags: ${e.toString()}");
+    }
+  }
+
+  // ======================== End add removetag public ===================================
 }
