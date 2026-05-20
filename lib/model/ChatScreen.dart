@@ -1114,7 +1114,7 @@ class _AttachmentList extends StatelessWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           builder: (ctx) => PublicTag(
-            messageToForward: {
+            tagList: {
               'company_id': company_id,
               'conversation_id': msg['conversation_id'],
               'msg_id': msg['msg_id'] ?? msg['id'],
