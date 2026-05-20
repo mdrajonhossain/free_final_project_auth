@@ -20,6 +20,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatMessageEdited>(_onMessageEdited);
     on<ChatMessageDeleted>(_onMessageDeleted);
     on<ChatMessageTagsUpdated>(_onMessageTagsUpdated); // Add this handler
+    on<ChatFileStarred>(_onFileStarred);
   }
 
   Future<void> _onFetchRequested(
@@ -269,6 +270,40 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
     } else {
       event.onError?.call("Message not found.");
+    }
+  }
+
+  Future<void> _onFileStarred(
+    ChatFileStarred event,
+    Emitter<ChatState> emit,
+  ) async {
+    final List<dynamic> updatedMessages = List.from(state.messages);
+    final int msgIndex = updatedMessages.indexWhere(
+      (m) => (m['msg_id'] ?? m['id']).toString() == event.msgId,
+    );
+
+    if (msgIndex != -1) {
+      final Map<String, dynamic> messageToUpdate = Map.from(
+        updatedMessages[msgIndex],
+      );
+      List<dynamic> allAttachments = List.from(
+        messageToUpdate['all_attachment'] ?? [],
+      );
+
+      final int fileIndex = allAttachments.indexWhere(
+        (file) => file['id']?.toString() == event.fileId,
+      );
+
+      if (fileIndex != -1) {
+        final Map<String, dynamic> fileToUpdate = Map.from(
+          allAttachments[fileIndex],
+        );
+        fileToUpdate['star'] = event.star;
+        allAttachments[fileIndex] = fileToUpdate;
+        messageToUpdate['all_attachment'] = allAttachments;
+        updatedMessages[msgIndex] = messageToUpdate;
+        emit(state.copyWith(messages: updatedMessages));
+      }
     }
   }
 

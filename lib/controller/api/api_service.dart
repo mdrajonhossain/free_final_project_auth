@@ -735,4 +735,19 @@ class ApiServer {
   }
 
   // ======================== End add removetag public ===================================
+
+  Future<Map<String, dynamic>> toggleFileStar({
+    required String fileId,
+    required String isReplyMsg,
+  }) async {
+    try {
+      final variables = {
+        "input": {"file_id": fileId, "is_reply_msg": isReplyMsg},
+      };
+      final data = await ApiServer.call(FileStarMutation, variables: variables);
+      return Map<String, dynamic>.from(data['file_star'] ?? {});
+    } catch (e) {
+      throw GqlException("Failed to update star: \${e.toString()}");
+    }
+  }
 }

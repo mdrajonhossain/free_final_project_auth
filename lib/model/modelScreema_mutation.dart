@@ -312,3 +312,17 @@ mutation Add_remove_tag_into_file(\$input: addRemoveTagIntoFile!) {
   }
 }
 """;
+
+const String FileStarMutation = """
+mutation File_star(\$input: starFileInput!) {
+  file_star(input: \$input) {
+    file_id
+    star
+    conversation_id
+    msg_id
+    file_bucket
+    file_key
+    is_reply_msg
+  }
+}
+""";

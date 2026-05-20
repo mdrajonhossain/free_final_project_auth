@@ -983,7 +983,7 @@ class _AttachmentList extends StatelessWidget {
                   children: [
                     tagPopUpListUpdate(context, file, company_id),
                     const SizedBox(height: 8),
-                    _buildIndexStar(index),
+                    _buildIndexStar(context, file),
                   ],
                 ),
                 Flexible(
@@ -1062,7 +1062,7 @@ class _AttachmentList extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   tagPopUpListUpdate(context, file, company_id),
-                  _buildIndexStar(index),
+                  _buildIndexStar(context, file),
                   Flexible(
                     child: Container(
                       // Removed margin: const EdgeInsets.only(bottom: 6)
@@ -1190,22 +1190,63 @@ class _AttachmentList extends StatelessWidget {
     );
   }
 
-  Widget _buildIndexStar(int index) {
+  Widget _buildIndexStar(BuildContext context, dynamic file) {
+    final String fId = file['id']?.toString() ?? "";
+    final String isReply = msg['is_reply_msg']?.toString() ?? "no";
+    final dynamic starList = file['star'];
+
+    // Get my ID from the Bloc state
+    final myId = context.read<ChatBloc>().state.myId;
+    final bool isStarred =
+        starList is List && starList.any((id) => id.toString() == myId);
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Color.fromARGB(179, 38, 28, 134),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white12),
-          ),
-          child: const Icon(
-            Icons.star_rounded,
-            size: 20,
-            color: Color.fromARGB(255, 245, 245, 247),
+        GestureDetector(
+          onTap: () async {
+            try {
+              final result = await ApiServer().toggleFileStar(
+                fileId: fId,
+                isReplyMsg: isReply,
+              );
+
+              if (result.isNotEmpty && context.mounted) {
+                // Dispatch an event to update the local state in ChatBloc
+                context.read<ChatBloc>().add(
+                  ChatFileStarred(
+                    msgId: msg['msg_id'] ?? msg['id'],
+                    fileId: fId,
+                    star: result['star'],
+                    isReply: isReply == "yes",
+                  ),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(e.toString())));
+              }
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: isStarred
+                  ? const Color(0xffFFD700)
+                  : const Color.fromARGB(179, 38, 28, 134),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Icon(
+              Icons.star_rounded,
+              size: 20,
+              color: isStarred
+                  ? const Color.fromARGB(255, 6, 3, 53)
+                  : const Color.fromARGB(255, 245, 245, 247),
+            ),
           ),
         ),
       ],
