@@ -5,9 +5,9 @@ import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 
 class PublicTag extends StatefulWidget {
-  final Map<String, dynamic> messageToForward;
+  final Map<String, dynamic> tagList;
 
-  const PublicTag({super.key, required this.messageToForward});
+  const PublicTag({super.key, required this.tagList});
 
   @override
   State<PublicTag> createState() => _PublicTagState();
@@ -39,8 +39,40 @@ class _PublicTagState extends State<PublicTag> {
   Future<void> getpublictag() async {
     try {
       final tags = await ApiServer().fetch_Public_Tags(
-        widget.messageToForward['company_id']?.toString(),
+        widget.tagList['company_id']?.toString(),
       );
+
+      // Safely extract and pre-select current tags
+      final dynamic rawCurrentTags = widget.tagList is Map
+          ? widget.tagList['tagList']
+          : null;
+      if (rawCurrentTags is List) {
+        for (var item in rawCurrentTags) {
+          if (item is Map) {
+            final String? id = item['tag_id']?.toString();
+            if (id != null) {
+              _selectedTagIds.add(id);
+            }
+          } else if (item is String) {
+            _selectedTagIds.add(item);
+          }
+        }
+      }
+
+      // Sort available tags: Selected tags go to the top
+      if (tags is List) {
+        tags.sort((dynamic a, dynamic b) {
+          final String aId = (a is Map) ? (a['tag_id']?.toString() ?? "") : "";
+          final String bId = (b is Map) ? (b['tag_id']?.toString() ?? "") : "";
+
+          final bool aSelected = _selectedTagIds.contains(aId);
+          final bool bSelected = _selectedTagIds.contains(bId);
+          if (aSelected && !bSelected) return -1;
+          if (!aSelected && bSelected) return 1;
+          return 0;
+        });
+      }
+
       setState(() {
         _availableTags = tags;
         _isLoading = false;
@@ -54,9 +86,9 @@ class _PublicTagState extends State<PublicTag> {
   }
 
   void _handleApply() {
-    // Implementation for applying tags.
-    // This typically returns the selected tags to the caller.
-    Navigator.pop(context, _selectedTagIds.toList());
+    print("44444444444444444, $_availableTags");
+
+    // Navigator.pop(context, _selectedTagIds.toList());
   }
 
   @override

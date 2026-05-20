@@ -981,7 +981,7 @@ class _AttachmentList extends StatelessWidget {
                 // Tag Counter / Index Indicator
                 Column(
                   children: [
-                    _buildIndexTag(context, file['tag_list'], company_id),
+                    tagPopUpListUpdate(context, file['tag_list'], company_id),
                     const SizedBox(height: 8),
                     _buildIndexStar(index),
                   ],
@@ -1061,8 +1061,8 @@ class _AttachmentList extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  tagPopUpListUpdate(context, file['tag_list'], company_id),
                   _buildIndexStar(index),
-                  _buildIndexTag(context, file['tag_list'], company_id),
                   Flexible(
                     child: Container(
                       // Removed margin: const EdgeInsets.only(bottom: 6)
@@ -1107,7 +1107,7 @@ class _AttachmentList extends StatelessWidget {
     );
   }
 
-  Widget _buildIndexTag(
+  Widget tagPopUpListUpdate(
     BuildContext context,
     dynamic tagList,
     String companyId,
@@ -1122,7 +1122,7 @@ class _AttachmentList extends StatelessWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           builder: (ctx) =>
-              PublicTag(messageToForward: {'company_id': companyId}),
+              PublicTag(tagList: {'company_id': companyId, 'tagList': tagList}),
         );
       },
       child: Stack(
