@@ -438,10 +438,21 @@ class _TagsPageState extends State<TagsPage> {
               ],
             ),
           ),
-          Icon(
-            Icons.more_vert_rounded,
-            color: subTextColor.withOpacity(0.8),
-            size: 20,
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.star_outline_rounded,
+                color: subTextColor.withOpacity(0.8),
+                size: 22,
+              ),
+              const SizedBox(height: 8),
+              Icon(
+                Icons.download_rounded,
+                color: subTextColor.withOpacity(0.8),
+                size: 22,
+              ),
+            ],
           ),
         ],
       ),
