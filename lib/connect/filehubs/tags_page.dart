@@ -24,15 +24,33 @@ class _TagsPageState extends State<TagsPage> {
   List<dynamic> _tagFiles = [];
   List<dynamic> _filteredFiles = [];
   bool _isLoadingFiles = false;
+  bool _isLoadingMore = false;
+  int _filePage = 1;
+  int _totalFilePages = 1;
+  String _currentTagId = "";
   String _selectedTagName = "";
   int selectedCategory = 0;
 
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _fileScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _filteredTags = widget.tags;
+    _fileScrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_isShowingFiles || _isLoadingFiles || _isLoadingMore) return;
+
+    // Trigger load more when user scrolls to within 200 pixels of the bottom
+    if (_fileScrollController.position.pixels >=
+        _fileScrollController.position.maxScrollExtent - 100) {
+      if (_filePage < _totalFilePages) {
+        _loadMoreFiles();
+      }
+    }
   }
 
   @override
@@ -49,17 +67,20 @@ class _TagsPageState extends State<TagsPage> {
     setState(() {
       _isShowingFiles = true;
       _selectedTagName = tagName;
+      _currentTagId = tagId;
       _tagFiles = [];
       _filteredFiles = [];
       _isLoadingFiles = true;
+      _filePage = 1;
+      _totalFilePages = 1;
       selectedCategory = 0; // Reset category when opening a tag
     });
 
     try {
-      // Fixed: The class name is ApiServer, defined in api_service.dart
-      final response = await ApiServer().getFilesByTag(tagId);
+      final response = await ApiServer().getFilesByTag(_currentTagId, page: 1);
       setState(() {
-        _tagFiles = response ?? [];
+        _tagFiles = response?['files'] ?? [];
+        _totalFilePages = response?['pagination']?['totalPages'] ?? 1;
         _filteredFiles = _tagFiles;
         _isLoadingFiles = false;
         _runFilter(_searchController.text);
@@ -70,9 +91,34 @@ class _TagsPageState extends State<TagsPage> {
     }
   }
 
+  Future<void> _loadMoreFiles() async {
+    if (_isLoadingMore || _filePage >= _totalFilePages) return;
+
+    setState(() => _isLoadingMore = true);
+    try {
+      final nextPage = _filePage + 1;
+      final response = await ApiServer().getFilesByTag(
+        _currentTagId,
+        page: nextPage,
+      );
+      setState(() {
+        _filePage = nextPage;
+        final newFiles = response?['files'] ?? [];
+        _totalFilePages = response?['pagination']?['totalPages'] ?? 1;
+        _tagFiles.addAll(newFiles);
+        _isLoadingMore = false;
+        _runFilter(_searchController.text);
+      });
+    } catch (e) {
+      setState(() => _isLoadingMore = false);
+      debugPrint("Error loading more files: $e");
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _fileScrollController.dispose();
     super.dispose();
   }
 
@@ -566,13 +612,24 @@ class _TagsPageState extends State<TagsPage> {
                   : _isShowingFiles
                   ? ListView.builder(
                       physics: const BouncingScrollPhysics(),
-                      itemCount: _filteredFiles.length,
+                      controller: _fileScrollController,
+                      itemCount:
+                          _filteredFiles.length +
+                          (_filePage < _totalFilePages ? 1 : 0),
                       padding: const EdgeInsets.only(
                         left: 20,
                         right: 20,
                         bottom: 30,
                       ),
                       itemBuilder: (context, index) {
+                        if (index == _filteredFiles.length) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        }
                         return _buildFileItem(
                           _filteredFiles[index],
                           widget.isDark,

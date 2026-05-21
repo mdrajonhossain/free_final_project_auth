@@ -255,16 +255,28 @@ class ApiServer {
   }
 
   // ==========================get_tag_gallery==============================
-  Future<Map<String, dynamic>> get_tag_gallery() async {
+  Future<Map<String, dynamic>> get_tag_gallery({
+    int page = 1,
+    String? tagId,
+    String tab = "tag",
+  }) async {
     try {
       final data = await ApiServer.call(
         Get_file_galleryQuery,
         variables: {
+          "conversation_id": "all_files",
           "conversation_ids": null,
+          "uploaded_by": null,
           "file_type": "all",
-          "tab": "tag",
-          "tag_id": ["tag"],
-          "conversation_id": null,
+          "file_sub_type": tagId != null ? "tag" : "all",
+          "tag_id": tagId != null ? [tagId] : null,
+          "tag_operator": null,
+          "file_name": "",
+          "from": null,
+          "to": null,
+          "page": page,
+          "tab": tab,
+          "selectedFilters": "date_- Descending",
         },
       );
       final galleryData = data['get_file_gallery'];
@@ -282,16 +294,37 @@ class ApiServer {
   // ==================End
 
   // ==========================get_File_gallery==============================
-  Future<Map<String, dynamic>> get_file_gallery() async {
+  Future<Map<String, dynamic>> get_file_gallery({
+    String conversationId = "all_files",
+    String fileType = "all",
+    String fileSubType = "all",
+    String? tagId,
+    String? uploadedBy,
+    String? tagOperator,
+    String fileName = "",
+    String? from,
+    String? to,
+    int page = 1,
+    String tab = "file",
+    String selectedFilters = "date_- Descending",
+  }) async {
     try {
       final data = await ApiServer.call(
         Get_file_galleryQuery,
         variables: {
+          "conversation_id": conversationId,
           "conversation_ids": null,
-          "file_type": "all",
-          "tab": "file",
-          "tag_id": ["file"],
-          "conversation_id": null,
+          "uploaded_by": uploadedBy,
+          "file_type": fileType,
+          "file_sub_type": fileSubType,
+          "tag_id": tagId != null ? [tagId] : null,
+          "tag_operator": tagOperator,
+          "file_name": fileName,
+          "from": from,
+          "to": to,
+          "page": page,
+          "tab": tab,
+          "selectedFilters": selectedFilters,
         },
       );
       final galleryData = data['get_file_gallery'];
@@ -309,26 +342,47 @@ class ApiServer {
   // ==================End
 
   // ==========================get_files_by_tag==============================
-  Future<List<dynamic>?> getFilesByTag(String tagId) async {
+  Future<Map<String, dynamic>?> getFilesByTag(
+    String tagId, {
+    String conversationId = "all_files",
+    String fileType = "all",
+    String fileSubType = "tag",
+    String fileName = "",
+    int page = 1,
+    String tab = "tag_file",
+    String selectedFilters = "date_- Descending",
+    String? uploadedBy,
+    String? tagOperator,
+    String? from,
+    String? to,
+  }) async {
     try {
       final data = await ApiServer.call(
         Get_file_galleryQuery,
         variables: {
+          "conversation_id": conversationId,
           "conversation_ids": null,
-          "file_type": "all",
-          "tab": "file",
-          "tag_id": [tagId],
-          "conversation_id": null,
+          "uploaded_by": uploadedBy,
+          "file_type": fileType,
+          "file_sub_type": fileSubType,
+          "tag_id": tagId is List ? tagId : [tagId],
+          "tag_operator": tagOperator,
+          "file_name": fileName,
+          "from": from,
+          "to": to,
+          "page": page,
+          "tab": tab,
+          "selectedFilters": selectedFilters,
         },
       );
       final galleryData = data['get_file_gallery'];
-      if (galleryData != null && galleryData['files'] != null) {
-        return galleryData['files'] as List<dynamic>;
+      if (galleryData != null) {
+        return Map<String, dynamic>.from(galleryData);
       }
-      return [];
+      return null;
     } catch (e) {
       print("[API ERROR] getFilesByTag: $e");
-      return [];
+      return null;
     }
   }
 
