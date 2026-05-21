@@ -4,7 +4,7 @@ import 'package:freeli/model/modelScreema_quary.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../AppDrawer.dart';
 import 'tags_page.dart';
-import 'file_hub_page.dart';
+import '../file_hub_page.dart';
 import 'links_page.dart';
 import 'FileHubSkeleton.dart';
 
@@ -89,6 +89,7 @@ class FilehubsState extends State<Filehubs> {
       FileHubPage(
         isDark: widget.isDark,
         files: filesList,
+        onRefresh: fetchFilehubData,
       ), // Assuming FileHubPage takes files
       LinksPage(
         isDark: widget.isDark,
