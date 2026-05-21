@@ -5,6 +5,7 @@ import '../file_utils.dart';
 import 'FileHubSkeleton.dart';
 import '../PopUpFile/PublicTag.dart';
 import '../PopUpFile/ForwardMessageScreen.dart';
+import '../FullImageViewer.dart';
 
 // IMPORTANT: ensure this import exists in your project
 // import 'api_server.dart';
@@ -504,32 +505,46 @@ class _TagsPageState extends State<TagsPage> {
         ),
         child: Row(
           children: [
-            Container(
-              height: 44,
-              width: 44,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.08)
-                    : const Color(0xFF4C8DFF).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: isImage
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.network(
-                        fullUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.broken_image_rounded,
-                          color: subTextColor,
+            GestureDetector(
+              onTap: isImage
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FullImageViewer(imageUrl: fullUrl),
                         ),
+                      );
+                    }
+                  : null,
+              child: Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : const Color(0xFF4C8DFF).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: isImage
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: Image.network(
+                          fullUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.broken_image_rounded,
+                            color: subTextColor,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        FileUtils.getFileIcon(location),
+                        color: isDark
+                            ? Colors.white70
+                            : const Color(0xFF4C8DFF),
+                        size: 24,
                       ),
-                    )
-                  : Icon(
-                      FileUtils.getFileIcon(location),
-                      color: isDark ? Colors.white70 : const Color(0xFF4C8DFF),
-                      size: 24,
-                    ),
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
