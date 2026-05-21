@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:freeli/controller/api/api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../file_utils.dart';
 import 'FileHubSkeleton.dart';
+import '../PopUpFile/PublicTag.dart';
+import '../PopUpFile/ForwardMessageScreen.dart';
 
 // IMPORTANT: ensure this import exists in your project
 // import 'api_server.dart';
@@ -317,144 +320,306 @@ class _TagsPageState extends State<TagsPage> {
         ? location
         : "https://wfss001.freeli.io/$location";
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.05)
-              : Colors.grey.withOpacity(0.08),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.18 : 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+    return GestureDetector(
+      onLongPress: () {
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: isDark ? const Color(0xff1B2335) : Colors.white,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 44,
-            width: 44,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.08)
-                  : const Color(0xFF4C8DFF).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: isImage
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      fullUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(Icons.broken_image_rounded, color: subTextColor),
+          builder: (context) {
+            final itemColor = isDark ? Colors.white : const Color(0xFF1B1D28);
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.open_in_new_rounded, color: itemColor),
+                    title: Text("Open", style: TextStyle(color: itemColor)),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final Uri uri = Uri.parse(fullUrl);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.star_outline_rounded, color: itemColor),
+                    title: Text("Star", style: TextStyle(color: itemColor)),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      try {
+                        await ApiServer().toggleFileStar(
+                          fileId: (file['id'] ?? file['file_id']).toString(),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Star status updated")),
+                        );
+                      } catch (e) {
+                        debugPrint("Star error: $e");
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.share_rounded, color: itemColor),
+                    title: Text("Share", style: TextStyle(color: itemColor)),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.local_offer_rounded, color: itemColor),
+                    title: Text(
+                      "Add a tag",
+                      style: TextStyle(color: itemColor),
                     ),
-                  )
-                : Icon(
-                    FileUtils.getFileIcon(location),
-                    color: isDark ? Colors.white70 : const Color(0xFF4C8DFF),
-                    size: 24,
-                  ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  originalName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "$fileSize ${date.isNotEmpty ? '• $date' : ''}",
-                  style: TextStyle(color: subTextColor, fontSize: 12),
-                ),
-                Text(
-                  file['uploaded_by'] ?? "Unknown",
-                  style: TextStyle(color: subTextColor, fontSize: 12),
-                ),
-                Text(
-                  file['conversation_title'] ?? "Unknown",
-                  style: TextStyle(color: subTextColor, fontSize: 12),
-                ),
-                if (file['tag_list_details'] is List &&
-                    (file['tag_list_details'] as List).isNotEmpty)
-                  Row(
-                    children: [
-                      ...(file['tag_list_details'] as List)
-                          .take(2)
-                          .map(
-                            (data) => Container(
-                              margin: const EdgeInsets.only(right: 6, top: 4),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: Colors.blue.withOpacity(0.3),
-                                ),
-                              ),
-                              child: Text(
-                                data['title'] ?? "",
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                      if ((file['tag_list_details'] as List).length > 2)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            "+${(file['tag_list_details'] as List).length - 2}",
-                            style: TextStyle(
-                              color: subTextColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.white,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(24),
                           ),
                         ),
-                    ],
+                        builder: (ctx) => PublicTag(
+                          tagList: {
+                            'company_id': file['company_id'],
+                            'tagList':
+                                file['tag_list'] ?? file['tag_list_details'],
+                            'conversation_id': file['conversation_id'],
+                            'file_id': file['id'] ?? file['file_id'],
+                            'msg_id':
+                                file['msg_id'] ?? file['id'] ?? file['file_id'],
+                            'is_reply': file['is_reply_msg'] ?? 'no',
+                            'participants': (file['participants'] is List)
+                                ? file['participants']
+                                : (file['participants'] != null
+                                      ? [file['participants']]
+                                      : []),
+                          },
+                        ),
+                      );
+                    },
                   ),
+                  ListTile(
+                    leading: Icon(Icons.forward_rounded, color: itemColor),
+                    title: Text("Forward", style: TextStyle(color: itemColor)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.white,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(24),
+                          ),
+                        ),
+                        builder: (ctx) =>
+                            ForwardMessageScreen(messageToForward: file),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.redAccent,
+                    ),
+                    title: const Text(
+                      "Delete",
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.05)
+                : Colors.grey.withOpacity(0.08),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.18 : 0.05),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              height: 44,
+              width: 44,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : const Color(0xFF4C8DFF).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: isImage
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.network(
+                        fullUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.broken_image_rounded,
+                          color: subTextColor,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      FileUtils.getFileIcon(location),
+                      color: isDark ? Colors.white70 : const Color(0xFF4C8DFF),
+                      size: 24,
+                    ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    originalName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "$fileSize ${date.isNotEmpty ? '• $date' : ''}",
+                    style: TextStyle(color: subTextColor, fontSize: 12),
+                  ),
+                  Text(
+                    file['uploaded_by'] ?? "Unknown",
+                    style: TextStyle(color: subTextColor, fontSize: 12),
+                  ),
+                  Text(
+                    file['conversation_title'] ?? "Unknown",
+                    style: TextStyle(color: subTextColor, fontSize: 12),
+                  ),
+                  if (file['tag_list_details'] is List &&
+                      (file['tag_list_details'] as List).isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(24),
+                            ),
+                          ),
+                          builder: (ctx) => PublicTag(
+                            tagList: {
+                              'company_id': file['company_id'],
+                              'tagList':
+                                  file['tag_list'] ?? file['tag_list_details'],
+                              'conversation_id': file['conversation_id'],
+                              'file_id': file['id'] ?? file['file_id'],
+                              'msg_id':
+                                  file['msg_id'] ??
+                                  file['id'] ??
+                                  file['file_id'],
+                              'is_reply': file['is_reply_msg'] ?? 'no',
+                              'participants': (file['participants'] is List)
+                                  ? file['participants']
+                                  : (file['participants'] != null
+                                        ? [file['participants']]
+                                        : []),
+                            },
+                          ),
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          ...(file['tag_list_details'] as List)
+                              .take(2)
+                              .map(
+                                (data) => Container(
+                                  margin: const EdgeInsets.only(
+                                    right: 6,
+                                    top: 4,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Colors.blue.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    data['title'] ?? "",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          if ((file['tag_list_details'] as List).length > 2)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                "+${(file['tag_list_details'] as List).length - 2}",
+                                style: TextStyle(
+                                  color: subTextColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.star_outline_rounded,
+                  color: subTextColor.withOpacity(0.8),
+                  size: 22,
+                ),
+                const SizedBox(height: 8),
+                Icon(
+                  Icons.download_rounded,
+                  color: subTextColor.withOpacity(0.8),
+                  size: 22,
+                ),
               ],
             ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.star_outline_rounded,
-                color: subTextColor.withOpacity(0.8),
-                size: 22,
-              ),
-              const SizedBox(height: 8),
-              Icon(
-                Icons.download_rounded,
-                color: subTextColor.withOpacity(0.8),
-                size: 22,
-              ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

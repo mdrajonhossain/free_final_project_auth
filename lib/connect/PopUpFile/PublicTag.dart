@@ -40,9 +40,11 @@ class _PublicTagState extends State<PublicTag> {
 
   Future<void> getpublictag() async {
     try {
-      final tags = await ApiServer().fetch_Public_Tags(
-        widget.tagList['company_id']?.toString(),
-      );
+      final String? companyId = widget.tagList['company_id']?.toString();
+      if (companyId == null || companyId.isEmpty) {
+        throw Exception("Company ID is missing for fetching public tags.");
+      }
+      final tags = await ApiServer().fetch_Public_Tags(companyId);
 
       // Safely extract and pre-select current tags
       final dynamic rawCurrentTags = widget.tagList is Map
@@ -51,14 +53,14 @@ class _PublicTagState extends State<PublicTag> {
       if (rawCurrentTags is List) {
         for (var item in rawCurrentTags) {
           if (item is Map) {
-            final String? id = item['tag_id']?.toString();
+            final String? id = item['tag_id']?.toString().trim();
             if (id != null && id.isNotEmpty) {
               _selectedTagIds.add(id);
               _initialSelectedTagIds.add(id); // Store initial selection
             }
           } else if (item is String) {
-            _selectedTagIds.add(item);
-            _initialSelectedTagIds.add(item); // Store initial selection
+            _selectedTagIds.add(item.trim());
+            _initialSelectedTagIds.add(item.trim()); // Store initial selection
           }
         }
       }
@@ -66,8 +68,12 @@ class _PublicTagState extends State<PublicTag> {
       // Sort available tags: Selected tags go to the top
       if (tags is List) {
         tags.sort((dynamic a, dynamic b) {
-          final String aId = (a is Map) ? (a['tag_id']?.toString() ?? "") : "";
-          final String bId = (b is Map) ? (b['tag_id']?.toString() ?? "") : "";
+          final String aId = (a is Map)
+              ? (a['tag_id']?.toString().trim() ?? "")
+              : "";
+          final String bId = (b is Map)
+              ? (b['tag_id']?.toString().trim() ?? "")
+              : "";
 
           final bool aSelected = _selectedTagIds.contains(aId);
           final bool bSelected = _selectedTagIds.contains(bId);
@@ -93,7 +99,7 @@ class _PublicTagState extends State<PublicTag> {
     return tags
         .map(
           (tag) => {
-            'tag_id': tag['tag_id']?.toString(),
+            'tag_id': tag['tag_id']?.toString().trim(),
             'tagged_by': tag['tagged_by']?.toString(),
             'title': tag['title']?.toString(),
             'company_id': tag['company_id']?.toString(),
@@ -174,7 +180,7 @@ class _PublicTagState extends State<PublicTag> {
               conversationId: conversationId,
               msgId: msgId,
               fileId: fileId,
-              newTagIds: _selectedTagIds.toList(),
+              newTagIds: _selectedTagIds.map((id) => id.trim()).toList(),
               newTagDetails:
                   _availableTags
                       ?.where(
@@ -322,7 +328,8 @@ class _PublicTagState extends State<PublicTag> {
                       final tag = filteredList[index];
                       final String title =
                           tag['title']?.toString() ?? "No Title";
-                      final String tagId = tag['tag_id']?.toString() ?? "";
+                      final String tagId =
+                          tag['tag_id']?.toString().trim() ?? "";
                       final Color tagColor = _parseColor(
                         tag['tag_color']?.toString(),
                       );
