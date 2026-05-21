@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/connect/ChangePassword/ChangePassword.dart';
+import 'package:freeli/connect/archiveroom/archiveroom.dart';
 import 'package:freeli/connect/filehubs/filehubs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -57,6 +59,10 @@ class _MyAppState extends State<MyApp> {
           '/chat': (context) => ChatScreen(isDark: isDark),
           '/filehuball': (context) =>
               Filehubs(isDark: isDark, onThemeChange: toggleTheme),
+          '/archiveroom': (context) =>
+              ArchiveRoom(isDark: isDark, onThemeChange: toggleTheme),
+          '/changepassword': (context) =>
+              ChangePassword(isDark: isDark, onThemeChange: toggleTheme),
         },
       ),
     );

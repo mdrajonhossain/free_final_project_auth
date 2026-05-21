@@ -123,14 +123,20 @@ class AppDrawer extends StatelessWidget {
           ),
 
           /// ================= SECONDARY MENU =================
-          _drawerItem(Icons.archive_outlined, "Archive rooms", () {}),
+          _drawerItem(Icons.archive_outlined, "Archive rooms", () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/archiveroom');
+          }),
           _drawerItem(Icons.flag_outlined, "Flagged messages", () {}),
           _drawerItem(
             Icons.notifications_none_outlined,
             "All notifications",
             () {},
           ),
-          _drawerItem(Icons.lock_outline, "Change password", () {}),
+          _drawerItem(Icons.lock_outline, "Change password", () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/changepassword');
+          }),
           _drawerItem(
             Icons.admin_panel_settings_outlined,
             "Admin settings",
