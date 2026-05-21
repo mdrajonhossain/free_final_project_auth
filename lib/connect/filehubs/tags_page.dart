@@ -331,9 +331,10 @@ class _TagsPageState extends State<TagsPage> {
       "webp",
     ].contains(extension);
 
-    final String fullUrl = location.startsWith("http")
+    final String rawUrl = location.startsWith("http")
         ? location
         : "https://wfss001.freeli.io/$location";
+    final String fullUrl = rawUrl.replaceAll(' ', '%20');
 
     final bool isStarred =
         currentUserId != null &&
@@ -359,12 +360,16 @@ class _TagsPageState extends State<TagsPage> {
                     title: Text("Open", style: TextStyle(color: itemColor)),
                     onTap: () async {
                       Navigator.pop(context);
-                      final Uri uri = Uri.parse(fullUrl);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(
-                          uri,
-                          mode: LaunchMode.externalApplication,
-                        );
+                      final Uri? uri = Uri.tryParse(fullUrl);
+                      if (uri != null) {
+                        try {
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        } catch (e) {
+                          debugPrint('Error opening file: $e');
+                        }
                       }
                     },
                   ),
@@ -675,20 +680,24 @@ class _TagsPageState extends State<TagsPage> {
                 GestureDetector(
                   // Wrap download icon with GestureDetector
                   onTap: () async {
-                    final Uri uri = Uri.parse(fullUrl);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    } else {
-                      debugPrint('Could not launch $fullUrl for download');
-                      if (mounted)
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Could not open file for download."),
-                          ),
+                    final Uri? uri = Uri.tryParse(fullUrl);
+                    bool launched = false;
+                    if (uri != null) {
+                      try {
+                        launched = await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
                         );
+                      } catch (e) {
+                        debugPrint('Download error: $e');
+                      }
+                    }
+                    if (!launched && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Could not open file for download."),
+                        ),
+                      );
                     }
                   },
                   child: Icon(
