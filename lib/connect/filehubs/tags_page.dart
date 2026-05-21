@@ -383,6 +383,58 @@ class _TagsPageState extends State<TagsPage> {
                   "$fileSize ${date.isNotEmpty ? '• $date' : ''}",
                   style: TextStyle(color: subTextColor, fontSize: 12),
                 ),
+                Text(
+                  file['uploaded_by'] ?? "Unknown",
+                  style: TextStyle(color: subTextColor, fontSize: 12),
+                ),
+                Text(
+                  file['conversation_title'] ?? "Unknown",
+                  style: TextStyle(color: subTextColor, fontSize: 12),
+                ),
+                if (file['tag_list_details'] is List &&
+                    (file['tag_list_details'] as List).isNotEmpty)
+                  Row(
+                    children: [
+                      ...(file['tag_list_details'] as List)
+                          .take(2)
+                          .map(
+                            (data) => Container(
+                              margin: const EdgeInsets.only(right: 6, top: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.blue.withOpacity(0.3),
+                                ),
+                              ),
+                              child: Text(
+                                data['title'] ?? "",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                      if ((file['tag_list_details'] as List).length > 2)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            "+${(file['tag_list_details'] as List).length - 2}",
+                            style: TextStyle(
+                              color: subTextColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
               ],
             ),
           ),
