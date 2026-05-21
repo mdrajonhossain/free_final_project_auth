@@ -97,27 +97,26 @@ class AppDrawer extends StatelessWidget {
           ),
 
           /// ================= PRIMARY MENU (2 COLUMN GRID) =================
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
-            child: GridView.count(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 5,
-              crossAxisSpacing: 5,
-              childAspectRatio: 2.6,
-              children: [
-                _gridItem(Icons.task_alt, "Tasks", () {}),
-                _gridItem(Icons.folder_open_outlined, "FileHub", () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/filehuball');
-                }),
-                _gridItem(Icons.analytics_outlined, "Daily Sales", () {}),
-              ],
-            ),
-          ),
-
+          // Padding(
+          //   padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
+          //   child: GridView.count(
+          //     shrinkWrap: true,
+          //     padding: EdgeInsets.zero,
+          //     physics: const NeverScrollableScrollPhysics(),
+          //     crossAxisCount: 2,
+          //     mainAxisSpacing: 5,
+          //     crossAxisSpacing: 5,
+          //     childAspectRatio: 2.6,
+          //     children: [
+          //       _gridItem(Icons.task_alt, "Tasks", () {}),
+          //       _gridItem(Icons.folder_open_outlined, "FileHub", () {
+          //         Navigator.pop(context);
+          //         Navigator.pushNamed(context, '/filehuball');
+          //       }),
+          //       _gridItem(Icons.analytics_outlined, "Daily Sales", () {}),
+          //     ],
+          //   ),
+          // ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 2),
             child: Divider(color: Colors.white12, indent: 20, endIndent: 20),
@@ -131,13 +130,13 @@ class AppDrawer extends StatelessWidget {
             "All notifications",
             () {},
           ),
-
           _drawerItem(Icons.lock_outline, "Change password", () {}),
           _drawerItem(
             Icons.admin_panel_settings_outlined,
             "Admin settings",
             () {},
           ),
+          _drawerItem(Icons.theater_comedy, "Theme", () {}),
 
           const SizedBox(height: 30),
 
