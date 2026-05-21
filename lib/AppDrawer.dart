@@ -142,7 +142,16 @@ class AppDrawer extends StatelessWidget {
             "Admin settings",
             () {},
           ),
-          _drawerItem(Icons.theater_comedy, "Theme", () {}),
+          _drawerItem(
+            Icons.theater_comedy,
+            "Theme",
+            () => onThemeChange(!isDark),
+            trailing: Icon(
+              isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+              color: isDark ? Colors.yellow : Colors.white70,
+              size: 20,
+            ),
+          ),
 
           const SizedBox(height: 30),
 
@@ -159,13 +168,19 @@ class AppDrawer extends StatelessWidget {
   }
 
   /// Helper to build Drawer Items
-  Widget _drawerItem(IconData icon, String title, VoidCallback onTap) {
+  Widget _drawerItem(
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    Widget? trailing,
+  }) {
     return ListTile(
       leading: Icon(icon, color: Colors.white70, size: 22),
       title: Text(
         title,
         style: const TextStyle(color: Colors.white, fontSize: 15),
       ),
+      trailing: trailing,
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 25),
       visualDensity: const VisualDensity(vertical: -1),
