@@ -77,7 +77,10 @@ class _TagsPageState extends State<TagsPage> {
     });
 
     try {
-      final response = await ApiServer().getFilesByTag(_currentTagId, page: 1);
+      final response = await ApiServer().getFilesByTag(
+        tagId: _currentTagId,
+        page: 1,
+      );
       setState(() {
         _tagFiles = response?['files'] ?? [];
         _totalFilePages = response?['pagination']?['totalPages'] ?? 1;
@@ -95,22 +98,30 @@ class _TagsPageState extends State<TagsPage> {
     if (_isLoadingMore || _filePage >= _totalFilePages) return;
 
     setState(() => _isLoadingMore = true);
+
     try {
       final nextPage = _filePage + 1;
+
       final response = await ApiServer().getFilesByTag(
-        _currentTagId,
+        tagId: _currentTagId,
         page: nextPage,
       );
+
+      final newFiles = response?['files'] ?? [];
+
       setState(() {
         _filePage = nextPage;
-        final newFiles = response?['files'] ?? [];
         _totalFilePages = response?['pagination']?['totalPages'] ?? 1;
-        _tagFiles.addAll(newFiles);
+
+        _tagFiles.addAll(List<Map<String, dynamic>>.from(newFiles));
+
         _isLoadingMore = false;
-        _runFilter(_searchController.text);
       });
+
+      _runFilter(_searchController.text);
     } catch (e) {
       setState(() => _isLoadingMore = false);
+
       debugPrint("Error loading more files: $e");
     }
   }

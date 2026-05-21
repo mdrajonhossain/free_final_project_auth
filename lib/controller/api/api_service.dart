@@ -342,19 +342,19 @@ class ApiServer {
   // ==================End
 
   // ==========================get_files_by_tag==============================
-  Future<Map<String, dynamic>?> getFilesByTag(
-    String tagId, {
+  Future<Map<String, dynamic>?> getFilesByTag({
+    dynamic tagId,
     String conversationId = "all_files",
-    String fileType = "all",
-    String fileSubType = "tag",
     String fileName = "",
+    String fileSubType = "tag",
+    String fileType = "all",
     int page = 1,
-    String tab = "tag_file",
     String selectedFilters = "date_- Descending",
-    String? uploadedBy,
-    String? tagOperator,
-    String? from,
-    String? to,
+    String tab = "tag_file",
+    dynamic uploadedBy,
+    String tagOperator = "or",
+    dynamic from,
+    dynamic to,
   }) async {
     try {
       final data = await ApiServer.call(
@@ -375,13 +375,13 @@ class ApiServer {
           "selectedFilters": selectedFilters,
         },
       );
-      final galleryData = data['get_file_gallery'];
+      final galleryData = data?['get_file_gallery'];
       if (galleryData != null) {
         return Map<String, dynamic>.from(galleryData);
       }
       return null;
     } catch (e) {
-      print("[API ERROR] getFilesByTag: $e");
+      debugPrint("[API ERROR] getFilesByTag: $e");
       return null;
     }
   }
