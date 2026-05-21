@@ -278,13 +278,21 @@ query Messages(\$conversationId: String!, \$page: Int!) {
 """;
 
 const String Get_file_galleryQuery = """
-  query Get_file_gallery(\$conversation_ids: [String!], \$file_type: String, \$tab: String, \$tag_id: [String!], \$conversation_id: String) {
+  query Get_file_gallery(\$conversation_id: String, \$conversation_ids: [String!], \$uploaded_by: String, \$file_type: String, \$file_sub_type: String, \$tag_id: [String!], \$tag_operator: String, \$file_name: String, \$from: String, \$to: String, \$page: Int, \$tab: String, \$selectedFilters: String) {
     get_file_gallery(
-      conversation_ids: \$conversation_ids
-      file_type: \$file_type
-      tab: \$tab
-      tag_id: \$tag_id
       conversation_id: \$conversation_id
+      conversation_ids: \$conversation_ids
+      uploaded_by: \$uploaded_by
+      file_type: \$file_type
+      file_sub_type: \$file_sub_type
+      tag_id: \$tag_id
+      tag_operator: \$tag_operator
+      file_name: \$file_name
+      from: \$from
+      to: \$to
+      page: \$page
+      tab: \$tab
+      selectedFilters: \$selectedFilters
     ) {
       tags {
         tag_id
@@ -310,50 +318,56 @@ const String Get_file_galleryQuery = """
         disabled
       }
       files {
-            id
-            conversation_id
-            conversation_title
-            group
-            user_id
-            msg_id
-            bucket
-            file_type
-            key
-            location
-            originalname
-            file_size
-            has_tag
-            root_conv_id
-            url_short_id
-            file_category
-            main_msg_id
-            company_id
-            referenceId
-            reference_type
-            uploaded_by
-            cost_id
-            is_delete
-            is_secret
-            created_at
-            has_delete
-            tag_list
-            mention_user
-            secret_user
-            participants
-            star
+        id
+        conversation_id
+        conversation_title
+        uploaded_by
+        user_id
+        msg_id
+        bucket
+        file_type
+        key
+        location
+        originalname
+        file_size
+        has_tag
+        root_conv_id
+        url_short_id
+        file_category
+        main_msg_id
+        company_id
+        referenceId
+        reference_type
+        tag_list_details {
+          tag_id
+          tag_type
+          tagged_by
+          title
+          tag_color
+          __typename
         }
-      summary {
-        total
-        image
-        audio
-        video
-        other
-        voice
-        share
-        total_viewed_files
-        total_my_uploaded_files
-        total_others_uploaded_files
+        is_delete
+        is_secret
+        created_at
+        has_delete
+        tag_list
+        tag_list_with_user {
+          tag_id
+          created_by
+          __typename
+        }
+        mention_user
+        secret_user
+        participants
+        star
+        __typename
       }
+      pagination {
+        page
+        totalPages
+        total
+      }
+      __typename
     }
 }
 """;
