@@ -31,6 +31,7 @@ class _TagsPageState extends State<TagsPage> {
   int _filePage = 1;
   int _totalFilePages = 1;
   String _currentTagId = "";
+  String? _myId; // To store the current user's ID
   String _selectedTagName = "";
   int selectedCategory = 0;
 
@@ -42,6 +43,7 @@ class _TagsPageState extends State<TagsPage> {
     super.initState();
     _filteredTags = widget.tags;
     _fileScrollController.addListener(_onScroll);
+    _fetchMyId(); // Fetch user ID on init
   }
 
   void _onScroll() {
@@ -53,6 +55,18 @@ class _TagsPageState extends State<TagsPage> {
       if (_filePage < _totalFilePages) {
         _loadMoreFiles();
       }
+    }
+  }
+
+  Future<void> _fetchMyId() async {
+    try {
+      // Assuming ApiServer().fetchMe() returns user data including 'id'
+      final userData = await ApiServer().fetchMe();
+      setState(() {
+        _myId = userData['id']?.toString();
+      });
+    } catch (e) {
+      debugPrint("Error fetching my ID in TagsPage: $e");
     }
   }
 
@@ -284,6 +298,7 @@ class _TagsPageState extends State<TagsPage> {
     Color textColor,
     Color subTextColor,
     Color cardColor,
+    String? currentUserId, // New parameter for current user's ID
   ) {
     final String originalName =
         file['originalname'] ??
@@ -320,6 +335,11 @@ class _TagsPageState extends State<TagsPage> {
         ? location
         : "https://wfss001.freeli.io/$location";
 
+    final bool isStarred =
+        currentUserId != null &&
+        (file['star'] is List &&
+            (file['star'] as List).any((id) => id.toString() == currentUserId));
+
     return GestureDetector(
       onLongPress: () {
         showModalBottomSheet(
@@ -349,17 +369,32 @@ class _TagsPageState extends State<TagsPage> {
                     },
                   ),
                   ListTile(
-                    leading: Icon(Icons.star_outline_rounded, color: itemColor),
-                    title: Text("Star", style: TextStyle(color: itemColor)),
+                    leading: Icon(
+                      isStarred
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      color: isStarred ? Colors.yellow : itemColor,
+                    ),
+                    title: Text(
+                      isStarred ? "Unstar" : "Star",
+                      style: TextStyle(
+                        color: isStarred ? Colors.yellow : itemColor,
+                      ),
+                    ),
                     onTap: () async {
                       Navigator.pop(context);
                       try {
                         await ApiServer().toggleFileStar(
                           fileId: (file['id'] ?? file['file_id']).toString(),
                         );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Star status updated")),
-                        );
+                        // Refresh the file list to update star status
+                        await get_tag_file(_currentTagId, _selectedTagName);
+                        if (mounted)
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Star status updated"),
+                            ),
+                          );
                       } catch (e) {
                         debugPrint("Star error: $e");
                       }
@@ -605,16 +640,62 @@ class _TagsPageState extends State<TagsPage> {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.star_outline_rounded,
-                  color: subTextColor.withOpacity(0.8),
-                  size: 22,
+                GestureDetector(
+                  // Wrap star icon with GestureDetector for individual tap
+                  onTap: () async {
+                    try {
+                      await ApiServer().toggleFileStar(
+                        fileId: (file['id'] ?? file['file_id']).toString(),
+                      );
+                      await get_tag_file(
+                        _currentTagId,
+                        _selectedTagName,
+                      ); // Refresh list
+                      if (mounted)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Star status updated")),
+                        );
+                    } catch (e) {
+                      debugPrint("Star error: $e");
+                      if (mounted)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Failed to update star: $e")),
+                        );
+                    }
+                  },
+                  child: Icon(
+                    isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: isStarred
+                        ? Colors.yellow
+                        : subTextColor.withOpacity(0.8),
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                Icon(
-                  Icons.download_rounded,
-                  color: subTextColor.withOpacity(0.8),
-                  size: 22,
+                GestureDetector(
+                  // Wrap download icon with GestureDetector
+                  onTap: () async {
+                    final Uri uri = Uri.parse(fullUrl);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    } else {
+                      debugPrint('Could not launch $fullUrl for download');
+                      if (mounted)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Could not open file for download."),
+                          ),
+                        );
+                    }
+                  },
+                  child: Icon(
+                    Icons.download_rounded,
+                    color: subTextColor.withOpacity(0.8),
+                    size: 22,
+                  ),
                 ),
               ],
             ),
@@ -875,6 +956,7 @@ class _TagsPageState extends State<TagsPage> {
                           textColor,
                           subTextColor,
                           cardColor,
+                          _myId, // Pass _myId here
                         );
                       },
                     )
