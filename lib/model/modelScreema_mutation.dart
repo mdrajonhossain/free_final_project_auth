@@ -374,3 +374,13 @@ mutation File_delete($input: fileInput!) {
   }
 }
 ''';
+
+const String SET_NEW_PASSWORD = r'''
+mutation Set_new_password($input: newPasswordInput!) {
+  set_new_password(input: $input) {
+    status
+    message
+    data
+  }
+}
+''';

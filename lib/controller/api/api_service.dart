@@ -868,5 +868,35 @@ class ApiServer {
     }
   }
 
+  Future<Map<String, dynamic>> setNewPassword({
+    required String email,
+    required String password,
+    required String password2,
+  }) async {
+    try {
+      final variables = {
+        "input": {"email": email, "password": password, "password2": password2},
+      };
+
+      final response = await ApiServer.call(
+        SET_NEW_PASSWORD,
+        variables: variables,
+      );
+
+      final result = Map<String, dynamic>.from(
+        response['set_new_password'] ?? {},
+      );
+
+      /// API Status Check
+      if (result['status'] == true) {
+        return result;
+      } else {
+        throw GqlException(result['message'] ?? "Password reset failed");
+      }
+    } catch (e) {
+      throw GqlException(e.toString());
+    }
+  }
+
   // ========================= End FileDelete Filhubs==========================
 }
