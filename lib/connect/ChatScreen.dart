@@ -263,7 +263,10 @@ participants: $participants
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => ChatFilterScreen.show(context),
+                  onTap: () {
+                    ChatFilterScreen.show(context);
+                    Navigator.pushNamed(context, "/filehubRoom");
+                  },
                   child: Container(
                     margin: const EdgeInsets.only(left: 8),
                     padding: const EdgeInsets.all(6),
@@ -271,27 +274,28 @@ participants: $participants
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
-                      Icons.filter_alt_sharp,
+                      Icons.folder_open_rounded,
                       size: 28,
                       color: Colors.white70,
                     ),
                   ),
                 ),
-                GestureDetector(
-                  onTap: () => ChatMoreScreen.show(context),
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.more_vert,
-                      size: 28,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
+                SizedBox(width: 14),
+                // GestureDetector(
+                //   onTap: () => ChatMoreScreen.show(context),
+                //   child: Container(
+                //     margin: const EdgeInsets.only(left: 8),
+                //     padding: const EdgeInsets.all(6),
+                //     decoration: BoxDecoration(
+                //       borderRadius: BorderRadius.circular(10),
+                //     ),
+                //     child: const Icon(
+                //       Icons.more_vert,
+                //       size: 28,
+                //       color: Colors.white70,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
