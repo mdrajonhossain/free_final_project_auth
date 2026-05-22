@@ -19,19 +19,38 @@ class _SwitchAccountState extends State<SwitchAccount>
     with SingleTickerProviderStateMixin {
   List<Map<String, dynamic>> companies = [];
   bool isLoading = true;
+  String? _userEmail;
 
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
     )..repeat(reverse: true);
 
-    loadCompanies();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      // 1. Fetch the user profile to get the email
+      final userData = await ApiServer().fetchMe();
+      final email = userData['email']?.toString();
+
+      if (email != null) {
+        _userEmail = email;
+        // 2. Load companies using the fetched email
+        await loadCompanies();
+      } else {
+        throw Exception("Email not found in user data");
+      }
+    } catch (e) {
+      debugPrint("Error initializing data: $e");
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -40,18 +59,19 @@ class _SwitchAccountState extends State<SwitchAccount>
     super.dispose();
   }
 
-  void loadCompanies() async {
+  Future<void> loadCompanies() async {
+    if (_userEmail == null) return;
     try {
-      final data = await ApiServer().getCompanyList(
-        email: "rajonhossaindhaka@gmail.com",
-      );
+      final data = await ApiServer().getCompanyList(email: _userEmail!);
 
-      setState(() {
-        companies = data;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          companies = data;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -172,7 +192,7 @@ class _SwitchAccountState extends State<SwitchAccount>
                   child: Row(
                     children: [
                       Text(
-                        "Company List",
+                        "Company List (${companies.length})",
                         style: TextStyle(
                           color: text,
                           fontSize: 16,
