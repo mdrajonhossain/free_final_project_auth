@@ -5,6 +5,7 @@ import 'package:freeli/connect/ChangePassword/ChangePassword.dart';
 import 'package:freeli/connect/archiveroom/archiveroom.dart';
 import 'package:freeli/connect/filehubs/filehubs.dart';
 import 'package:freeli/connect/filehubs_Room/RoomFilehubs.dart';
+import 'package:freeli/connect/swichAccount/SwitchAccount.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'CompanyListScreen.dart';
@@ -69,6 +70,8 @@ class _MyAppState extends State<MyApp> {
               ChangePassword(isDark: isDark, onThemeChange: toggleTheme),
           '/allFlaggedMessage': (context) =>
               AllFlaggedMessage(isDark: isDark, onThemeChange: toggleTheme),
+          '/switchAccount': (context) =>
+              SwitchAccount(isDark: isDark, onThemeChange: toggleTheme),
         },
       ),
     );

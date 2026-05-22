@@ -925,4 +925,29 @@ class ApiServer {
   }
 
   // ========================= End All Archive room List ==========================
+
+  // ========================= Start Company List ==========================
+  Future<List<Map<String, dynamic>>> getCompanyList({
+    required String email,
+  }) async {
+    try {
+      final variables = {"email": email};
+      final response = await ApiServer.call(
+        CompaniesList,
+        variables: variables,
+      );
+      final data = response['companies'];
+      if (data == null) {
+        return [];
+      }
+      final List<Map<String, dynamic>> result = List<Map<String, dynamic>>.from(
+        data,
+      );
+      return result;
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  // ========================= End Company List ==========================
 }

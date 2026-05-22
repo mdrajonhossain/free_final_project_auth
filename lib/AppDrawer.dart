@@ -44,27 +44,59 @@ class AppDrawer extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ================= TOP ROW =================
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Image.asset('assets/logo.webp', height: 30),
-                    CircleAvatar(
-                      radius: 35,
-                      backgroundColor: Colors.white24,
-                      backgroundImage: imgUrl != null
-                          ? NetworkImage(imgUrl)
-                          : null,
-                      child: imgUrl == null
-                          ? const Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 40,
-                            )
-                          : null,
+
+                    Row(
+                      children: [
+                        // 🔁 SWITCH COMPANY BUTTON
+                        InkWell(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/switchAccount');
+                          },
+                          borderRadius: BorderRadius.circular(30),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.swap_horiz_rounded,
+                              color: Color.fromARGB(255, 235, 232, 233),
+                              size: 30,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        // PROFILE IMAGE
+                        CircleAvatar(
+                          radius: 35,
+                          backgroundColor: Colors.white24,
+                          backgroundImage: imgUrl != null
+                              ? NetworkImage(imgUrl)
+                              : null,
+                          child: imgUrl == null
+                              ? const Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                  size: 40,
+                                )
+                              : null,
+                        ),
+                      ],
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 15),
+
+                // ================= NAME =================
                 Text(
                   name,
                   overflow: TextOverflow.ellipsis,
@@ -74,6 +106,7 @@ class AppDrawer extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
                 if (email != null)
                   Text(
                     email,
@@ -82,6 +115,7 @@ class AppDrawer extends StatelessWidget {
                       fontSize: 13,
                     ),
                   ),
+
                 Text(
                   teamName ??
                       (userData == null

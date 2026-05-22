@@ -663,3 +663,14 @@ const String ArchiveCount = """
       }
   }
 """;
+
+const String CompaniesList = """
+query Companies(\$email: String!) {
+  companies(email: \$email) {
+    company_id
+    company_name
+    role
+    company_img
+  }
+}
+""";
