@@ -153,7 +153,10 @@ class AppDrawer extends StatelessWidget {
                   )
                 : null,
           ),
-          _drawerItem(Icons.flag_outlined, "Flagged messages", () {}),
+          _drawerItem(Icons.flag_outlined, "Flagged messages", () {
+            Navigator.pop(context);
+            Navigator.pushNamed(context, '/allFlaggedMessage');
+          }),
           _drawerItem(
             Icons.notifications_none_outlined,
             "All notifications",

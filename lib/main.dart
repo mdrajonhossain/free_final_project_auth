@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/connect/AllFlagged/AllFlaggedMessage.dart';
 import 'package:freeli/connect/ChangePassword/ChangePassword.dart';
 import 'package:freeli/connect/archiveroom/archiveroom.dart';
 import 'package:freeli/connect/filehubs/filehubs.dart';
@@ -66,6 +67,8 @@ class _MyAppState extends State<MyApp> {
               ArchiveRoom(isDark: isDark, onThemeChange: toggleTheme),
           '/changepassword': (context) =>
               ChangePassword(isDark: isDark, onThemeChange: toggleTheme),
+          '/allFlaggedMessage': (context) =>
+              AllFlaggedMessage(isDark: isDark, onThemeChange: toggleTheme),
         },
       ),
     );
