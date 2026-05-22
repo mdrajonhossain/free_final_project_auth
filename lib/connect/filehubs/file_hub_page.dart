@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:freeli/connect/FullImageViewer.dart';
+import 'package:freeli/connect/PopUpFile/ForwardMessageScreen.dart';
+import 'package:freeli/connect/PopUpFile/PublicTag.dart';
+import 'package:freeli/connect/file_utils.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import 'file_utils.dart'; // Updated path
-import 'filehubs/FileHubSkeleton.dart'; // Import FileHubSkeleton
-import 'PopUpFile/PublicTag.dart'; // Import PublicTag
-import 'PopUpFile/ForwardMessageScreen.dart'; // Import ForwardMessageScreen
-import 'FullImageViewer.dart'; // Updated path
 
 class FileHubPage extends StatefulWidget {
   final bool isDark;
