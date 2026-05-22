@@ -327,6 +327,44 @@ mutation File_star(\$input: starFileInput!) {
 }
 """;
 
+const String CREATE_ROOM = r'''
+mutation create_room($input: newRoomData!) {
+  create_room(input: $input) {
+    data {
+      conversation_id
+      title
+      pin
+      group
+      mute
+      has_mute
+      company_id
+      created_by
+      close_for
+      archive
+      friend_id
+      system_conversation
+      temp_user
+      participants
+      participants_guest
+      participants_admin
+      b_unit_id
+      b_unit_id_name
+      team_id
+      team_id_name
+      tag_list
+      conv_img
+      conv_is_active
+      last_msg_time
+      short_id
+      __typename
+    }
+    status
+    message
+    __typename
+  }
+}
+''';
+
 const String FILE_DELETE = r'''
 mutation File_delete($input: fileInput!) {
   file_delete(input: $input) {

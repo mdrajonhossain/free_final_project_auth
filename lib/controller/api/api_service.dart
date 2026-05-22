@@ -185,6 +185,19 @@ class ApiServer {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchAllUsers(String companyId) async {
+    try {
+      final data = await ApiServer.call(
+        getAllUsersQuery,
+        variables: {"company_id": companyId},
+      );
+      final List users = data['users'] ?? [];
+      return users.map((e) => Map<String, dynamic>.from(e)).toList();
+    } catch (e) {
+      throw GqlException("Failed to fetch users: ${e.toString()}");
+    }
+  }
+
   // ======================== start tag public ===================================
   Future<List<Map<String, dynamic>>> fetch_Public_Tags(
     String? companyId,
@@ -820,6 +833,38 @@ class ApiServer {
       return Map<String, dynamic>.from(data['file_delete'] ?? {});
     } catch (e) {
       throw GqlException("Failed to delete file: ${e.toString()}");
+    }
+  }
+
+  Future<Map<String, dynamic>> createRoom({
+    required Map<String, dynamic> input,
+  }) async {
+    try {
+      final data = await ApiServer.call(
+        CREATE_ROOM,
+        variables: {"input": input},
+      );
+      return Map<String, dynamic>.from(data['create_room'] ?? {});
+    } catch (e) {
+      throw GqlException("Failed to create room: ${e.toString()}");
+    }
+  }
+
+  Future<Map<String, dynamic>> get_Category() async {
+    try {
+      final data = await ApiServer.call(Categories, variables: {});
+      return Map<String, dynamic>.from(data);
+    } catch (e) {
+      throw GqlException("Failed to fetch categories: ${e.toString()}");
+    }
+  }
+
+  Future<Map<String, dynamic>> get_Teams() async {
+    try {
+      final data = await ApiServer.call(Teams, variables: {});
+      return Map<String, dynamic>.from(data);
+    } catch (e) {
+      throw GqlException("Failed to fetch teams: ${e.toString()}");
     }
   }
 

@@ -1,3 +1,31 @@
+const String getAllUsersQuery = """
+  query users (\$company_id: String!){
+    users(company_id: \$company_id) {
+      id
+      firstname
+      lastname
+      email
+      company_id
+      phone
+      img
+      fnln
+      role
+      access
+      email_otp
+      email_otp_created_at
+      login_total
+      is_delete
+      is_active
+      eod_report
+      createdat
+      created_by
+      erpNext
+      erpNextPass
+      erpNextRoles
+    }
+  }
+""";
+
 const String myQuery = """
 query Me {
   me {
@@ -538,4 +566,38 @@ const String filehubs_Links = """
         }
       }
     }
+""";
+
+const String Categories = """
+  query Categories{
+      categories {
+        unit_id
+        unit_name
+        company_id
+        user_id
+        created_by
+        created_by_name
+        total_use
+        updated_at
+        created_at
+    }
+}
+""";
+
+const String Teams = """
+  query Teams {
+      teams {
+        team_id
+        team_title
+        company_id
+        created_by
+        updated_by
+        team_system_conversation_active
+        team_system_conversation_off_sms
+        participants
+        admin
+        created_at
+        updated_at
+      }
+  }
 """;
