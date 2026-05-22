@@ -30,21 +30,80 @@ class _FileHubPageState extends State<FileHubPage> {
   int selectedCategory = 0;
   final TextEditingController _searchController = TextEditingController();
   String searchText = "";
+  List<dynamic> _localFiles = [];
 
   @override
   void initState() {
     super.initState();
+    _localFiles = List.from(widget.files);
   }
 
   @override
   void didUpdateWidget(covariant FileHubPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Sync local list if the parent updates the files list
+    if (oldWidget.files != widget.files) {
+      _localFiles = List.from(widget.files);
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void fileDelete(fileId, participant) {
+    // Ensure participant is converted to a List<String> of IDs
+    List<String> participantsList = [];
+    if (participant is List) {
+      participantsList = participant.map((e) {
+        if (e is Map) return (e['id'] ?? e['uid'] ?? e['_id']).toString();
+        return e.toString();
+      }).toList();
+    } else if (participant != null) {
+      participantsList = [participant.toString()];
+    }
+
+    final String idToDelete = fileId.toString();
+
+    ApiServer()
+        .Delete_File_Filehubs(
+          fileId: idToDelete,
+          participants: participantsList,
+        )
+        .then((response) {
+          if (!mounted) return;
+
+          if (response['status'] == true || response['status'] == 'success') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("File deleted successfully")),
+            );
+
+            // Remove the file from local state immediately for a better UX
+            setState(() {
+              _localFiles.removeWhere(
+                (f) => (f['id'] ?? f['file_id']).toString() == idToDelete,
+              );
+            });
+
+            // Optional: Re-fetch only if the list is now empty or specific logic requires it
+            // get_tag_file(_currentTagId, _selectedTagName);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Failed to delete file: ${response['message']}"),
+              ),
+            );
+          }
+        })
+        .catchError((error) {
+          if (!mounted) return;
+          debugPrint("File deletion error: $error");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error deleting file: $error")),
+          );
+        });
   }
 
   String formatFileSize(dynamic bytes) {
@@ -77,7 +136,7 @@ class _FileHubPageState extends State<FileHubPage> {
     final subTextColor = isDark ? Colors.white70 : Colors.black54;
 
     /// API FILES
-    final List<dynamic> allFiles = widget.files;
+    final List<dynamic> allFiles = _localFiles;
 
     /// FILTER CATEGORY
     List<dynamic> filteredFiles = allFiles.where((file) {
@@ -347,7 +406,13 @@ class _FileHubPageState extends State<FileHubPage> {
                         "Delete",
                         style: TextStyle(color: Colors.redAccent),
                       ),
-                      onTap: () => Navigator.pop(context),
+                      onTap: () {
+                        fileDelete(
+                          file['id'] ?? file['file_id'],
+                          file['participants'],
+                        );
+                        Navigator.pop(context);
+                      },
                     ),
                   ],
                 ),
