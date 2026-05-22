@@ -187,61 +187,6 @@ class _LinksPageState extends State<LinksPage> {
                 ),
               ),
 
-              const SizedBox(height: 20),
-
-              /// TABLE HEADER
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: widget.isDark
-                        ? Colors.white.withOpacity(0.05)
-                        : Colors.grey.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          "Title",
-                          style: TextStyle(
-                            color: textColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 5,
-                        child: Text(
-                          "URL",
-                          style: TextStyle(
-                            color: textColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: Text(
-                          "Open",
-                          style: TextStyle(
-                            color: textColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
               /// TABLE BODY
               Expanded(
                 child: isLoading
@@ -254,97 +199,83 @@ class _LinksPageState extends State<LinksPage> {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
+                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+                        physics: const BouncingScrollPhysics(),
                         itemCount: filteredLinks.length,
                         itemBuilder: (context, index) {
                           final link = filteredLinks[index];
-
                           final String url = (link['url'] ?? '').toString();
 
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(14),
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: cardColor,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: widget.isDark
                                     ? Colors.white.withOpacity(0.05)
-                                    : Colors.grey.withOpacity(0.08),
+                                    : Colors.black.withOpacity(0.05),
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(
-                                    widget.isDark ? 0.15 : 0.04,
+                                    widget.isDark ? 0.2 : 0.04,
                                   ),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 6),
                                 ),
                               ],
                             ),
                             child: Row(
                               children: [
-                                /// TITLE
+                                Container(
+                                  height: 48,
+                                  width: 48,
+                                  decoration: BoxDecoration(
+                                    color: widget.isDark
+                                        ? Colors.white.withOpacity(0.08)
+                                        : primaryColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Icon(
+                                    _getLinkIcon(url),
+                                    color: widget.isDark
+                                        ? Colors.white70
+                                        : primaryColor,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
                                 Expanded(
-                                  flex: 3,
-                                  child: Row(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        height: 42,
-                                        width: 42,
-                                        decoration: BoxDecoration(
-                                          color: widget.isDark
-                                              ? Colors.white.withOpacity(0.06)
-                                              : primaryColor.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: Icon(
-                                          _getLinkIcon(url),
-                                          color: widget.isDark
-                                              ? Colors.white70
-                                              : primaryColor,
+                                      Text(
+                                        _getTitle(link),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
                                         ),
                                       ),
-
-                                      const SizedBox(width: 12),
-
-                                      Expanded(
-                                        child: Text(
-                                          _getTitle(link),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: textColor,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                          ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        url,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: subTextColor,
+                                          fontSize: 12,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-
-                                const SizedBox(width: 10),
-
-                                /// URL
-                                Expanded(
-                                  flex: 5,
-                                  child: Text(
-                                    url,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: subTextColor,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(width: 10),
-
-                                /// OPEN BUTTON
+                                const SizedBox(width: 12),
                                 InkWell(
                                   borderRadius: BorderRadius.circular(12),
                                   onTap: () async {
@@ -359,8 +290,8 @@ class _LinksPageState extends State<LinksPage> {
                                     }
                                   },
                                   child: Container(
-                                    height: 42,
-                                    width: 42,
+                                    height: 40,
+                                    width: 40,
                                     decoration: BoxDecoration(
                                       color: primaryColor.withOpacity(0.12),
                                       borderRadius: BorderRadius.circular(12),
