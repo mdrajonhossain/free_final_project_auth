@@ -29,7 +29,14 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
 
   Future<void> _fetchConversations() async {
     try {
-      final myId = context.read<ChatBloc>().state.myId;
+      // Try to get myId from ChatBloc state
+      String myId = context.read<ChatBloc>().state.myId;
+
+      // Fallback: Check if it was passed manually in the message map
+      if (myId.isEmpty) {
+        myId = widget.messageToForward['user_id']?.toString() ?? "";
+      }
+
       if (myId.isEmpty) throw Exception("User ID not found");
 
       final apiService = ApiServer();

@@ -11,12 +11,14 @@ import 'FullImageViewer.dart'; // Updated path
 class FileHubPage extends StatefulWidget {
   final bool isDark;
   final List<dynamic> files;
+  final Map<String, dynamic>? userData;
   final Future<void> Function()? onRefresh;
 
   const FileHubPage({
     super.key,
     this.isDark = true,
     required this.files,
+    this.userData,
     this.onRefresh,
   });
 
@@ -26,41 +28,17 @@ class FileHubPage extends StatefulWidget {
 
 class _FileHubPageState extends State<FileHubPage> {
   int selectedCategory = 0;
-
-  bool isLoading = true;
-
   final TextEditingController _searchController = TextEditingController();
-
   String searchText = "";
-  String? _myId;
 
   @override
   void initState() {
     super.initState();
-    isLoading = false;
-    _fetchMyId();
-  }
-
-  Future<void> _fetchMyId() async {
-    try {
-      final userData = await ApiServer().fetchMe();
-      setState(() {
-        _myId = userData['id']?.toString();
-      });
-    } catch (e) {
-      debugPrint("Error fetching my ID in FileHubPage: $e");
-    }
   }
 
   @override
   void didUpdateWidget(covariant FileHubPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.files != oldWidget.files) {
-      // If the parent passes new files, update the state
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   @override
@@ -203,10 +181,11 @@ class _FileHubPageState extends State<FileHubPage> {
         "webp",
       ].contains(extension);
 
+      final String? myId = widget.userData?['id']?.toString();
       final bool isStarred =
-          _myId != null &&
+          myId != null &&
           (file['star'] is List &&
-              (file['star'] as List).any((id) => id.toString() == _myId));
+              (file['star'] as List).any((id) => id.toString() == myId));
 
       final List<dynamic> tagDetails = (file['tag_list_details'] is List)
           ? file['tag_list_details']
@@ -344,8 +323,18 @@ class _FileHubPageState extends State<FileHubPage> {
                               top: Radius.circular(24),
                             ),
                           ),
-                          builder: (ctx) =>
-                              ForwardMessageScreen(messageToForward: file),
+                          builder: (ctx) => ForwardMessageScreen(
+                            messageToForward: {
+                              ...file,
+                              'msg_id':
+                                  file['msg_id'] ??
+                                  file['id'] ??
+                                  file['file_id'],
+                              'user_id': myId,
+                              'conversation_id': file['conversation_id'],
+                              'is_reply_msg': file['is_reply_msg'] ?? 'no',
+                            },
+                          ),
                         );
                       },
                     ),
@@ -446,14 +435,20 @@ class _FileHubPageState extends State<FileHubPage> {
                     const SizedBox(height: 6),
                     Text(
                       "$fileSize • $date",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: subTextColor, fontSize: 12),
                     ),
                     Text(
                       file['uploaded_by'] ?? "Unknown",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: subTextColor, fontSize: 12),
                     ),
                     Text(
                       file['conversation_title'] ?? "Unknown",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: subTextColor, fontSize: 12),
                     ),
                     if (tagDetails.isNotEmpty)
@@ -496,7 +491,10 @@ class _FileHubPageState extends State<FileHubPage> {
                             if (widget.onRefresh != null) widget.onRefresh!();
                           });
                         },
-                        child: Row(
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             ...tagDetails
                                 .take(2)
@@ -645,8 +643,13 @@ class _FileHubPageState extends State<FileHubPage> {
       backgroundColor: backgroundColor,
 
       body: SafeArea(
-        child: isLoading
-            ? FileHubSkeleton(isDark: isDark)
+        child: widget.files.isEmpty && searchText.isEmpty
+            ? Center(
+                child: Text(
+                  "No files available",
+                  style: TextStyle(color: subTextColor),
+                ),
+              )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -712,8 +715,7 @@ class _FileHubPageState extends State<FileHubPage> {
                     ),
 
                     child: Container(
-                      height: 58,
-
+                      constraints: const BoxConstraints(minHeight: 58),
                       decoration: BoxDecoration(
                         color: surfaceColor,
 
@@ -750,6 +752,7 @@ class _FileHubPageState extends State<FileHubPage> {
                           border: InputBorder.none,
 
                           hintText: "Search files...",
+                          isDense: true,
 
                           hintStyle: TextStyle(color: subTextColor),
 

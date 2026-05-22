@@ -27,6 +27,7 @@ class FilehubsState extends State<Filehubs> {
   Map<String, dynamic>? userData;
   List<dynamic> tagsList = [];
   List<dynamic> filesList = [];
+  List<dynamic> hubFiles = [];
   List<dynamic> linksList = [];
   bool isLoading = true;
   String? errorMessage;
@@ -34,7 +35,39 @@ class FilehubsState extends State<Filehubs> {
   @override
   void initState() {
     super.initState();
-    fetchFilehubData();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    // Coordinate both fetch operations to manage the loading state correctly
+    await Future.wait([fetchFilehubData(), fetchFileList()]);
+  }
+
+  Future<void> fetchFileList() async {
+    try {
+      final dataFile = await ApiServer().get_file_gallery(
+        conversationId: "all_files",
+        fileName: "",
+        fileSubType: "all",
+        fileType: "all",
+        from: null,
+        page: 1,
+        selectedFilters: "date_- Descending",
+        tab: "file",
+        tagId: null,
+        uploadedBy: null,
+        to: null,
+      );
+
+      debugPrint(
+        "[API] fetchFileList Success: ${dataFile?['files']?.length ?? 0} files found",
+      );
+      setState(() {
+        hubFiles = dataFile?['files'] ?? [];
+      });
+    } catch (e) {
+      debugPrint("fetchFileList Error: $e");
+    }
   }
 
   Future<void> fetchFilehubData() async {
@@ -88,8 +121,9 @@ class FilehubsState extends State<Filehubs> {
       TagsPage(isDark: widget.isDark, tags: tagsList),
       FileHubPage(
         isDark: widget.isDark,
-        files: filesList,
-        onRefresh: fetchFilehubData,
+        files: hubFiles,
+        userData: userData,
+        onRefresh: fetchFileList,
       ), // Assuming FileHubPage takes files
       LinksPage(
         isDark: widget.isDark,
