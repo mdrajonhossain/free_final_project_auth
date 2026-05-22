@@ -674,3 +674,32 @@ query Companies(\$email: String!) {
   }
 }
 """;
+
+const String Get_notifications = """
+query Get_notifications(\$read_status: String!, \$page: Int) {
+  get_notifications(read_status: \$read_status, page: \$page) {
+    notification {
+      _id
+      type
+      title
+      body
+      created_by_id
+      created_by_name
+      created_by_img
+      receiver_id
+      company_id
+      task_id
+      tab
+      created_at
+      fnln
+      created_by_email      
+    }
+    pagination {
+      page
+      totalPages
+      total
+      __typename
+    }
+  }
+}
+""";

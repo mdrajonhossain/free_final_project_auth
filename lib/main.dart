@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/AllFlagged/AllFlaggedMessage.dart';
+import 'package:freeli/connect/All_Notification/All_Notification.dart';
 import 'package:freeli/connect/ChangePassword/ChangePassword.dart';
 import 'package:freeli/connect/archiveroom/archiveroom.dart';
 import 'package:freeli/connect/filehubs/filehubs.dart';
@@ -72,6 +73,8 @@ class _MyAppState extends State<MyApp> {
               AllFlaggedMessage(isDark: isDark, onThemeChange: toggleTheme),
           '/switchAccount': (context) =>
               SwitchAccount(isDark: isDark, onThemeChange: toggleTheme),
+          '/allnotification': (context) =>
+              AllNotificationPage(isDark: isDark, onThemeChange: toggleTheme),
         },
       ),
     );

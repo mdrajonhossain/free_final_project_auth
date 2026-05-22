@@ -975,4 +975,21 @@ class ApiServer {
   }
 
   // ========================= End Company List ==========================
+  Future<Map<String, dynamic>> getNotifications({
+    required String readStatus,
+    int page = 1,
+  }) async {
+    try {
+      final response = await ApiServer.call(
+        Get_notifications,
+        variables: {"read_status": readStatus, "page": page},
+      );
+
+      return response['get_notifications'];
+    } catch (e) {
+      debugPrint("Get Notification Error: $e");
+
+      return {"notification": [], "pagination": {}};
+    }
+  }
 }

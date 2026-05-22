@@ -194,7 +194,10 @@ class AppDrawer extends StatelessWidget {
           _drawerItem(
             Icons.notifications_none_outlined,
             "All notifications",
-            () {},
+            () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/allnotification');
+            },
           ),
           _drawerItem(Icons.lock_outline, "Change password", () {
             Navigator.pop(context);
