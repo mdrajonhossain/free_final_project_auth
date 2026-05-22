@@ -326,3 +326,13 @@ mutation File_star(\$input: starFileInput!) {
   }
 }
 """;
+
+const String FILE_DELETE = r'''
+mutation File_delete($input: fileInput!) {
+  file_delete(input: $input) {
+    status
+    message
+    data
+  }
+}
+''';

@@ -294,54 +294,54 @@ class ApiServer {
   // ==================End
 
   // ==========================get_File_gallery==============================
-   Future<Map<String, dynamic>> get_file_gallery({
-  String conversationId = "all_files",
-  String fileType = "all",
-  String fileSubType = "all",
-  String? tagId,
-  String? uploadedBy,
-  String? tagOperator,
-  String fileName = "",
-  String? from,
-  String? to,
-  int page = 1,
-  String tab = "file",
-  String selectedFilters = "date_- Descending",
-}) async {
-  try {
-    final data = await ApiServer.call(
-      Get_file_galleryQuery,
-      variables: {
-        "conversation_id": conversationId,
-        "conversation_ids": [],
-        "uploaded_by": uploadedBy,
-        "file_type": fileType,
-        "file_sub_type": fileSubType,
-        "tag_id": tagId != null ? [tagId] : [],
-        "tag_operator": tagOperator,
-        "file_name": fileName,
-        "from": from,
-        "to": to,
-        "page": page,
-        "tab": tab,
-        "selectedFilters": selectedFilters,
-        "timezone": "Asia/Dhaka",
-      },
-    );
+  Future<Map<String, dynamic>> get_file_gallery({
+    String conversationId = "all_files",
+    String fileType = "all",
+    String fileSubType = "all",
+    String? tagId,
+    String? uploadedBy,
+    String? tagOperator,
+    String fileName = "",
+    String? from,
+    String? to,
+    int page = 1,
+    String tab = "file",
+    String selectedFilters = "date_- Descending",
+  }) async {
+    try {
+      final data = await ApiServer.call(
+        Get_file_galleryQuery,
+        variables: {
+          "conversation_id": conversationId,
+          "conversation_ids": [],
+          "uploaded_by": uploadedBy,
+          "file_type": fileType,
+          "file_sub_type": fileSubType,
+          "tag_id": tagId != null ? [tagId] : [],
+          "tag_operator": tagOperator,
+          "file_name": fileName,
+          "from": from,
+          "to": to,
+          "page": page,
+          "tab": tab,
+          "selectedFilters": selectedFilters,
+          "timezone": "Asia/Dhaka",
+        },
+      );
 
-    final galleryData = data['get_file_gallery'];
+      final galleryData = data['get_file_gallery'];
 
-    if (galleryData != null) {
-      print("[API] get_file_gallery: success");
-      return Map<String, dynamic>.from(galleryData);
+      if (galleryData != null) {
+        print("[API] get_file_gallery: success");
+        return Map<String, dynamic>.from(galleryData);
+      }
+
+      throw Exception("File gallery data not found");
+    } catch (e) {
+      print("[API ERROR] get_file_gallery: $e");
+      throw Exception("Failed to fetch gallery: ${e.toString()}");
     }
-
-    throw Exception("File gallery data not found");
-  } catch (e) {
-    print("[API ERROR] get_file_gallery: $e");
-    throw Exception("Failed to fetch gallery: ${e.toString()}");
   }
-}
 
   // ==================End
 
@@ -806,4 +806,22 @@ class ApiServer {
       throw GqlException("Failed to update star: ${e.toString()}");
     }
   }
+
+  // ========================= star FileDelete Filhubs==========================
+  Future<Map<String, dynamic>> Delete_File_Filehubs({
+    required String fileId,
+    required List<String> participants,
+  }) async {
+    try {
+      final variables = {
+        "input": {"file_id": fileId, "participants": participants},
+      };
+      final data = await ApiServer.call(FILE_DELETE, variables: variables);
+      return Map<String, dynamic>.from(data['file_delete'] ?? {});
+    } catch (e) {
+      throw GqlException("Failed to delete file: ${e.toString()}");
+    }
+  }
+
+  // ========================= End FileDelete Filhubs==========================
 }
