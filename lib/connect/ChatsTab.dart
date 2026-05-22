@@ -307,27 +307,65 @@ class _ChatsTabState extends State<ChatsTab>
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                /// DATE / TIME (TOP)
                 Text(
                   displayTime,
                   style: const TextStyle(color: Colors.white54, fontSize: 11),
                 ),
-                const SizedBox(height: 5),
-                if (unreadCount > 0)
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.greenAccent,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      unreadCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+
+                const SizedBox(height: 6),
+
+                /// BOTTOM ROW (3 ITEMS)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (unreadCount > 0)
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Colors.greenAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          unreadCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(width: 6),
+
+                    /// 2nd badge (example icon)
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.blueAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications,
+                        size: 12,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.orangeAccent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.push_pin,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
