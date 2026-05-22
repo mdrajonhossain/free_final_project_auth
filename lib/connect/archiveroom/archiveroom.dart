@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freeli/controller/api/api_service.dart';
 
 class ArchiveRoom extends StatefulWidget {
   final bool isDark;
@@ -19,67 +20,40 @@ class _ArchiveRoomState extends State<ArchiveRoom> {
 
   String _searchQuery = "";
 
-  // Dummy Data
-  final List<Map<String, dynamic>> archivedChats = [
-    {
-      "name": "John Doe",
-      "message": "Hey, are you available?",
-      "time": "10:30 AM",
-      "avatar": "",
-    },
-    {
-      "name": "Flutter Devs",
-      "message": "New update released 🚀",
-      "time": "Yesterday",
-      "avatar": "",
-    },
-    {
-      "name": "Sarah Khan",
-      "message": "Let’s meet tomorrow",
-      "time": "Mon",
-      "avatar": "",
-    },
-    {
-      "name": "Project Team",
-      "message": "Deadline is near!",
-      "time": "Sun",
-      "avatar": "",
-    },
-    {
-      "name": "Flutter Devs",
-      "message": "New update released 🚀",
-      "time": "Yesterday",
-      "avatar": "",
-    },
-    {
-      "name": "Sarah Khan",
-      "message": "Let’s meet tomorrow",
-      "time": "Mon",
-      "avatar": "",
-    },
-    {
-      "name": "Project Team",
-      "message": "Deadline is near!",
-      "time": "Sun",
-      "avatar": "",
-    },
-  ];
+  List<Map<String, dynamic>> archivedChats = [];
 
   @override
   void initState() {
     super.initState();
-
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
     });
+    getAll_ArchivedRoom();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void getAll_ArchivedRoom() {
+    ApiServer()
+        .getAll_ArchivedRoom()
+        .then((rooms) {
+          try {
+            setState(() {
+              archivedChats = List<Map<String, dynamic>>.from(rooms);
+            });
+          } catch (e) {
+            print("Parsing error: $e");
+          }
+        })
+        .catchError((error) {
+          print("Error fetching archived rooms: $error");
+        });
   }
 
   @override
@@ -99,8 +73,10 @@ class _ArchiveRoomState extends State<ArchiveRoom> {
     final subTextColor = isDark ? Colors.white70 : Colors.black54;
 
     final filteredChats = archivedChats.where((chat) {
-      return chat["name"].toString().toLowerCase().contains(_searchQuery) ||
-          chat["message"].toString().toLowerCase().contains(_searchQuery);
+      final name = (chat["title"] ?? chat["name"] ?? "")
+          .toString()
+          .toLowerCase();
+      return name.contains(_searchQuery);
     }).toList();
 
     return Scaffold(
@@ -285,7 +261,23 @@ class _ArchiveRoomState extends State<ArchiveRoom> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(22),
 
-                            onTap: () {},
+                            onTap: () async {
+                              final convId =
+                                  chat['conversation_id']?.toString() ?? "";
+
+                              await Navigator.pushNamed(
+                                context,
+                                '/chat',
+                                arguments: {
+                                  'conversation_id': chat['conversation_id'],
+                                  'company_id': chat['company_id'],
+                                  'participants': chat['participants'],
+                                  'title': chat['title'] ?? 'No Title',
+                                  'group': chat['group'] == 'yes',
+                                  'conv_img': chat['conv_img'],
+                                },
+                              );
+                            },
 
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -315,17 +307,31 @@ class _ArchiveRoomState extends State<ArchiveRoom> {
                                         ),
 
                                         child: Center(
-                                          child: chat["avatar"] == ""
-                                              ? Text(
-                                                  chat["name"][0].toUpperCase(),
-
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 22,
-                                                    fontWeight: FontWeight.w700,
+                                          child:
+                                              (chat["conv_img"] ?? "")
+                                                  .toString()
+                                                  .isNotEmpty
+                                              ? ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(18),
+                                                  child: Image.network(
+                                                    chat["conv_img"],
+                                                    width: 58,
+                                                    height: 58,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (
+                                                          context,
+                                                          error,
+                                                          stackTrace,
+                                                        ) {
+                                                          return _buildInitial(
+                                                            chat,
+                                                          );
+                                                        },
                                                   ),
                                                 )
-                                              : null,
+                                              : _buildInitial(chat),
                                         ),
                                       ),
 
@@ -370,7 +376,9 @@ class _ArchiveRoomState extends State<ArchiveRoom> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                chat["name"],
+                                                chat["title"] ??
+                                                    chat["name"] ??
+                                                    "Unknown",
 
                                                 maxLines: 1,
 
@@ -383,25 +391,14 @@ class _ArchiveRoomState extends State<ArchiveRoom> {
                                                 ),
                                               ),
                                             ),
-
-                                            Text(
-                                              chat["time"],
-
-                                              style: TextStyle(
-                                                color: subTextColor,
-                                                fontSize: 11,
-                                              ),
-                                            ),
                                           ],
                                         ),
 
                                         const SizedBox(height: 8),
 
                                         Text(
-                                          chat["message"],
-
+                                          chat["status"] ?? "No messages",
                                           maxLines: 1,
-
                                           overflow: TextOverflow.ellipsis,
 
                                           style: TextStyle(
@@ -410,63 +407,13 @@ class _ArchiveRoomState extends State<ArchiveRoom> {
                                             height: 1.4,
                                           ),
                                         ),
-
-                                        const SizedBox(height: 14),
-
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 5,
-                                                  ),
-
-                                              decoration: BoxDecoration(
-                                                color: Colors.orange
-                                                    .withOpacity(0.12),
-
-                                                borderRadius:
-                                                    BorderRadius.circular(30),
-                                              ),
-
-                                              child: const Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    Icons.archive_rounded,
-                                                    color: Colors.orange,
-                                                    size: 13,
-                                                  ),
-
-                                                  SizedBox(width: 4),
-
-                                                  Text(
-                                                    "Archived",
-                                                    style: TextStyle(
-                                                      color: Colors.orange,
-                                                      fontSize: 11,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
                                       ],
                                     ),
                                   ),
 
                                   const SizedBox(width: 12),
-
-                                  // =========================
-                                  // UNARCHIVE BUTTON
-                                  // =========================
                                   InkWell(
                                     borderRadius: BorderRadius.circular(14),
-
                                     onTap: () {
                                       // unarchive action
                                     },
@@ -503,4 +450,17 @@ class _ArchiveRoomState extends State<ArchiveRoom> {
       ),
     );
   }
+}
+
+Widget _buildInitial(Map<String, dynamic> chat) {
+  final title = (chat["title"] ?? chat["name"] ?? "U").toString().trim();
+
+  return Text(
+    title.isNotEmpty ? title[0].toUpperCase() : "U",
+    style: const TextStyle(
+      color: Colors.white,
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+    ),
+  );
 }

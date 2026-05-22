@@ -601,3 +601,56 @@ const String Teams = """
       }
   }
 """;
+
+const String All_Archive = """
+  query All_archive {
+      all_archive {
+        status
+        message
+        data {
+            conversation_id
+            created_by
+            title
+            group
+            team_id
+            privacy
+            archive
+            status
+            conv_img
+            topic_type
+            b_unit_id
+            room_id
+            is_busy
+            company_id
+            last_msg
+            sender_id
+            conference_id
+            root_conv_id
+            reset_id
+            system_conversation
+            system_conversation_active
+            short_id
+            close_for
+            friend_id
+            conv_is_active
+            participants
+            participants_name
+            participants_admin
+            participants_guest
+            is_active
+            is_pinned_users
+            tag_list
+            team_id_name
+            b_unit_id_name
+            system_conversatio_is_active
+            system_conversatio_send_sms
+            pin
+            has_mute
+            mute
+            temp_user
+            created_at
+            last_msg_time
+        }
+      }
+  }
+""";

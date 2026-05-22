@@ -897,6 +897,21 @@ class ApiServer {
       throw GqlException(e.toString());
     }
   }
-
   // ========================= End FileDelete Filhubs==========================
+
+  // ========================= Start All Archive room List ==========================
+  Future<List<dynamic>> getAll_ArchivedRoom() async {
+    try {
+      final response = await ApiServer.call(All_Archive, variables: {});
+      final data = response['all_archive'];
+      if (data == null) {
+        return [];
+      }
+      return List<dynamic>.from(data['data'] ?? []);
+    } catch (e) {
+      throw GqlException("Failed to fetch archive rooms: ${e.toString()}");
+    }
+  }
+
+  // ========================= End All Archive room List ==========================
 }
