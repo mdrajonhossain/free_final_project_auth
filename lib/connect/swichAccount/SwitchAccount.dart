@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freeli/controller/api/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SwitchAccount extends StatefulWidget {
   final bool isDark;
@@ -71,6 +72,43 @@ class _SwitchAccountState extends State<SwitchAccount>
         });
       }
     } catch (e) {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> switch_ChangeComapny(Map<String, dynamic> company) async {
+    if (_userEmail == null) return;
+
+    setState(() => isLoading = true);
+
+    try {
+      final result = await ApiServer().switchAccount(
+        email: _userEmail!,
+        company_id: company['company_id'],
+        device_id: "android",
+      );
+
+      if (result['status'] == true && result['token'] != null) {
+        final String token = result['token'];
+        await ApiServer.setAuthToken(token);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool("islogin", true);
+
+        if (!mounted) return;
+        Navigator.pushNamedAndRemoveUntil(context, "/home", (route) => false);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? "Switch failed")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error switching company: ${e.toString()}")),
+        );
+      }
+    } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
@@ -283,7 +321,8 @@ class _SwitchAccountState extends State<SwitchAccount>
                                 ),
                               ),
                               onPressed: () {
-                                debugPrint("Switch to ${c["company_name"]}");
+                                // debugPrint("Switch to ${c["company_name"]}");
+                                switch_ChangeComapny(c);
                               },
                               child: const Text(
                                 "Switch",

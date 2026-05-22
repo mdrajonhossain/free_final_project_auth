@@ -949,5 +949,30 @@ class ApiServer {
     }
   }
 
+  Future<Map<String, dynamic>> switchAccount({
+    required String email,
+    required String company_id,
+    required String device_id,
+  }) async {
+    try {
+      final variables = {
+        "email": email,
+        "company_id": company_id,
+        "device_id": device_id,
+      };
+      final response = await ApiServer.call(
+        Switch_Account,
+        variables: variables,
+      );
+      final data = response['switch_account'];
+      if (data == null) {
+        return {};
+      }
+      return Map<String, dynamic>.from(data);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
   // ========================= End Company List ==========================
 }

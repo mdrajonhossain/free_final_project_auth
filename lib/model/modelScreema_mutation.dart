@@ -384,3 +384,26 @@ mutation Set_new_password($input: newPasswordInput!) {
   }
 }
 ''';
+
+const String Switch_Account = """
+mutation SwitchAccount(
+  \$email: String!,
+  \$company_id: String!,
+  \$device_id: String!) {
+  switch_account(
+  input: {
+      email: \$email
+      company_id: \$company_id
+      device_id: \$device_id
+    }
+  ) {
+    token
+    refresh_token
+    status
+    status_code
+    message
+    next_step
+    session_token
+  }
+}
+""";
