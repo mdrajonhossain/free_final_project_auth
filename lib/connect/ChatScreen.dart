@@ -264,7 +264,6 @@ participants: $participants
                 ),
                 GestureDetector(
                   onTap: () {
-                    ChatFilterScreen.show(context);
                     Navigator.pushNamed(context, "/filehubRoom");
                   },
                   child: Container(
