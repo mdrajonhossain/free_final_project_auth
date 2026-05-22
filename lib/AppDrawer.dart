@@ -6,6 +6,7 @@ class AppDrawer extends StatelessWidget {
   final Function(bool) onThemeChange;
   final Map<String, dynamic>? userData;
   final VoidCallback onLogout;
+  final archiveCount;
 
   const AppDrawer({
     super.key,
@@ -13,6 +14,7 @@ class AppDrawer extends StatelessWidget {
     required this.onThemeChange,
     this.userData,
     required this.onLogout,
+    required this.archiveCount,
   });
 
   @override
@@ -123,10 +125,34 @@ class AppDrawer extends StatelessWidget {
           ),
 
           /// ================= SECONDARY MENU =================
-          _drawerItem(Icons.archive_outlined, "Archive rooms", () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/archiveroom');
-          }),
+          _drawerItem(
+            Icons.archive_outlined,
+            "Archive rooms",
+            () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/archiveroom');
+            },
+            trailing: archiveCount > 0
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      archiveCount.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                : null,
+          ),
           _drawerItem(Icons.flag_outlined, "Flagged messages", () {}),
           _drawerItem(
             Icons.notifications_none_outlined,

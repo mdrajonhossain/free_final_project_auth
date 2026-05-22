@@ -29,13 +29,26 @@ class RoomFilehubsState extends State<RoomFilehubs> {
   List<dynamic> filesList = [];
   List<dynamic> hubFiles = [];
   List<dynamic> linksList = [];
+  int archiveCount = 0; // Add archiveCount state variable
   bool isLoading = true;
   String? errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    _loadInitialData(); // This will now also fetch archive count
+    _fetchArchiveCount(); // Ensure archive count is fetched
+  }
+
+  Future<void> _fetchArchiveCount() async {
+    try {
+      final count = await ApiServer().getArchiveCount();
+      if (mounted) {
+        setState(() => archiveCount = count);
+      }
+    } catch (e) {
+      debugPrint("Error fetching archive count in RoomFilehubs: $e");
+    }
   }
 
   Future<void> _loadInitialData() async {
@@ -145,6 +158,7 @@ class RoomFilehubsState extends State<RoomFilehubs> {
         isDark: widget.isDark,
         onThemeChange: widget.onThemeChange,
         userData: userData,
+        archiveCount: archiveCount, // Pass archiveCount
         onLogout: _handleLogout,
       ),
 

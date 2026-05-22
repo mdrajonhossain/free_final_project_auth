@@ -913,5 +913,16 @@ class ApiServer {
     }
   }
 
+  Future<int> getArchiveCount() async {
+    try {
+      final response = await ApiServer.call(ArchiveCount, variables: {});
+      final data = response['archive_count'];
+      if (data == null) return 0;
+      return (data['archive'] ?? 0) as int;
+    } catch (e) {
+      throw GqlException("Failed to fetch archive count: ${e.toString()}");
+    }
+  }
+
   // ========================= End All Archive room List ==========================
 }

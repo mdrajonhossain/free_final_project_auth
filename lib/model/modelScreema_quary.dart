@@ -654,3 +654,12 @@ const String All_Archive = """
       }
   }
 """;
+
+const String ArchiveCount = """
+  query Archive_count {
+      archive_count {
+        status
+        archive
+      }
+  }
+""";

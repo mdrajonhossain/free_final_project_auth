@@ -40,11 +40,24 @@ class _HomePageState extends State<HomePage> {
   String _selectedFilter = 'all';
   bool _isCallPopupShowing = false;
   String? _activeConversationId;
+  int archiveCount = 0;
 
   @override
   void initState() {
     super.initState();
     getMeData();
+    archiveCounter();
+  }
+
+  Future<void> archiveCounter() async {
+    try {
+      final data = await ApiServer().getArchiveCount();
+      setState(() {
+        archiveCount = data;
+      });
+    } catch (e) {
+      debugPrint("Error: $e");
+    }
   }
 
   @override
@@ -433,6 +446,7 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         backgroundColor: bgColor,
         endDrawer: AppDrawer(
+          archiveCount: archiveCount,
           isDark: widget.isDark,
           onThemeChange: widget.onThemeChange,
           userData: userData,
