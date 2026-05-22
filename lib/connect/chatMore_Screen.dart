@@ -23,12 +23,10 @@ class ChatMoreScreen {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildOption(
-                      context,
-                      Icons.file_copy_rounded,
-                      "Files",
-                      () => debugPrint("Filehub clicked"),
-                    ),
+                    _buildOption(context, Icons.file_copy_rounded, "Files", () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, "/filehuball");
+                    }),
                     _buildOption(
                       context,
                       Icons.assignment_rounded,
