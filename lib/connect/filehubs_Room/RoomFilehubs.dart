@@ -8,21 +8,21 @@ import 'tags_page.dart';
 import 'links_page.dart';
 import 'FileHubSkeleton.dart';
 
-class Filehubs extends StatefulWidget {
+class RoomFilehubs extends StatefulWidget {
   final bool isDark;
   final Function(bool) onThemeChange;
 
-  const Filehubs({
+  const RoomFilehubs({
     super.key,
     required this.isDark,
     required this.onThemeChange,
   });
 
   @override
-  State<Filehubs> createState() => FilehubsState();
+  State<RoomFilehubs> createState() => RoomFilehubsState();
 }
 
-class FilehubsState extends State<Filehubs> {
+class RoomFilehubsState extends State<RoomFilehubs> {
   int _currentIndex = 0; // Default to Tags tab to show API data
   Map<String, dynamic>? userData;
   List<dynamic> tagsList = [];

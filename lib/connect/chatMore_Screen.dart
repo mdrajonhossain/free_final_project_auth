@@ -25,7 +25,7 @@ class ChatMoreScreen {
                   children: [
                     _buildOption(context, Icons.file_copy_rounded, "Files", () {
                       Navigator.pop(context);
-                      Navigator.pushNamed(context, "/filehuball");
+                      Navigator.pushNamed(context, "/filehubRoom");
                     }),
                     _buildOption(
                       context,
