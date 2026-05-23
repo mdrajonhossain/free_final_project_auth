@@ -166,7 +166,7 @@ const String roomsQuery = """
       # b_unit_id_name
       # system_conversatio_is_active
       # system_conversatio_send_sms
-      # pin
+      pin
       # has_mute
       # mute
       # temp_user

@@ -56,6 +56,16 @@ class _ChatsTabState extends State<ChatsTab>
     setState(() {});
   }
 
+  bool _isRoomPinned(dynamic room) {
+    final String? myId = (widget.userMe ?? widget.userId)?.toString();
+    if (myId == null || room['pin'] == null) return false;
+    final pinData = room['pin'];
+    if (pinData is List) {
+      return pinData.any((id) => id.toString() == myId);
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,22 +170,33 @@ class _ChatsTabState extends State<ChatsTab>
       );
     }
 
-    final List<dynamic> sortedRooms;
-    if (widget.conversationRooms!.length > 1) {
-      sortedRooms = List.from(widget.conversationRooms!);
-      final int meIndex = sortedRooms.indexWhere(
-        (room) =>
-            room['title']?.toString().toLowerCase() == 'me' ||
-            (widget.userMe != null &&
-                room['conversation_id']?.toString() == widget.userMe),
-      );
+    final List<dynamic> sortedRooms = List.from(widget.conversationRooms!);
+    if (sortedRooms.length > 1) {
+      sortedRooms.sort((a, b) {
+        final String? myId = (widget.userMe ?? widget.userId)?.toString();
 
-      if (meIndex != -1 && meIndex != 0) {
-        final meRoom = sortedRooms.removeAt(meIndex);
-        sortedRooms.insert(0, meRoom);
-      }
-    } else {
-      sortedRooms = widget.conversationRooms!;
+        // 1. Priority: "Me" চ্যাট সবার উপরে
+        bool aIsMe =
+            a['title']?.toString().toLowerCase() == 'me' ||
+            (myId != null && a['conversation_id']?.toString() == myId);
+        bool bIsMe =
+            b['title']?.toString().toLowerCase() == 'me' ||
+            (myId != null && b['conversation_id']?.toString() == myId);
+        if (aIsMe && !bIsMe) return -1;
+        if (!aIsMe && bIsMe) return 1;
+
+        // 2. Priority: Pinned চ্যাট (Me এর নিচে)
+        bool aPinned = _isRoomPinned(a);
+        bool bPinned = _isRoomPinned(b);
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+
+        // 3. Priority: Last message time (Most recent at the top)
+        final String aTime = a['last_msg_time']?.toString() ?? '';
+        final String bTime = b['last_msg_time']?.toString() ?? '';
+
+        return bTime.compareTo(aTime);
+      });
     }
 
     return ListView.builder(
@@ -337,18 +358,19 @@ class _ChatsTabState extends State<ChatsTab>
                       ),
 
                     const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.orangeAccent,
-                        shape: BoxShape.circle,
+                    if (_isRoomPinned(room))
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Colors.orangeAccent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.push_pin,
+                          size: 12,
+                          color: Colors.white,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.push_pin,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                    ),
                   ],
                 ),
               ],
