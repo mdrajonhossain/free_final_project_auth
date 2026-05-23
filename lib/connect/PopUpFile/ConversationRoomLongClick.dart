@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freeli/connect/PopUpFile/MuteNotifications.dart';
 import '../../controller/api/api_service.dart';
 
 class ConversationRoomLongClick {
@@ -96,7 +97,11 @@ class ConversationRoomLongClick {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  onMuteToggle(!isMuted);
+                  MuteNotifications.show(
+                    context,
+                    alreadyMuted: isMuted,
+                    onMuteChanged: onMuteToggle,
+                  );
                 },
               ),
 
