@@ -206,6 +206,10 @@ class _ChatsTabState extends State<ChatsTab>
       itemCount: sortedRooms.length,
       itemBuilder: (context, index) {
         final room = sortedRooms[index];
+        final bool isMeRoom =
+            room['title']?.toString().toLowerCase() == 'me' ||
+            (myId.isNotEmpty && room['conversation_id']?.toString() == myId);
+
         String title = room['title'] ?? 'No Title';
 
         if (title.length > 12) {
@@ -254,21 +258,48 @@ class _ChatsTabState extends State<ChatsTab>
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
-            onLongPress: () {
-              ConversationRoomLongClick.show(
-                context: context,
-                room: room,
-                currentUserId: myId,
-                onPinToggle: (pinned) {
-                  // TODO: Implement your Pin API call here
-                },
-                onMuteToggle: (muted) {
-                  // TODO: Implement your Mute API call here
-                },
-                onLockToggle: (locked) => {}, // Implement Lock logic
-                onArchiveToggle: (archived) => {}, // Implement Archive logic
-              );
-            },
+            onLongPress: isMeRoom
+                ? null
+                : () {
+                    ConversationRoomLongClick.show(
+                      context: context,
+                      room: room,
+                      currentUserId: myId,
+                      onPinToggle: (pinned) {
+                        setState(() {
+                          // লোকাল ডাটা আপডেট করে পজিশন সাথে সাথে পরিবর্তন করা
+                          final List pins = List.from(room['pin'] ?? []);
+                          if (pinned) {
+                            if (!pins.contains(myId)) pins.add(myId);
+                          } else {
+                            pins.remove(myId);
+                          }
+                          room['pin'] = pins;
+                        });
+                      },
+                      onMuteToggle: (muted) {
+                        setState(() {
+                          final List mutes = List.from(room['mute'] ?? []);
+                          if (muted) {
+                            if (!mutes.contains(myId)) mutes.add(myId);
+                          } else {
+                            mutes.remove(myId);
+                          }
+                          room['mute'] = mutes;
+                        });
+                      },
+                      onLockToggle: (locked) {
+                        setState(
+                          () => room['close_for'] = locked ? "yes" : "no",
+                        );
+                      },
+                      onArchiveToggle: (archived) {
+                        setState(
+                          () => room['archive'] = archived ? "yes" : "no",
+                        );
+                      },
+                    );
+                  },
             onTap: () async {
               final convId = room['conversation_id']?.toString() ?? "";
               if (widget.onRoomTap != null) {
