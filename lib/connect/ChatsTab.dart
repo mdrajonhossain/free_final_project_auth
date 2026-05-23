@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freeli/connect/PopUpFile/ConversationRoomLongClick.dart';
 import 'package:freeli/connect/PopUpFile/DirectMessagePopup.dart';
 import '../AppColors.dart';
 import '../skeleton.dart'; // Import the skeleton loader
@@ -156,6 +157,7 @@ class _ChatsTabState extends State<ChatsTab>
     final cardColor = widget.isDark
         ? Colors.white.withOpacity(0.05)
         : Colors.black.withOpacity(0.05);
+    final String myId = (widget.userMe ?? widget.userId)?.toString() ?? "";
 
     if (widget.conversationRooms == null) {
       return const ChatSkeleton(); // Show skeleton instead of loader
@@ -173,15 +175,13 @@ class _ChatsTabState extends State<ChatsTab>
     final List<dynamic> sortedRooms = List.from(widget.conversationRooms!);
     if (sortedRooms.length > 1) {
       sortedRooms.sort((a, b) {
-        final String? myId = (widget.userMe ?? widget.userId)?.toString();
-
         // 1. Priority: "Me" চ্যাট সবার উপরে
         bool aIsMe =
             a['title']?.toString().toLowerCase() == 'me' ||
-            (myId != null && a['conversation_id']?.toString() == myId);
+            (myId.isNotEmpty && a['conversation_id']?.toString() == myId);
         bool bIsMe =
             b['title']?.toString().toLowerCase() == 'me' ||
-            (myId != null && b['conversation_id']?.toString() == myId);
+            (myId.isNotEmpty && b['conversation_id']?.toString() == myId);
         if (aIsMe && !bIsMe) return -1;
         if (!aIsMe && bIsMe) return 1;
 
@@ -254,6 +254,21 @@ class _ChatsTabState extends State<ChatsTab>
             borderRadius: BorderRadius.circular(12),
           ),
           child: ListTile(
+            onLongPress: () {
+              ConversationRoomLongClick.show(
+                context: context,
+                room: room,
+                currentUserId: myId,
+                onPinToggle: (pinned) {
+                  // TODO: Implement your Pin API call here
+                },
+                onMuteToggle: (muted) {
+                  // TODO: Implement your Mute API call here
+                },
+                onLockToggle: (locked) => {}, // Implement Lock logic
+                onArchiveToggle: (archived) => {}, // Implement Archive logic
+              );
+            },
             onTap: () async {
               final convId = room['conversation_id']?.toString() ?? "";
               if (widget.onRoomTap != null) {
