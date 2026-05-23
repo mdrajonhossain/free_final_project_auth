@@ -424,3 +424,13 @@ mutation Pin_unpin(
   }
 }
 """;
+
+const String MuteConversationMutation = """
+mutation mute_conversation(\$input: muteConversationData!) {
+  mute_conversation(input: \$input) {
+    status
+    data
+    message
+  }
+}
+""";

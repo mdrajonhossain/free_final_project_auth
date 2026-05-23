@@ -1008,4 +1008,19 @@ class ApiServer {
       return {"status": false, "message": e.toString()};
     }
   }
+
+  Future<Map<String, dynamic>> muteConversationActionRoom({
+    required Map<String, dynamic> input,
+  }) async {
+    try {
+      final response = await ApiServer.call(
+        MuteConversationMutation,
+        variables: {"input": input},
+      );
+      return Map<String, dynamic>.from(response['mute_conversation'] ?? {});
+    } catch (e) {
+      debugPrint("Mute Error: $e");
+      return {"status": false, "message": e.toString()};
+    }
+  }
 }

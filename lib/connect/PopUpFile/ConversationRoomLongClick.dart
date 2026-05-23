@@ -97,8 +97,11 @@ class ConversationRoomLongClick {
                 ),
                 onTap: () {
                   Navigator.pop(context);
+                  final String convId =
+                      room['conversation_id']?.toString() ?? "";
                   MuteNotifications.show(
                     context,
+                    conversationId: convId,
                     alreadyMuted: isMuted,
                     onMuteChanged: onMuteToggle,
                   );

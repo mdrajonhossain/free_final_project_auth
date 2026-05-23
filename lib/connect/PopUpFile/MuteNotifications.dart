@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../controller/api/api_service.dart';
 
 class MuteNotifications extends StatefulWidget {
+  final String conversationId;
   final bool alreadyMuted;
   final Function(bool) onMuteChanged;
 
   const MuteNotifications({
     super.key,
+    required this.conversationId,
     required this.alreadyMuted,
     required this.onMuteChanged,
   });
 
   static void show(
     BuildContext context, {
+    required String conversationId,
     required bool alreadyMuted,
     required Function(bool) onMuteChanged,
   }) {
@@ -19,6 +24,7 @@ class MuteNotifications extends StatefulWidget {
       context: context,
       barrierColor: Colors.transparent,
       builder: (context) => MuteNotifications(
+        conversationId: conversationId,
         alreadyMuted: alreadyMuted,
         onMuteChanged: onMuteChanged,
       ),
@@ -47,6 +53,74 @@ class _MuteNotificationsState extends State<MuteNotifications> {
     {"label": "For 1 Day", "value": "1D"},
     {"label": "For 1 Month", "value": "1M"},
   ];
+
+  String _calculateEndTime(String duration) {
+    DateTime now = DateTime.now();
+    DateTime endTime;
+    switch (duration) {
+      case "30M":
+        endTime = now.add(const Duration(minutes: 30));
+        break;
+      case "1H":
+        endTime = now.add(const Duration(hours: 1));
+        break;
+      case "12H":
+        endTime = now.add(const Duration(hours: 12));
+        break;
+      case "1D":
+        endTime = now.add(const Duration(days: 1));
+        break;
+      case "1M":
+        endTime = now.add(const Duration(days: 30));
+        break;
+      case "20Y":
+        endTime = now.add(const Duration(days: 365 * 20));
+        break;
+      default:
+        endTime = now.add(const Duration(days: 365 * 20));
+    }
+    return DateFormat('E, MMM d, yyyy h:mm a').format(endTime);
+  }
+
+  String _getTimezone() {
+    Duration offset = DateTime.now().timeZoneOffset;
+    String sign = offset.isNegative ? "-" : "+";
+    String hours = offset.inHours.abs().toString().padLeft(2, '0');
+    String minutes = (offset.inMinutes.abs() % 60).toString().padLeft(2, '0');
+    return "$sign$hours:$minutes";
+  }
+
+  Future<void> _submitMuteAction(bool isMute) async {
+    final String nowTime = DateFormat(
+      'E, MMM d, yyyy h:mm a',
+    ).format(DateTime.now());
+
+    Map<String, dynamic> input;
+    if (isMute) {
+      input = {
+        "conversation_id": widget.conversationId,
+        "mute_duration": selectedDuration,
+        "mute_start_time": nowTime,
+        "mute_end_time": _calculateEndTime(selectedDuration),
+        "mute_timezone": _getTimezone(),
+        "type": alreadyMuted ? "update" : "add",
+      };
+    } else {
+      input = {"conversation_id": widget.conversationId, "type": "delete"};
+    }
+
+    try {
+      final result = await ApiServer().muteConversationActionRoom(input: input);
+      if (result['status'] == true) {
+        widget.onMuteChanged(isMute);
+        if (mounted) Navigator.pop(context);
+      } else {
+        debugPrint("Mute action failed: ${result['message']}");
+      }
+    } catch (e) {
+      debugPrint("Mute API Error: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,10 +282,7 @@ class _MuteNotificationsState extends State<MuteNotifications> {
                     if (alreadyMuted)
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {
-                            widget.onMuteChanged(false);
-                            Navigator.pop(context);
-                          },
+                          onPressed: () => _submitMuteAction(false),
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.red.withOpacity(0.15),
                             side: const BorderSide(color: Colors.redAccent),
@@ -229,10 +300,7 @@ class _MuteNotificationsState extends State<MuteNotifications> {
                     /// MUTE BUTTON
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          widget.onMuteChanged(true);
-                          Navigator.pop(context);
-                        },
+                        onPressed: () => _submitMuteAction(true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent,
                           padding: const EdgeInsets.symmetric(vertical: 14),
