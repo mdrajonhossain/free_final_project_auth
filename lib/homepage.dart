@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/connect/filehubs/Filehubs.dart';
 import 'package:freeli/connect/roomFilter.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/api/xmpp_server.dart';
@@ -398,6 +399,16 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final bgColor = AppColors.getBackgroundColor(widget.isDark);
 
+    // Data fetch না হওয়া পর্যন্ত লোডার দেখানো হচ্ছে যাতে null pointer error না হয়
+    if (isLoading || userData == null) {
+      return Scaffold(
+        backgroundColor: bgColor,
+        body: const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
+
     List<dynamic>? filteredRooms = conversationRooms;
 
     // Category Filtering Logic
@@ -506,7 +517,7 @@ class _HomePageState extends State<HomePage> {
                 text: "Chats",
               ),
               const Tab(icon: Icon(Icons.call), text: "Calls"),
-              const Tab(icon: Icon(Icons.dashboard), text: "Dashboard"),
+              const Tab(icon: Icon(Icons.dashboard), text: "Filehubs"),
             ],
           ),
         ),
@@ -525,7 +536,11 @@ class _HomePageState extends State<HomePage> {
               companyId: userData?['company_id']?.toString(),
               isDark: widget.isDark,
             ),
-            DashboardTab(userMe: userData),
+            Filehubs(
+              isDark: widget.isDark,
+              onThemeChange: widget.onThemeChange,
+              userMe: userData,
+            ),
           ],
         ),
       ),

@@ -11,11 +11,13 @@ import 'FileHubSkeleton.dart';
 class Filehubs extends StatefulWidget {
   final bool isDark;
   final Function(bool) onThemeChange;
+  final Map<String, dynamic>? userMe;
 
   const Filehubs({
     super.key,
     required this.isDark,
     required this.onThemeChange,
+    this.userMe,
   });
 
   @override
@@ -36,6 +38,7 @@ class FilehubsState extends State<Filehubs> {
   @override
   void initState() {
     super.initState();
+    userData = widget.userMe;
     _loadInitialData(); // This will now also fetch archive count
     _fetchArchiveCount(); // Ensure archive count is fetched
   }
@@ -90,18 +93,26 @@ class FilehubsState extends State<Filehubs> {
         isLoading = true;
         errorMessage = null;
       });
-      final results = await Future.wait([
-        ApiServer().fetchMe(),
+
+      final List<Future> futures = [
         ApiServer().get_tag_gallery(),
         ApiServer().fetchFilehubs_Link(),
-      ]);
+      ];
+
+      if (userData == null) {
+        futures.insert(0, ApiServer().fetchMe());
+      }
+
+      final results = await Future.wait(futures);
 
       if (!mounted) return;
       setState(() {
-        userData = results[0] as Map<String, dynamic>?; // User data
-        final galleryResult =
-            results[1] as Map<String, dynamic>?; // Tags and files
-        final linksResult = results[2] as List<Map<String, dynamic>>?; // Links
+        final int offset = userData == null ? 1 : 0;
+        if (userData == null) {
+          userData = results[0] as Map<String, dynamic>?;
+        }
+        final galleryResult = results[0 + offset] as Map<String, dynamic>?;
+        final linksResult = results[1 + offset] as List<Map<String, dynamic>>?;
 
         tagsList = galleryResult?['tags'] ?? [];
         filesList = galleryResult?['files'] ?? [];
@@ -161,36 +172,6 @@ class FilehubsState extends State<Filehubs> {
         archiveCount: archiveCount, // Pass archiveCount
         onLogout: _handleLogout,
       ),
-
-      /// ================= APP BAR =================
-      appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 12, 31, 94),
-        elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        automaticallyImplyLeading: false,
-        titleSpacing: 5,
-        title: Image.asset('assets/logo.webp', height: 45),
-        actions: [
-          Builder(
-            builder: (context) {
-              return IconButton(
-                constraints: const BoxConstraints(),
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                onPressed: () => Scaffold.of(context).openEndDrawer(),
-                icon: const Icon(Icons.menu, color: Colors.white),
-                tooltip: 'Toggle menu',
-              );
-            },
-          ),
-          const SizedBox(width: 3),
-        ],
-      ),
-
-      /// ================= BODY =================
       body: isLoading
           ? FileHubSkeleton(
               isDark: widget.isDark,
