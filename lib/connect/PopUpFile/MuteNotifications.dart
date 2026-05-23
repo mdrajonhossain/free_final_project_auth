@@ -38,6 +38,7 @@ class MuteNotifications extends StatefulWidget {
 class _MuteNotificationsState extends State<MuteNotifications> {
   String selectedDuration = "20Y";
   late bool alreadyMuted;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -95,6 +96,8 @@ class _MuteNotificationsState extends State<MuteNotifications> {
       'E, MMM d, yyyy h:mm a',
     ).format(DateTime.now());
 
+    setState(() => _isLoading = true);
+
     Map<String, dynamic> input;
     if (isMute) {
       input = {
@@ -116,9 +119,11 @@ class _MuteNotificationsState extends State<MuteNotifications> {
         if (mounted) Navigator.pop(context);
       } else {
         debugPrint("Mute action failed: ${result['message']}");
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
       debugPrint("Mute API Error: $e");
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -184,11 +189,13 @@ class _MuteNotificationsState extends State<MuteNotifications> {
                     final isSelected = selectedDuration == option["value"];
 
                     return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          selectedDuration = option["value"]!;
-                        });
-                      },
+                      onTap: _isLoading
+                          ? null
+                          : () {
+                              setState(() {
+                                selectedDuration = option["value"]!;
+                              });
+                            },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.symmetric(
@@ -259,60 +266,74 @@ class _MuteNotificationsState extends State<MuteNotifications> {
               /// FOOTER BUTTONS
               Padding(
                 padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    /// CANCEL
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.white24),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.blueAccent,
                         ),
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    /// UNMUTE (optional)
-                    if (alreadyMuted)
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => _submitMuteAction(false),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.red.withOpacity(0.15),
-                            side: const BorderSide(color: Colors.redAccent),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                      )
+                    : Row(
+                        children: [
+                          /// CANCEL
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.white24),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                              child: const Text(
+                                "Cancel",
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ),
                           ),
-                          child: const Text(
-                            "Unmute",
-                            style: TextStyle(color: Colors.redAccent),
+
+                          const SizedBox(width: 10),
+
+                          /// UNMUTE (optional)
+                          if (alreadyMuted)
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _submitMuteAction(false),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Colors.red.withOpacity(0.15),
+                                  side: const BorderSide(
+                                    color: Colors.redAccent,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Unmute",
+                                  style: TextStyle(color: Colors.redAccent),
+                                ),
+                              ),
+                            ),
+
+                          if (alreadyMuted) const SizedBox(width: 10),
+
+                          /// MUTE BUTTON
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => _submitMuteAction(true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blueAccent,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                              child: Text(
+                                alreadyMuted ? "Update" : "Mute",
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-
-                    if (alreadyMuted) const SizedBox(width: 10),
-
-                    /// MUTE BUTTON
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => _submitMuteAction(true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: Text(
-                          alreadyMuted ? "Update" : "Mute",
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
