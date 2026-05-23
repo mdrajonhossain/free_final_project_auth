@@ -337,21 +337,6 @@ class _ChatsTabState extends State<ChatsTab>
                       ),
 
                     const SizedBox(width: 6),
-
-                    /// 2nd badge (example icon)
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.blueAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications,
-                        size: 12,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: const BoxDecoration(
