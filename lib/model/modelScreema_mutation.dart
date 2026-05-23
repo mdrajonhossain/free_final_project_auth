@@ -407,3 +407,20 @@ mutation SwitchAccount(
   }
 }
 """;
+
+const String PinUnpin = """
+mutation Pin_unpin(  
+  \$conversation_id: String!,
+  \$action: String!) {
+  pin_unpin(
+  input: {
+      conversation_id: \$conversation_id
+      action: \$action
+    }
+  ) {
+    status
+    message
+    data
+  }
+}
+""";

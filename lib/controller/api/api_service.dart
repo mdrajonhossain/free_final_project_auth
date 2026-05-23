@@ -992,4 +992,20 @@ class ApiServer {
       return {"notification": [], "pagination": {}};
     }
   }
+
+  Future<Map<String, dynamic>> pinUnpinActionRoom({
+    required String conversation_id,
+    required String action,
+  }) async {
+    try {
+      final response = await ApiServer.call(
+        PinUnpin,
+        variables: {"conversation_id": conversation_id, "action": action},
+      );
+      return Map<String, dynamic>.from(response['pin_unpin'] ?? {});
+    } catch (e) {
+      debugPrint("Pin/Unpin Error: $e");
+      return {"status": false, "message": e.toString()};
+    }
+  }
 }

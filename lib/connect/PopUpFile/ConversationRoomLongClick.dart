@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../controller/api/api_service.dart';
 
 class ConversationRoomLongClick {
   static void show({
@@ -16,6 +17,7 @@ class ConversationRoomLongClick {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+
       builder: (context) {
         final List pinList = room['pin'] ?? [];
         final List muteList = room['mute'] ?? [];
@@ -57,9 +59,28 @@ class ConversationRoomLongClick {
                   isPinned ? "Unpin Room" : "Pin Room",
                   style: const TextStyle(color: Colors.white),
                 ),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  onPinToggle(!isPinned);
+                  final String action = isPinned ? "unpin" : "pin";
+                  final String convId =
+                      room['conversation_id']?.toString() ?? "";
+
+                  try {
+                    final result = await ApiServer().pinUnpinActionRoom(
+                      conversation_id: convId,
+                      action: action,
+                    );
+
+                    if (result['status'] == true) {
+                      onPinToggle(!isPinned);
+                    } else {
+                      debugPrint(
+                        "Server rejected pin action: ${result['message']}",
+                      );
+                    }
+                  } catch (e) {
+                    debugPrint("Pin API call failed: $e");
+                  }
                 },
               ),
 
