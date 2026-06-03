@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'FileHubSkeleton.dart';
+import '../../AppColors.dart';
 import 'package:url_launcher/url_launcher.dart'; // For opening links
 
 class LinksPage extends StatefulWidget {
@@ -90,21 +91,20 @@ class _LinksPageState extends State<LinksPage> {
           url.contains(_searchText.toLowerCase());
     }).toList();
 
-    final Color backgroundColor = widget.isDark
-        ? const Color(0xFF1A3470)
-        : const Color(0xFFF4F7FC);
+    final bool isDark = widget.isDark;
+    final Color backgroundColor = AppColors.getBackgroundColor(isDark);
+    final Color cardColor = isDark
+        ? Colors.white.withOpacity(0.05)
+        : Colors.black.withOpacity(0.05);
 
-    final Color cardColor = widget.isDark
-        ? const Color(0xFF132850)
-        : Colors.white;
-
-    final Color textColor = widget.isDark
+    final textColor = (isDark || backgroundColor == AppColors.colorBlue)
         ? Colors.white
-        : const Color(0xFF1E293B);
+        : Colors.black87;
+    final subTextColor = (isDark || backgroundColor == AppColors.colorBlue)
+        ? Colors.white70
+        : Colors.black54;
 
-    final Color subTextColor = widget.isDark ? Colors.white70 : Colors.black54;
-
-    const Color primaryColor = Color(0xFF4C8DFF);
+    final Color primaryColor = AppColors.getAccentColor(isDark);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -157,9 +157,7 @@ class _LinksPageState extends State<LinksPage> {
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(
-                          widget.isDark ? 0.20 : 0.05,
-                        ),
+                        color: Colors.black.withOpacity(isDark ? 0.20 : 0.05),
                         blurRadius: 18,
                         offset: const Offset(0, 6),
                       ),
@@ -190,7 +188,7 @@ class _LinksPageState extends State<LinksPage> {
               /// TABLE BODY
               Expanded(
                 child: isLoading
-                    ? FileHubSkeleton(isDark: widget.isDark, type: 'link')
+                    ? FileHubSkeleton(isDark: isDark, type: 'link')
                     : filteredLinks.isEmpty
                     ? Center(
                         child: Text(
@@ -213,14 +211,14 @@ class _LinksPageState extends State<LinksPage> {
                               color: cardColor,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: widget.isDark
+                                color: isDark
                                     ? Colors.white.withOpacity(0.05)
                                     : Colors.black.withOpacity(0.05),
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(
-                                    widget.isDark ? 0.2 : 0.04,
+                                    isDark ? 0.2 : 0.04,
                                   ),
                                   blurRadius: 15,
                                   offset: const Offset(0, 6),
@@ -233,14 +231,14 @@ class _LinksPageState extends State<LinksPage> {
                                   height: 48,
                                   width: 48,
                                   decoration: BoxDecoration(
-                                    color: widget.isDark
+                                    color: isDark
                                         ? Colors.white.withOpacity(0.08)
                                         : primaryColor.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                   child: Icon(
                                     _getLinkIcon(url),
-                                    color: widget.isDark
+                                    color: isDark
                                         ? Colors.white70
                                         : primaryColor,
                                     size: 24,
@@ -296,7 +294,7 @@ class _LinksPageState extends State<LinksPage> {
                                       color: primaryColor.withOpacity(0.12),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.open_in_new_rounded,
                                       color: primaryColor,
                                       size: 20,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 
 import 'package:freeli/controller/stateBloc/LoginBloc.dart';
@@ -29,6 +30,28 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      rememberMe = prefs.getBool('remember_me') ?? false;
+      if (rememberMe) {
+        emailController.text = prefs.getString('saved_email') ?? '';
+      }
+    });
+  }
+
+  Future<void> _updateTheme(bool isDark) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDark', isDark);
+    widget.onThemeChange(isDark);
+  }
+
+  @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
@@ -43,28 +66,46 @@ class _LoginScreenState extends State<LoginScreen> {
     TextInputType? keyboardType,
     bool isPassword = false,
   }) {
+    final bool isDark = widget.isDark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: isDark
+            ? Colors.white.withOpacity(0.08)
+            : Colors.black.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.15), width: 1),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.15)
+              : Colors.black.withOpacity(0.1),
+          width: 1,
+        ),
       ),
       child: TextField(
         controller: controller,
         obscureText: isPassword ? obscurePassword : false,
         keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white, fontSize: 15),
+        style: TextStyle(
+          color: isDark ? Colors.white : const Color(0xFF1E293B),
+          fontSize: 15,
+        ),
         decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: iconColor ?? Colors.white60, size: 22),
+          prefixIcon: Icon(
+            icon,
+            color: iconColor ?? (isDark ? Colors.white60 : Colors.black45),
+            size: 22,
+          ),
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white38, fontSize: 15),
+          hintStyle: TextStyle(
+            color: isDark ? Colors.white38 : Colors.black38,
+            fontSize: 15,
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     obscurePassword ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.white60,
+                    color: isDark ? Colors.white60 : Colors.black45,
                     size: 20,
                   ),
                   onPressed: () {
@@ -82,14 +123,29 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final bgColor = AppColors.getBackgroundColor(widget.isDark);
+    final primaryTextColor = widget.isDark
+        ? Colors.white
+        : const Color(0xFF1E293B);
+    final secondaryTextColor = widget.isDark
+        ? Colors.white.withOpacity(0.6)
+        : const Color(0xFF64748B);
 
     return BlocListener<LoginBloc, LoginState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is LoginSuccess) {
           final loginData = state.data;
           final email = emailController.text.trim();
 
           if (loginData['status'] == true) {
+            final prefs = await SharedPreferences.getInstance();
+            if (rememberMe) {
+              await prefs.setBool('remember_me', true);
+              await prefs.setString('saved_email', email);
+            } else {
+              await prefs.setBool('remember_me', false);
+              await prefs.remove('saved_email');
+            }
+
             if (loginData['next_step'] == "otp") {
               Navigator.pushNamed(
                 context,
@@ -139,10 +195,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 Column(
                   children: [
-                    const Text(
+                    Text(
                       "Hello ! Welcome back",
                       style: TextStyle(
-                        color: Colors.white,
+                        color: primaryTextColor,
                         fontSize: 32,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.5,
@@ -151,7 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       "Sign into your account here",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
+                        color: secondaryTextColor,
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
                       ),
@@ -165,7 +221,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: emailController,
                   hint: "Email",
                   icon: Icons.email,
-                  iconColor: Colors.white70, // Apply icon color
                   keyboardType: TextInputType.emailAddress,
                 ),
 
@@ -175,7 +230,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: passwordController,
                   hint: "Password",
                   icon: Icons.lock_outline,
-                  iconColor: Colors.white70, // Apply icon color
                   isPassword: true,
                 ),
 
@@ -191,14 +245,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         value: rememberMe,
                         onChanged: (val) =>
                             setState(() => rememberMe = val ?? false),
-                        side: const BorderSide(color: Colors.white70),
-                        activeColor: AppColors.accentColor,
+                        side: BorderSide(
+                          color: widget.isDark
+                              ? Colors.white30
+                              : AppColors.colorBlue.withOpacity(0.5),
+                        ),
+                        activeColor: AppColors.getAccentColor(widget.isDark),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       "Remember me ?",
-                      style: TextStyle(color: Colors.white60, fontSize: 14),
+                      style: TextStyle(color: secondaryTextColor, fontSize: 14),
                     ),
                   ],
                 ),
@@ -208,10 +266,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     TextButton(
                       onPressed: () {}, // TODO: Implement OTP Login logic
-                      child: const Text(
+                      child: Text(
                         "Sign in with otp",
                         style: TextStyle(
-                          color: AppColors.accentColor,
+                          color: AppColors.getAccentColor(widget.isDark),
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -219,9 +277,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     TextButton(
                       onPressed: () {}, // TODO: Implement Forgot Password logic
-                      child: const Text(
+                      child: Text(
                         "Forgot your password ?",
-                        style: TextStyle(color: Colors.white60, fontSize: 13),
+                        style: TextStyle(
+                          color: secondaryTextColor,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
@@ -260,11 +321,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
+                        gradient: AppColors.getPrimaryGradient(widget.isDark),
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF1E3C72).withOpacity(0.3),
+                            color: AppColors.getBackgroundColor(
+                              widget.isDark,
+                            ).withOpacity(0.3),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           ),
@@ -304,16 +367,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "Don't have an account ? ",
-                      style: TextStyle(color: Colors.white54, fontSize: 14),
+                      style: TextStyle(color: secondaryTextColor, fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () {}, // TODO: Navigate to Sign Up
-                      child: const Text(
+                      child: Text(
                         "Sign up",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: widget.isDark
+                              ? Colors.white
+                              : AppColors.colorBlue,
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
                         ),
@@ -328,14 +393,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      onPressed: () => widget.onThemeChange(false),
+                      onPressed: () => _updateTheme(false),
                       icon: const Icon(Icons.wb_sunny),
                       color: Colors.yellow,
                     ),
                     IconButton(
-                      onPressed: () => widget.onThemeChange(true),
+                      onPressed: () => _updateTheme(true),
                       icon: const Icon(Icons.nightlight_round),
-                      color: Colors.white,
+                      color: widget.isDark ? Colors.white : Colors.blueGrey,
                     ),
                   ],
                 ),

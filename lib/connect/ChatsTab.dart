@@ -85,7 +85,11 @@ class _ChatsTabState extends State<ChatsTab>
               icon: Icons.person_add_alt_1_rounded,
               onPressed: () {
                 _toggleMenu();
-                DirectMessagePopup.show(context, widget.conversationRooms);
+                DirectMessagePopup.show(
+                  context,
+                  widget.conversationRooms,
+                  isDark: widget.isDark,
+                );
               },
             ),
             const SizedBox(height: 16),
@@ -96,7 +100,8 @@ class _ChatsTabState extends State<ChatsTab>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const CreateRoomScreen(),
+                    builder: (context) =>
+                        CreateRoomScreen(isDark: widget.isDark),
                   ),
                 );
                 _toggleMenu();
@@ -105,7 +110,7 @@ class _ChatsTabState extends State<ChatsTab>
             const SizedBox(height: 16),
             FloatingActionButton(
               onPressed: _toggleMenu,
-              backgroundColor: AppColors.accentColor,
+              backgroundColor: AppColors.getAccentColor(widget.isDark),
               child: RotationTransition(
                 turns: Tween(begin: 0.0, end: 0.125).animate(_animation),
                 child: const Icon(Icons.add, color: Colors.white, size: 40),
@@ -144,7 +149,7 @@ class _ChatsTabState extends State<ChatsTab>
             const SizedBox(width: 12),
             FloatingActionButton.small(
               onPressed: onPressed,
-              backgroundColor: AppColors.accentColor,
+              backgroundColor: AppColors.getAccentColor(widget.isDark),
               child: Icon(icon, color: Colors.white),
             ),
           ],
@@ -329,7 +334,7 @@ class _ChatsTabState extends State<ChatsTab>
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.accentColor,
+                  backgroundColor: AppColors.getAccentColor(widget.isDark),
                   backgroundImage: imageUrl.isNotEmpty
                       ? NetworkImage(imageUrl)
                       : null,

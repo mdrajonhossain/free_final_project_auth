@@ -186,8 +186,8 @@ class _ChatScreenState extends State<ChatScreen> {
             elevation: 0,
             backgroundColor: Colors.transparent,
             flexibleSpace: Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.primaryGradient,
+              decoration: BoxDecoration(
+                gradient: AppColors.getPrimaryGradient(widget.isDark),
               ),
             ),
             leading: IconButton(
@@ -298,7 +298,7 @@ participants: $participants
           body: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: AppColors.primaryGradient.colors,
+                colors: AppColors.getPrimaryGradient(widget.isDark).colors,
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -354,6 +354,7 @@ participants: $participants
                     ),
                   ),
                 ChatInput(
+                  isDark: widget.isDark,
                   controller: _messageController,
                   onSend: _sendMessage,
                   companyId: company_id,
@@ -464,6 +465,7 @@ participants: $participants
         return _MessageBubble(
           key: ValueKey(msg['id'] ?? index),
           msg: msg,
+          isDark: widget.isDark,
           isMe: isMe,
           index: index,
           conversationId: conversationId,
@@ -489,6 +491,7 @@ participants: $participants
 
 class _MessageBubble extends StatelessWidget {
   final dynamic msg;
+  final bool isDark;
   final bool isMe;
   final int index;
   final String conversationId;
@@ -498,6 +501,7 @@ class _MessageBubble extends StatelessWidget {
   const _MessageBubble({
     super.key,
     required this.msg,
+    required this.isDark,
     required this.isMe,
     required this.index,
     required this.conversationId,

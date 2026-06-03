@@ -169,27 +169,22 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = AppColors.getBackgroundColor(widget.isDark);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     return BlocBuilder<ChatBloc, ChatState>(
       builder: (context, state) {
         if (state.isLoading) {
-          return const Scaffold(
-            backgroundColor: Color(0xff0B1120),
-            body: ChatSkeleton(),
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: const ChatSkeleton(),
           );
         }
 
         return Scaffold(
-          backgroundColor: bgColor,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
             elevation: 0,
-            backgroundColor: Colors.transparent,
-            flexibleSpace: Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.primaryGradient,
-              ),
-            ),
+            backgroundColor: AppColors.getBackgroundColor(widget.isDark),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.pop(context),
@@ -298,14 +293,7 @@ participants: $participants
               ],
             ),
           ),
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: AppColors.primaryGradient.colors,
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
+          body: SafeArea(
             child: Column(
               children: [
                 Expanded(
@@ -319,7 +307,9 @@ participants: $participants
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    color: Colors.white.withOpacity(0.1),
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.05),
                     child: Row(
                       children: [
                         const Icon(
@@ -328,19 +318,19 @@ participants: $participants
                           size: 16,
                         ),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             "Editing message",
                             style: TextStyle(
-                              color: Colors.white70,
+                              color: isDark ? Colors.white70 : Colors.black87,
                               fontSize: 13,
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.close,
-                            color: Colors.white70,
+                            color: isDark ? Colors.white70 : Colors.black54,
                             size: 18,
                           ),
                           padding: EdgeInsets.zero,
@@ -361,7 +351,7 @@ participants: $participants
                   onSend: _sendMessage,
                   companyId: company_id,
                   group: conversation_type == "group",
-                  userEmail: state.userData?['email'],
+                  userEmail: state.userData?['email']?.toString(),
                   conversationId: conversationId,
                   participants: participants,
                   chatBloc: _chatBloc,
@@ -385,12 +375,7 @@ participants: $participants
       width: 42,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        gradient: const LinearGradient(
-          colors: [
-            Color.fromARGB(255, 6, 180, 157),
-            Color.fromARGB(255, 6, 180, 157),
-          ],
-        ),
+        color: AppColors.getAccentColor(widget.isDark),
       ),
       child: convImg.isNotEmpty
           ? ClipRRect(
@@ -431,8 +416,15 @@ participants: $participants
   }
 
   Widget _buildEmptyMessages() {
-    return const Center(
-      child: Text("No messages found", style: TextStyle(color: Colors.white54)),
+    return Center(
+      child: Text(
+        "No messages found",
+        style: TextStyle(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white54
+              : Colors.black38,
+        ),
+      ),
     );
   }
 
@@ -467,6 +459,7 @@ participants: $participants
         return _MessageBubble(
           key: ValueKey(msg['id'] ?? index),
           msg: msg,
+          isDark: widget.isDark,
           isMe: isMe,
           index: index,
           conversationId: conversationId,
@@ -492,6 +485,7 @@ participants: $participants
 
 class _MessageBubble extends StatelessWidget {
   final dynamic msg;
+  final bool isDark;
   final bool isMe;
   final int index;
   final String conversationId;
@@ -501,6 +495,7 @@ class _MessageBubble extends StatelessWidget {
   const _MessageBubble({
     super.key,
     required this.msg,
+    required this.isDark,
     required this.isMe,
     required this.index,
     required this.conversationId,
@@ -510,6 +505,14 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dynamic colors for bubble text and background
+    final Color textColor = isMe
+        ? Colors.white
+        : (isDark ? Colors.white : const Color(0xFF1E293B));
+    final Color bubbleColor = isMe
+        ? (isDark ? const Color(0xFF2B2F55) : const Color(0xFF4C8DFF))
+        : Theme.of(context).cardColor;
+
     // Decryption and formatting happen only when this specific bubble builds
     String decryptedText = "";
     try {
@@ -541,7 +544,7 @@ class _MessageBubble extends StatelessWidget {
         onLongPress: () {
           showModalBottomSheet(
             context: context,
-            backgroundColor: const Color(0xff1B2335),
+            backgroundColor: isDark ? const Color(0xff1B2335) : Colors.white,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
@@ -556,9 +559,11 @@ class _MessageBubble extends StatelessWidget {
                           Icons.edit,
                           color: Colors.greenAccent,
                         ),
-                        title: const Text(
+                        title: Text(
                           "Edit",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
                         ),
                         onTap: () {
                           Navigator.pop(context);
@@ -567,10 +572,15 @@ class _MessageBubble extends StatelessWidget {
                       ),
                     // Copy functionality
                     ListTile(
-                      leading: const Icon(Icons.copy, color: Colors.white70),
-                      title: const Text(
+                      leading: Icon(
+                        Icons.copy,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                      title: Text(
                         "Copy",
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
                       ),
                       onTap: () {
                         Navigator.pop(context);
@@ -582,10 +592,15 @@ class _MessageBubble extends StatelessWidget {
                     ),
                     // Forward functionality
                     ListTile(
-                      leading: const Icon(Icons.forward, color: Colors.white70),
-                      title: const Text(
+                      leading: Icon(
+                        Icons.forward,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                      title: Text(
                         "Forward",
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
                       ),
                       onTap: () {
                         Navigator.pop(context);
@@ -599,6 +614,7 @@ class _MessageBubble extends StatelessWidget {
                             ),
                           ),
                           builder: (ctx) => ForwardMessageScreen(
+                            isDark: isDark,
                             messageToForward: {
                               ...msg,
                               'conversation_id':
@@ -729,7 +745,7 @@ class _MessageBubble extends StatelessWidget {
                                       "User")
                                   .toString(),
                         style: const TextStyle(
-                          color: Colors.white60,
+                          color: Colors.grey,
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -749,25 +765,23 @@ class _MessageBubble extends StatelessWidget {
                     ),
 
                     decoration: BoxDecoration(
-                      gradient: isMe
-                          ? const LinearGradient(
-                              colors: [
-                                Color.fromARGB(42, 129, 138, 137),
-                                Color.fromARGB(42, 129, 138, 137),
-                              ],
-                            )
-                          : null,
-                      color: isMe ? null : Colors.white.withOpacity(0.07),
+                      color: bubbleColor,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(isMe ? 22 : 6),
                         topRight: Radius.circular(isMe ? 6 : 22),
                         bottomLeft: const Radius.circular(22),
                         bottomRight: const Radius.circular(22),
                       ),
-                      border: Border.all(color: Colors.white.withOpacity(0.05)),
+                      border: Border.all(
+                        color: isMe
+                            ? Colors.white.withOpacity(0.05)
+                            : (isDark
+                                  ? Colors.white.withOpacity(0.05)
+                                  : Colors.black.withOpacity(0.05)),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
+                          color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -786,8 +800,8 @@ class _MessageBubble extends StatelessWidget {
                             cleanText.toLowerCase() != "null")
                           Text(
                             cleanText,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: textColor,
                               fontSize: 15,
                               height: 1.5,
                             ),
@@ -797,6 +811,7 @@ class _MessageBubble extends StatelessWidget {
                           messageId: messageId,
                           msg: msg,
                           company_id: company_id,
+                          isDark: isDark,
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -871,7 +886,11 @@ class _MessageBubble extends StatelessWidget {
                                 msg['created_at']?.toString(),
                               ),
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.65),
+                                color: isMe
+                                    ? Colors.white70
+                                    : (isDark
+                                          ? Colors.white60
+                                          : Colors.black45),
                                 fontSize: 10,
                               ),
                             ),
@@ -928,12 +947,14 @@ class _AttachmentList extends StatelessWidget {
   final String messageId;
   final dynamic msg;
   final String company_id;
+  final bool isDark;
 
   const _AttachmentList({
     required this.attachments,
     required this.messageId,
     required this.msg,
     required this.company_id,
+    required this.isDark,
   });
 
   @override
@@ -984,7 +1005,7 @@ class _AttachmentList extends StatelessWidget {
                 // Tag Counter / Index Indicator
                 Column(
                   children: [
-                    tagPopUpListUpdate(context, file, company_id),
+                    tagPopUpListUpdate(context, file, company_id, isDark),
                     const SizedBox(height: 8),
                     _buildIndexStar(context, file),
                   ],
@@ -1064,7 +1085,7 @@ class _AttachmentList extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  tagPopUpListUpdate(context, file, company_id),
+                  tagPopUpListUpdate(context, file, company_id, isDark),
                   _buildIndexStar(context, file),
                   Flexible(
                     child: Container(
@@ -1114,6 +1135,7 @@ class _AttachmentList extends StatelessWidget {
     BuildContext context,
     dynamic file,
     String companyId,
+    bool isDark,
   ) {
     final String convId = msg['conversation_id']?.toString() ?? "";
     final String mId = (msg['msg_id'] ?? msg['id'])?.toString() ?? "";
@@ -1143,6 +1165,7 @@ class _AttachmentList extends StatelessWidget {
                   ? participantsData
                   : [participantsData],
             },
+            isDark: isDark,
           ),
         );
       },

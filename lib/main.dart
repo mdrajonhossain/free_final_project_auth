@@ -32,9 +32,24 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool isDark = true;
+  bool isDark = false;
 
-  void toggleTheme(bool value) {
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isDark = prefs.getBool('isDark') ?? true;
+    });
+  }
+
+  Future<void> toggleTheme(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDark', value);
     setState(() {
       isDark = value;
     });
@@ -131,14 +146,14 @@ class _SplashPageState extends State<SplashPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030915),
+      backgroundColor: AppColors.colorBlack,
       body: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF052874), Color(0xFF030915)],
+            colors: [AppColors.colorBlue, AppColors.colorBlack],
           ),
         ),
         child: Column(

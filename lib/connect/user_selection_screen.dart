@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../AppColors.dart';
 
 class UserSelectionScreen extends StatefulWidget {
+  final bool isDark;
   final List<Map<String, dynamic>> allUsers;
   final List<String> initialSelectedUserIds;
   final String currentUserId;
 
   const UserSelectionScreen({
     super.key,
+    required this.isDark,
     required this.allUsers,
     required this.initialSelectedUserIds,
     required this.currentUserId,
@@ -46,7 +48,9 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+          decoration: BoxDecoration(
+            gradient: AppColors.getPrimaryGradient(widget.isDark),
+          ),
         ),
         title: const Text(
           "Select Members",
@@ -134,7 +138,9 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: isSelected
-                          ? AppColors.accentColor.withOpacity(0.5)
+                          ? AppColors.getAccentColor(
+                              widget.isDark,
+                            ).withOpacity(0.5)
                           : Colors.white.withOpacity(0.04),
                     ),
                   ),
@@ -168,7 +174,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                               height: 16,
                               width: 16,
                               decoration: BoxDecoration(
-                                color: AppColors.accentColor,
+                                color: AppColors.getAccentColor(widget.isDark),
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: const Color(0xFF16213E),
@@ -220,7 +226,9 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                               vertical: 5,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.accentColor.withOpacity(0.15),
+                              color: AppColors.getAccentColor(
+                                widget.isDark,
+                              ).withOpacity(0.15),
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: const Text(
@@ -245,7 +253,9 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                                   }
                                 });
                               },
-                              activeColor: AppColors.accentColor,
+                              activeColor: AppColors.getAccentColor(
+                                widget.isDark,
+                              ),
                               checkColor: Colors.white,
                               side: BorderSide(
                                 color: Colors.white.withOpacity(0.4),
@@ -299,7 +309,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     elevation: 0,
-                    backgroundColor: AppColors.accentColor,
+                    backgroundColor: AppColors.getAccentColor(widget.isDark),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),

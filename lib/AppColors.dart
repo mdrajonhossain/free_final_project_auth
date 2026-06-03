@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  // Color 1: Dark Blue
+  static const Color colorBlue = Color.fromRGBO(5, 40, 116, 1);
+  // Color 2: Deep Black
+  static const Color colorBlack = Color(0xFF030915);
+
   static Color getBackgroundColor(bool isDark) {
-    return isDark
-        ? const Color.fromRGBO(5, 40, 116, 1)
-        : const Color(0xFF030915);
+    return isDark ? colorBlack : colorBlue;
   }
 
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFF1E3C72), Color(0xFF2A5298)],
-  );
+  static LinearGradient getPrimaryGradient(bool isDark) {
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: isDark ? [colorBlack, colorBlue] : [colorBlue, colorBlack],
+    );
+  }
 
-  static const Color accentColor = Colors.lightBlueAccent;
+  static Color getAccentColor(bool isDark) {
+    // This ensures the accent/button color is always the "other" color
+    // in the palette for contrast.
+    return isDark ? colorBlue : colorBlack;
+  }
 }

@@ -115,7 +115,9 @@ class _TrastedScreenState extends State<TrastedScreen> {
                         height: 52,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            gradient: AppColors.primaryGradient,
+                            gradient: AppColors.getPrimaryGradient(
+                              widget.isDark,
+                            ),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: Material(

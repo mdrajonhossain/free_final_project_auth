@@ -5,7 +5,8 @@ import '../AppColors.dart';
 import 'user_selection_screen.dart'; // Import the new user selection screen
 
 class CreateRoomScreen extends StatefulWidget {
-  const CreateRoomScreen({super.key});
+  final bool isDark;
+  const CreateRoomScreen({super.key, required this.isDark});
 
   @override
   State<CreateRoomScreen> createState() => _CreateRoomScreenState();
@@ -282,7 +283,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 35, 54, 114),
+      backgroundColor: AppColors.getBackgroundColor(widget.isDark),
 
       /// APPBAR
       appBar: AppBar(
@@ -290,7 +291,9 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
         centerTitle: true,
         backgroundColor: Colors.white,
         flexibleSpace: Container(
-          decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+          decoration: BoxDecoration(
+            gradient: AppColors.getPrimaryGradient(widget.isDark),
+          ),
         ),
         title: const Text(
           "Create Room",
@@ -355,16 +358,20 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: AppColors.accentColor.withOpacity(0.5),
+                            color: AppColors.getAccentColor(
+                              widget.isDark,
+                            ).withOpacity(0.5),
                             width: 1.2,
                           ),
-                          color: AppColors.accentColor.withOpacity(0.1),
+                          color: AppColors.getAccentColor(
+                            widget.isDark,
+                          ).withOpacity(0.1),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
                             "Upload",
                             style: TextStyle(
-                              color: AppColors.accentColor,
+                              color: AppColors.getAccentColor(widget.isDark),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -485,16 +492,13 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                     child: Container(
                       height: 54,
                       decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
+                        gradient: AppColors.getPrimaryGradient(widget.isDark),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            10,
-                            32,
-                            100,
+                          backgroundColor: AppColors.getBackgroundColor(
+                            widget.isDark,
                           ),
                           shadowColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
@@ -597,8 +601,8 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                   onPressed: () => _makeAdmin(isAdmin ? 'remove' : 'add', id),
                   child: Text(
                     isAdmin ? "Remove Admin" : "Make Admin",
-                    style: const TextStyle(
-                      color: AppColors.accentColor,
+                    style: TextStyle(
+                      color: AppColors.getAccentColor(widget.isDark),
                       fontSize: 12,
                     ),
                   ),
@@ -690,8 +694,8 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(
-            color: AppColors.accentColor,
+          borderSide: BorderSide(
+            color: AppColors.getAccentColor(widget.isDark),
             width: 1.4,
           ),
         ),
@@ -765,6 +769,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => UserSelectionScreen(
+                isDark: widget.isDark,
                 allUsers: _allUsers,
                 initialSelectedUserIds: participants,
                 currentUserId: _userData?['id']?.toString() ?? "",

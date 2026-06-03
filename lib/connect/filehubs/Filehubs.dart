@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../AppDrawer.dart';
 import 'tags_page.dart';
 import 'links_page.dart';
+import '../../AppColors.dart';
 import 'FileHubSkeleton.dart';
 
 class Filehubs extends StatefulWidget {
@@ -156,15 +157,8 @@ class FilehubsState extends State<Filehubs> {
       ), // Assuming LinksPage takes links
     ];
 
-    final Color primaryColor = widget.isDark
-        ? const Color(0xFF052874)
-        : const Color(0xFF0A3BA8);
-    final Color backgroundColor = widget.isDark
-        ? const Color(0xFF1A3470)
-        : Colors.grey[100]!;
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(widget.isDark),
       endDrawer: AppDrawer(
         isDark: widget.isDark,
         onThemeChange: widget.onThemeChange,
@@ -173,9 +167,7 @@ class FilehubsState extends State<Filehubs> {
         onLogout: _handleLogout,
       ),
       body: isLoading
-          ? FileHubSkeleton(
-              isDark: widget.isDark,
-            ) // Show skeleton while loading
+          ? FileHubSkeleton(isDark: widget.isDark)
           : errorMessage != null
           ? Center(
               child: Text(
@@ -194,7 +186,7 @@ class FilehubsState extends State<Filehubs> {
             _currentIndex = index;
           });
         },
-        backgroundColor: primaryColor,
+        backgroundColor: AppColors.getBackgroundColor(widget.isDark),
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white.withOpacity(0.5),
         elevation: 10,

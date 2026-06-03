@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
+import '../../AppColors.dart';
 
 class FileHubSkeleton extends StatelessWidget {
-  final bool isDark;
+  final bool? isDark;
   final String type; // 'file', 'tag', or 'link'
 
-  const FileHubSkeleton({super.key, required this.isDark, this.type = 'file'});
+  const FileHubSkeleton({super.key, this.isDark, this.type = 'file'});
 
   @override
   Widget build(BuildContext context) {
-    final Color shimmerColor =
-        isDark // Color for the actual skeleton elements
-        ? const Color(0xFF1B2945) // Darker blue-grey for dark mode
-        : const Color(0xFFE0E0E0); // Light grey for light mode
-    final Color highlightColor =
-        isDark // Background color for the item container
-        ? const Color(
-            0xFF0F1B35,
-          ) // Deeper, more professional blue for dark mode
-        : const Color(0xFFF5F5F5); // Very light grey for light mode
+    final bool effectiveIsDark =
+        isDark ?? Theme.of(context).brightness == Brightness.dark;
+    final Color shimmerColor = effectiveIsDark
+        ? Colors.white.withOpacity(0.08)
+        : AppColors.colorBlue.withOpacity(0.15);
+    final Color highlightColor = effectiveIsDark
+        ? AppColors.colorBlack.withOpacity(0.4)
+        : AppColors.colorBlue.withOpacity(0.3);
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

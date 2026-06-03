@@ -6,6 +6,7 @@ import 'FileHubSkeleton.dart';
 import '../PopUpFile/PublicTag.dart';
 import '../PopUpFile/ForwardMessageScreen.dart';
 import '../FullImageViewer.dart';
+import '../../AppColors.dart';
 
 // IMPORTANT: ensure this import exists in your project
 // import 'api_server.dart';
@@ -326,11 +327,13 @@ class _TagsPageState extends State<TagsPage> {
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4C8DFF) : surfaceColor,
+          color: isSelected
+              ? AppColors.getAccentColor(isDark)
+              : surfaceColor.withOpacity(0.5),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFF4C8DFF)
+                ? AppColors.getAccentColor(isDark)
                 : isDark
                 ? Colors.white.withOpacity(.05)
                 : Colors.black.withOpacity(.05),
@@ -402,7 +405,7 @@ class _TagsPageState extends State<TagsPage> {
       onLongPress: () {
         showModalBottomSheet(
           context: context,
-          backgroundColor: isDark ? const Color(0xff1B2335) : Colors.white,
+          backgroundColor: AppColors.getBackgroundColor(isDark),
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -478,7 +481,7 @@ class _TagsPageState extends State<TagsPage> {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.getBackgroundColor(isDark),
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(24),
@@ -500,6 +503,7 @@ class _TagsPageState extends State<TagsPage> {
                                       ? [file['participants']]
                                       : []),
                           },
+                          isDark: isDark,
                         ),
                       );
                     },
@@ -512,14 +516,16 @@ class _TagsPageState extends State<TagsPage> {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
-                        backgroundColor: Colors.white,
+                        backgroundColor: AppColors.getBackgroundColor(isDark),
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(24),
                           ),
                         ),
-                        builder: (ctx) =>
-                            ForwardMessageScreen(messageToForward: file),
+                        builder: (ctx) => ForwardMessageScreen(
+                          isDark: isDark,
+                          messageToForward: file,
+                        ),
                       );
                     },
                   ),
@@ -643,7 +649,7 @@ class _TagsPageState extends State<TagsPage> {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
-                          backgroundColor: Colors.white,
+                          backgroundColor: AppColors.getBackgroundColor(isDark),
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(24),
@@ -667,6 +673,7 @@ class _TagsPageState extends State<TagsPage> {
                                         ? [file['participants']]
                                         : []),
                             },
+                            isDark: isDark,
                           ),
                         );
                       },
@@ -685,17 +692,23 @@ class _TagsPageState extends State<TagsPage> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue.withOpacity(0.12),
+                                    color: AppColors.getAccentColor(
+                                      isDark,
+                                    ).withOpacity(0.12),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color: Colors.blue.withOpacity(0.3),
+                                      color: AppColors.getAccentColor(
+                                        isDark,
+                                      ).withOpacity(0.3),
                                     ),
                                   ),
                                   child: Text(
                                     data['title'] ?? "",
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 11,
-                                      color: Colors.blue,
+                                      color: isDark
+                                          ? Colors.white
+                                          : AppColors.getAccentColor(isDark),
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -793,17 +806,21 @@ class _TagsPageState extends State<TagsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = widget.isDark
-        ? const Color(0xFF1A3470)
-        : const Color(0xFFF4F7FC);
+    final bool isDark = widget.isDark;
+    final Color backgroundColor = AppColors.getBackgroundColor(isDark);
+    final Color cardColor = isDark
+        ? Colors.white.withOpacity(0.05)
+        : Colors.black.withOpacity(0.05);
+    final Color surfaceColor = isDark
+        ? AppColors.colorBlack
+        : AppColors.colorBlue;
 
-    final surfaceColor = widget.isDark ? const Color(0xFF132850) : Colors.white;
-
-    final cardColor = widget.isDark ? const Color(0xFF102347) : Colors.white;
-
-    final textColor = widget.isDark ? Colors.white : const Color(0xFF1B1D28);
-
-    final subTextColor = widget.isDark ? Colors.white70 : Colors.black54;
+    final textColor = (isDark || backgroundColor == AppColors.colorBlue)
+        ? Colors.white
+        : Colors.black87;
+    final subTextColor = (isDark || backgroundColor == AppColors.colorBlue)
+        ? Colors.white70
+        : Colors.black54;
 
     /// COUNTS
     int allCount = 0;
@@ -897,7 +914,7 @@ class _TagsPageState extends State<TagsPage> {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: widget.isDark
+                      color: isDark
                           ? Colors.white.withOpacity(.06)
                           : Colors.blue.withOpacity(.08),
                       borderRadius: BorderRadius.circular(18),
@@ -932,7 +949,7 @@ class _TagsPageState extends State<TagsPage> {
                       allCount,
                       surfaceColor,
                       textColor,
-                      widget.isDark,
+                      isDark,
                     ),
                     _buildCategoryChip(
                       "Doc(s)",
@@ -940,7 +957,7 @@ class _TagsPageState extends State<TagsPage> {
                       docsCount,
                       surfaceColor,
                       textColor,
-                      widget.isDark,
+                      isDark,
                     ),
                     _buildCategoryChip(
                       "Image(s)",
@@ -948,7 +965,7 @@ class _TagsPageState extends State<TagsPage> {
                       imageCount,
                       surfaceColor,
                       textColor,
-                      widget.isDark,
+                      isDark,
                     ),
                     _buildCategoryChip(
                       "Voice(s)",
@@ -956,7 +973,7 @@ class _TagsPageState extends State<TagsPage> {
                       voiceCount,
                       surfaceColor,
                       textColor,
-                      widget.isDark,
+                      isDark,
                     ),
                     _buildCategoryChip(
                       "Audio(s)",
@@ -964,7 +981,7 @@ class _TagsPageState extends State<TagsPage> {
                       audioCount,
                       surfaceColor,
                       textColor,
-                      widget.isDark,
+                      isDark,
                     ),
                     _buildCategoryChip(
                       "Video(s)",
@@ -972,7 +989,7 @@ class _TagsPageState extends State<TagsPage> {
                       videoCount,
                       surfaceColor,
                       textColor,
-                      widget.isDark,
+                      isDark,
                     ),
                   ],
                 ),
@@ -1012,7 +1029,7 @@ class _TagsPageState extends State<TagsPage> {
             Expanded(
               child: _isLoadingFiles
                   ? FileHubSkeleton(
-                      isDark: widget.isDark,
+                      isDark: isDark,
                       type: _isShowingFiles ? 'file' : 'tag',
                     )
                   : _isShowingFiles
@@ -1038,7 +1055,7 @@ class _TagsPageState extends State<TagsPage> {
                         }
                         return _buildFileItem(
                           _filteredFiles[index],
-                          widget.isDark,
+                          isDark,
                           textColor,
                           subTextColor,
                           cardColor,

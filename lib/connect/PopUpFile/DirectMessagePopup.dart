@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:freeli/AppColors.dart';
 
 class DirectMessagePopup {
-  static void show(BuildContext context, List<dynamic>? conversationRooms) {
+  static void show(
+    BuildContext context,
+    List<dynamic>? conversationRooms, {
+    required bool isDark,
+  }) {
     String searchQuery = "";
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.getBackgroundColor(isDark),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -34,17 +38,17 @@ class DirectMessagePopup {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           "Direct message",
                           style: TextStyle(
-                            color: Colors.black,
+                            color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close, color: Colors.black54),
+                          icon: Icon(Icons.close, color: Colors.white70),
                         ),
                       ],
                     ),
@@ -56,16 +60,13 @@ class DirectMessagePopup {
                       onChanged: (value) {
                         setPopupState(() => searchQuery = value);
                       },
-                      style: const TextStyle(color: Colors.black),
+                      style: TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: "Search conversations...",
-                        hintStyle: const TextStyle(color: Colors.black38),
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: Colors.black45,
-                        ),
+                        hintStyle: TextStyle(color: Colors.white38),
+                        prefixIcon: Icon(Icons.search, color: Colors.white60),
                         filled: true,
-                        fillColor: Colors.grey[100],
+                        fillColor: Colors.white.withOpacity(0.05),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -80,7 +81,7 @@ class DirectMessagePopup {
                         ? const Center(
                             child: Text(
                               "No results found",
-                              style: TextStyle(color: Colors.black54),
+                              style: TextStyle(color: Colors.white54),
                             ),
                           )
                         : ListView.builder(
@@ -95,7 +96,9 @@ class DirectMessagePopup {
                                       .toString();
                               return ListTile(
                                 leading: CircleAvatar(
-                                  backgroundColor: AppColors.accentColor,
+                                  backgroundColor: AppColors.getAccentColor(
+                                    isDark,
+                                  ),
                                   backgroundImage: imageUrl.isNotEmpty
                                       ? NetworkImage(imageUrl)
                                       : null,
@@ -111,7 +114,7 @@ class DirectMessagePopup {
                                 ),
                                 title: Text(
                                   room['title'] ?? "No Title",
-                                  style: const TextStyle(color: Colors.black),
+                                  style: TextStyle(color: Colors.white),
                                 ),
                                 onTap: () {
                                   Navigator.pop(context);

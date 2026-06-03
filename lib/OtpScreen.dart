@@ -165,7 +165,7 @@ class _OtpScreenState extends State<OtpScreen> {
                         const Icon(
                           Icons.shield_outlined,
                           size: 80,
-                          color: Colors.lightBlueAccent,
+                          color: Colors.white70,
                         ),
 
                         const SizedBox(height: 30),
@@ -210,7 +210,7 @@ class _OtpScreenState extends State<OtpScreen> {
                           onPressed: resendOtp,
                           child: const Text(
                             "Didn't receive the code? Resend OTP",
-                            style: TextStyle(color: Colors.lightBlueAccent),
+                            style: TextStyle(color: Colors.white70),
                           ),
                         ),
 
@@ -222,7 +222,9 @@ class _OtpScreenState extends State<OtpScreen> {
                           height: 52,
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              gradient: AppColors.primaryGradient,
+                              gradient: AppColors.getPrimaryGradient(
+                                widget.isDark,
+                              ),
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: Material(
@@ -285,12 +287,12 @@ class _OtpScreenState extends State<OtpScreen> {
         IconButton(
           onPressed: () => widget.onThemeChange(false),
           icon: const Icon(Icons.wb_sunny),
-          color: Colors.yellow,
+          color: widget.isDark ? Colors.yellow.withOpacity(0.5) : Colors.yellow,
         ),
         IconButton(
           onPressed: () => widget.onThemeChange(true),
           icon: const Icon(Icons.nightlight_round),
-          color: Colors.white,
+          color: widget.isDark ? Colors.white : Colors.blueGrey,
         ),
       ],
     );

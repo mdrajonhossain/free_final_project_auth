@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../AppDrawer.dart';
 import 'tags_page.dart';
 import 'links_page.dart';
+import '../../AppColors.dart';
 import 'FileHubSkeleton.dart';
 
 class RoomFilehubs extends StatefulWidget {
@@ -145,15 +146,12 @@ class RoomFilehubsState extends State<RoomFilehubs> {
       ), // Assuming LinksPage takes links
     ];
 
-    final Color primaryColor = widget.isDark
-        ? const Color(0xFF052874)
-        : const Color(0xFF0A3BA8);
-    final Color backgroundColor = widget.isDark
-        ? const Color(0xFF1A3470)
-        : Colors.grey[100]!;
+    final Color navColor = widget.isDark
+        ? AppColors.colorBlack
+        : AppColors.colorBlue;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(widget.isDark),
       endDrawer: AppDrawer(
         isDark: widget.isDark,
         onThemeChange: widget.onThemeChange,
@@ -164,7 +162,7 @@ class RoomFilehubsState extends State<RoomFilehubs> {
 
       /// ================= APP BAR =================
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 12, 31, 94),
+        backgroundColor: AppColors.getBackgroundColor(widget.isDark),
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
@@ -213,7 +211,7 @@ class RoomFilehubsState extends State<RoomFilehubs> {
             _currentIndex = index;
           });
         },
-        backgroundColor: primaryColor,
+        backgroundColor: navColor,
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white.withOpacity(0.5),
         elevation: 10,

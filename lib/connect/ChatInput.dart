@@ -6,6 +6,7 @@ import '../AppColors.dart';
 
 class ChatInput extends StatefulWidget {
   final TextEditingController controller;
+  final bool? isDark;
   final VoidCallback onSend;
   final String companyId;
   final String? userEmail;
@@ -19,6 +20,7 @@ class ChatInput extends StatefulWidget {
   const ChatInput({
     super.key,
     required this.controller,
+    this.isDark,
     required this.onSend,
     required this.companyId,
     required this.onAttachmentsPicked,
@@ -52,6 +54,8 @@ class _ChatInputState extends State<ChatInput> {
 
   @override
   Widget build(BuildContext context) {
+    final bool effectiveIsDark =
+        widget.isDark ?? Theme.of(context).brightness == Brightness.dark;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -65,7 +69,7 @@ class _ChatInputState extends State<ChatInput> {
           child: Container(
             padding: const EdgeInsets.fromLTRB(12, 10, 14, 14),
             decoration: BoxDecoration(
-              color: AppColors.primaryGradient.colors[0],
+              color: AppColors.getPrimaryGradient(effectiveIsDark).colors[0],
               border: Border(
                 top: BorderSide(color: Colors.white.withOpacity(0.05)),
               ),
@@ -185,12 +189,10 @@ class _ChatInputState extends State<ChatInput> {
                     width: 54,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xff7C5CFF), Color(0xff5B4DFF)],
-                      ),
+                      color: AppColors.getAccentColor(effectiveIsDark),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xff7C5CFF).withOpacity(0.35),
+                          color: Colors.black.withOpacity(0.2),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),

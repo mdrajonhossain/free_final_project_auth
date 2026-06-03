@@ -218,22 +218,21 @@ class _PublicTagState extends State<PublicTag> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = widget.isDark;
     final filteredList =
         _availableTags?.where((tag) {
           final title = tag['title']?.toString().toLowerCase() ?? "";
           return title.contains(searchQuery.toLowerCase());
         }).toList() ??
         [];
-    final textColor = widget.isDark ? Colors.white : Colors.black87;
-    final subTextColor = widget.isDark ? Colors.white70 : Colors.black54;
 
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: BoxDecoration(
-        color: AppColors.getBackgroundColor(widget.isDark),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        color: AppColors.getBackgroundColor(isDark),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       height: MediaQuery.of(context).size.height * 0.75,
       child: Column(
@@ -253,11 +252,11 @@ class _PublicTagState extends State<PublicTag> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                const Expanded(
                   child: Text(
                     "Assign tag(s) to the file",
                     style: TextStyle(
-                      color: textColor,
+                      color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -280,7 +279,7 @@ class _PublicTagState extends State<PublicTag> {
                 else
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close, color: subTextColor),
+                    icon: const Icon(Icons.close, color: Colors.black54),
                   ),
               ],
             ),
@@ -292,13 +291,13 @@ class _PublicTagState extends State<PublicTag> {
               onChanged: (value) {
                 setState(() => searchQuery = value);
               },
-              style: TextStyle(color: textColor),
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Search tags...",
-                hintStyle: TextStyle(color: subTextColor.withOpacity(0.5)),
-                prefixIcon: Icon(Icons.search, color: subTextColor),
+                hintStyle: const TextStyle(color: Colors.white38),
+                prefixIcon: const Icon(Icons.search, color: Colors.white60),
                 filled: true,
-                fillColor: textColor.withOpacity(0.05),
+                fillColor: Colors.white.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -321,7 +320,7 @@ class _PublicTagState extends State<PublicTag> {
                 ? const Center(
                     child: Text(
                       "No tags found",
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: Colors.white54),
                     ),
                   )
                 : ListView.builder(
@@ -347,7 +346,10 @@ class _PublicTagState extends State<PublicTag> {
                           radius: 12,
                           backgroundColor: tagColor,
                         ),
-                        title: Text(title, style: TextStyle(color: textColor)),
+                        title: Text(
+                          title,
+                          style: const TextStyle(color: Colors.white),
+                        ),
                         trailing: isSelected
                             ? const Icon(Icons.check_circle, color: Colors.blue)
                             : const Icon(

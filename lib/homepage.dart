@@ -9,7 +9,6 @@ import 'AppColors.dart';
 import 'package:freeli/config/config.dart';
 import 'connect/ChatsTab.dart';
 import 'connect/CallsTab.dart';
-import 'connect/DashboardTab.dart';
 import 'connect/jitsi_call_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'AppDrawer.dart';
@@ -465,7 +464,9 @@ class _HomePageState extends State<HomePage> {
         ),
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          backgroundColor: const Color.fromARGB(255, 12, 31, 94),
+          backgroundColor: widget.isDark
+              ? AppColors.getBackgroundColor(true)
+              : const Color.fromARGB(255, 12, 31, 94),
           elevation: 0,
           title: _isSearching
               ? TextField(
@@ -499,12 +500,19 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
           bottom: TabBar(
-            indicatorColor: Colors.white,
+            indicatorColor: widget.isDark
+                ? AppColors.getAccentColor(true)
+                : Colors.white,
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
+            unselectedLabelColor: Colors.white.withOpacity(0.7),
             dividerColor: Colors.transparent,
-            indicator: const UnderlineTabIndicator(
-              borderSide: BorderSide(color: Colors.white, width: 2),
+            indicator: UnderlineTabIndicator(
+              borderSide: BorderSide(
+                color: widget.isDark
+                    ? AppColors.getAccentColor(true)
+                    : Colors.white,
+                width: 2,
+              ),
             ),
 
             tabs: [

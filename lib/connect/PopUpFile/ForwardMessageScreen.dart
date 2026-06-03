@@ -5,9 +5,14 @@ import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 
 class ForwardMessageScreen extends StatefulWidget {
+  final bool? isDark;
   final Map<String, dynamic> messageToForward;
 
-  const ForwardMessageScreen({super.key, required this.messageToForward});
+  const ForwardMessageScreen({
+    super.key,
+    this.isDark,
+    required this.messageToForward,
+  });
 
   @override
   State<ForwardMessageScreen> createState() => _ForwardMessageScreenState();
@@ -108,17 +113,22 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool effectiveIsDark =
+        widget.isDark ?? Theme.of(context).brightness == Brightness.dark;
     final filteredList =
         _conversationRooms?.where((room) {
           final title = room['title']?.toString().toLowerCase() ?? "";
           return title.contains(searchQuery.toLowerCase());
         }).toList() ??
         [];
+    final textColor = effectiveIsDark ? Colors.white : Colors.black87;
+    final subTextColor = effectiveIsDark ? Colors.white70 : Colors.black54;
 
     return Container(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
+      color: AppColors.getBackgroundColor(effectiveIsDark),
       height: MediaQuery.of(context).size.height * 0.75,
       child: Column(
         children: [
@@ -128,10 +138,10 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "Forward message",
                   style: TextStyle(
-                    color: Colors.black,
+                    color: textColor,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -151,7 +161,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                 else
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.black54),
+                    icon: Icon(Icons.close, color: subTextColor),
                   ),
               ],
             ),
@@ -163,13 +173,13 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
               onChanged: (value) {
                 setState(() => searchQuery = value);
               },
-              style: const TextStyle(color: Colors.black),
+              style: TextStyle(color: textColor),
               decoration: InputDecoration(
                 hintText: "Search conversations...",
-                hintStyle: const TextStyle(color: Colors.black38),
-                prefixIcon: const Icon(Icons.search, color: Colors.black45),
+                hintStyle: TextStyle(color: subTextColor.withOpacity(0.5)),
+                prefixIcon: Icon(Icons.search, color: subTextColor),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: textColor.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -193,7 +203,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                 ? const Center(
                     child: Text(
                       "No conversations found",
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(color: Colors.white54),
                     ),
                   )
                 : ListView.builder(
@@ -208,20 +218,22 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                               .toString();
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: AppColors.accentColor,
+                          backgroundColor: AppColors.getAccentColor(
+                            effectiveIsDark,
+                          ),
                           backgroundImage: imageUrl.isNotEmpty
                               ? NetworkImage(imageUrl)
                               : null,
                           child: imageUrl.isEmpty
                               ? Text(
                                   (room['title']?[0] ?? 'C').toUpperCase(),
-                                  style: const TextStyle(color: Colors.white),
+                                  style: TextStyle(color: textColor),
                                 )
                               : null,
                         ),
                         title: Text(
                           room['title'] ?? "No Title",
-                          style: const TextStyle(color: Colors.black),
+                          style: TextStyle(color: textColor),
                         ),
                         trailing:
                             _selectedConversationIds.contains(
