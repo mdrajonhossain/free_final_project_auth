@@ -177,13 +177,13 @@ class _ChatScreenState extends State<ChatScreen> {
           builder: (context, state) {
             if (state.isLoading) {
               return Scaffold(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                backgroundColor: appTheme.msgBackgroundColor,
                 body: const ChatSkeleton(),
               );
             }
 
             return Scaffold(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              backgroundColor: appTheme.msgBackgroundColor,
               appBar: AppBar(
                 elevation: 0,
                 backgroundColor: appTheme.backgroundColor,
@@ -905,11 +905,10 @@ class _MessageBubble extends StatelessWidget {
                             ),
                             if (isMe) ...[
                               const SizedBox(width: 4),
-                              const Icon(
+                              Icon(
                                 Icons.done_all,
                                 size: 14,
-                                color: Colors
-                                    .white70, // Me bubbles are usually dark enough
+                                color: appTheme.msgStatusIconColor,
                               ),
                             ],
                           ],

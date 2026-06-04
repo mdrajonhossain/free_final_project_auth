@@ -14,9 +14,10 @@ import 'package:freeli/connect/file_utils.dart';
 import 'package:freeli/connect/format_utils.dart';
 import 'package:freeli/connect/jitsi_call_service.dart';
 import 'package:freeli/controller/api/api_service.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:freeli/theme/themeList.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import '../controller/stateBloc/message/chat_bloc.dart';
-import '../AppColors.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool isDark;
@@ -169,53 +170,53 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = AppColors.getBackgroundColor(widget.isDark);
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        return BlocBuilder<ChatBloc, ChatState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return Scaffold(
+                backgroundColor: appTheme.msgBackgroundColor,
+                body: const ChatSkeleton(),
+              );
+            }
 
-    return BlocBuilder<ChatBloc, ChatState>(
-      builder: (context, state) {
-        if (state.isLoading) {
-          return const Scaffold(
-            backgroundColor: Color(0xff0B1120),
-            body: ChatSkeleton(),
-          );
-        }
+            return Scaffold(
+              backgroundColor: appTheme.msgBackgroundColor,
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                flexibleSpace: Container(
+                  decoration: BoxDecoration(
+                    gradient: AppColors.getPrimaryGradient(widget.isDark),
+                  ),
+                ),
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                titleSpacing: -5,
+                title: Row(
+                  children: [
+                    _buildRoomImage(),
+                    const SizedBox(width: 12),
+                    _buildRoomTitle(),
+                    GestureDetector(
+                      onTap: () async {
+                        final args =
+                            ModalRoute.of(context)?.settings.arguments as Map?;
+                        final userId =
+                            state.userData?['id']?.toString() ??
+                            args?['user_id']?.toString();
+                        final companyId = company_id.isNotEmpty
+                            ? company_id
+                            : (state.userData?['company_id']?.toString() ??
+                                  args?['company_id']?.toString());
 
-        return Scaffold(
-          backgroundColor: bgColor,
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            flexibleSpace: Container(
-              decoration: BoxDecoration(
-                gradient: AppColors.getPrimaryGradient(widget.isDark),
-              ),
-            ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-            titleSpacing: -5,
-            title: Row(
-              children: [
-                _buildRoomImage(),
-                const SizedBox(width: 12),
-                _buildRoomTitle(),
-                GestureDetector(
-                  onTap: () async {
-                    final args =
-                        ModalRoute.of(context)?.settings.arguments as Map?;
-                    final userId =
-                        state.userData?['id']?.toString() ??
-                        args?['user_id']?.toString();
-                    final companyId = company_id.isNotEmpty
-                        ? company_id
-                        : (state.userData?['company_id']?.toString() ??
-                              args?['company_id']?.toString());
+                        if (userId == null || companyId == null) return;
 
-                    if (userId == null || companyId == null) return;
-
-                    try {
-                      print("""
+                        try {
+                          print("""
 userId: $userId
 companyId: $companyId
 conversationId: $conversationId
@@ -227,151 +228,148 @@ userAvatar: ${state.userData?['img']}
 isVideo: false
 participants: $participants
 """);
-                      await JitsiCallService.joinCall(
-                        context: context,
-                        userId: userId,
-                        companyId: companyId,
-                        conversationId: conversationId,
-                        conversationType: conversation_type,
-                        participants: (participants as List?)?.toList() ?? [],
-                        roomTitle: roomTitle,
-                        userName: state.userData?['firstname'] ?? "User",
-                        userEmail: state.userData?['email'],
-                        userAvatar: state.userData?['img']?.toString(),
-                        isVideo: false,
-                      );
-                    } catch (e) {
-                      // Dismiss loading animation on error
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Call Error: $e")),
-                        );
-                      }
-                    }
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
+                          await JitsiCallService.joinCall(
+                            context: context,
+                            userId: userId,
+                            companyId: companyId,
+                            conversationId: conversationId,
+                            conversationType: conversation_type,
+                            participants:
+                                (participants as List?)?.toList() ?? [],
+                            roomTitle: roomTitle,
+                            userName: state.userData?['firstname'] ?? "User",
+                            userEmail: state.userData?['email'],
+                            userAvatar: state.userData?['img']?.toString(),
+                            isVideo: false,
+                          );
+                        } catch (e) {
+                          // Dismiss loading animation on error
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Call Error: $e")),
+                            );
+                          }
+                        }
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.call,
+                          size: 28,
+                          color: Colors.green,
+                        ),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.call,
-                      size: 28,
-                      color: Colors.green,
+                    GestureDetector(
+                      onTap: () => ChatFilterScreen.show(context),
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.filter_alt_sharp,
+                          size: 28,
+                          color: Colors.white70,
+                        ),
+                      ),
                     ),
-                  ),
+                    GestureDetector(
+                      onTap: () => ChatMoreScreen.show(context),
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.more_vert,
+                          size: 28,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                GestureDetector(
-                  onTap: () => ChatFilterScreen.show(context),
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.filter_alt_sharp,
-                      size: 28,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => ChatMoreScreen.show(context),
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.more_vert,
-                      size: 28,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: AppColors.getPrimaryGradient(widget.isDark).colors,
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
               ),
-            ),
-            child: Column(
-              children: [
-                Expanded(
-                  child: state.messages.isEmpty
-                      ? _buildEmptyMessages()
-                      : _buildMessageList(state),
-                ),
-                if (_isEditing)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+              body: Container(
+                color: appTheme.msgBackgroundColor,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: state.messages.isEmpty
+                          ? _buildEmptyMessages()
+                          : _buildMessageList(state),
                     ),
-                    color: Colors.white.withOpacity(0.1),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.edit,
-                          color: Colors.greenAccent,
-                          size: 16,
+                    if (_isEditing)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            "Editing message",
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
+                        color: Colors.white.withOpacity(0.1),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.edit,
+                              color: Colors.greenAccent,
+                              size: 16,
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                "Editing message",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white70,
+                                size: 18,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                setState(() {
+                                  _isEditing = false;
+                                  _editingMsgId = null;
+                                  _messageController.clear();
+                                });
+                              },
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            color: Colors.white70,
-                            size: 18,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () {
-                            setState(() {
-                              _isEditing = false;
-                              _editingMsgId = null;
-                              _messageController.clear();
-                            });
-                          },
-                        ),
-                      ],
+                      ),
+                    ChatInput(
+                      isDark: widget.isDark,
+                      controller: _messageController,
+                      onSend: _sendMessage,
+                      companyId: company_id,
+                      group: conversation_type == "group",
+                      userEmail: state.userData?['email'],
+                      conversationId: conversationId,
+                      participants: participants,
+                      chatBloc: _chatBloc,
+                      onAttachmentsPicked: (results) {
+                        // Handle picked attachments here
+                        debugPrint("Picked ${results.length} attachments");
+                        // You can add logic to send them or show a preview
+                      },
                     ),
-                  ),
-                ChatInput(
-                  isDark: widget.isDark,
-                  controller: _messageController,
-                  onSend: _sendMessage,
-                  companyId: company_id,
-                  group: conversation_type == "group",
-                  userEmail: state.userData?['email'],
-                  conversationId: conversationId,
-                  participants: participants,
-                  chatBloc: _chatBloc,
-                  onAttachmentsPicked: (results) {
-                    // Handle picked attachments here
-                    debugPrint("Picked ${results.length} attachments");
-                    // You can add logic to send them or show a preview
-                  },
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -465,7 +463,7 @@ participants: $participants
         return _MessageBubble(
           key: ValueKey(msg['id'] ?? index),
           msg: msg,
-          isDark: widget.isDark,
+          appTheme: appTheme,
           isMe: isMe,
           index: index,
           conversationId: conversationId,
@@ -491,17 +489,17 @@ participants: $participants
 
 class _MessageBubble extends StatelessWidget {
   final dynamic msg;
-  final bool isDark;
   final bool isMe;
   final int index;
   final String conversationId;
   final String company_id;
   final VoidCallback? onEdit;
+  final AppThemeModel appTheme;
 
   const _MessageBubble({
     super.key,
     required this.msg,
-    required this.isDark,
+    required this.appTheme,
     required this.isMe,
     required this.index,
     required this.conversationId,
@@ -511,7 +509,6 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Decryption and formatting happen only when this specific bubble builds
     String decryptedText = "";
     try {
       decryptedText = CryptoUtils.decryptMessage(msg['msg_body'] ?? '');
@@ -725,8 +722,8 @@ class _MessageBubble extends StatelessWidget {
                                       msg['username'] ??
                                       "User")
                                   .toString(),
-                        style: const TextStyle(
-                          color: Colors.white60,
+                        style: TextStyle(
+                          color: appTheme.subTextColor,
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -746,15 +743,9 @@ class _MessageBubble extends StatelessWidget {
                     ),
 
                     decoration: BoxDecoration(
-                      gradient: isMe
-                          ? const LinearGradient(
-                              colors: [
-                                Color.fromARGB(42, 129, 138, 137),
-                                Color.fromARGB(42, 129, 138, 137),
-                              ],
-                            )
-                          : null,
-                      color: isMe ? null : Colors.white.withOpacity(0.07),
+                      color: isMe
+                          ? appTheme.msgSenderBubble
+                          : appTheme.msgReceiverBubble,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(isMe ? 22 : 6),
                         topRight: Radius.circular(isMe ? 6 : 22),
@@ -783,8 +774,10 @@ class _MessageBubble extends StatelessWidget {
                             cleanText.toLowerCase() != "null")
                           Text(
                             cleanText,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: isMe
+                                  ? appTheme.msgSenderText
+                                  : appTheme.msgReceiverText,
                               fontSize: 15,
                               height: 1.5,
                             ),
@@ -874,10 +867,10 @@ class _MessageBubble extends StatelessWidget {
                             ),
                             if (isMe) ...[
                               const SizedBox(width: 4),
-                              const Icon(
+                              Icon(
                                 Icons.done_all,
                                 size: 14,
-                                color: Colors.white70,
+                                color: appTheme.msgStatusIconColor,
                               ),
                             ],
                           ],
