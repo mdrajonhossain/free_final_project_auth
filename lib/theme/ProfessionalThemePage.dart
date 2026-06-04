@@ -15,6 +15,7 @@ class ProfessionalThemePage extends StatelessWidget {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
+            centerTitle: true,
             title: Text(
               "Professional Themes",
               style: TextStyle(
@@ -30,63 +31,106 @@ class ProfessionalThemePage extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          body: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          body: GridView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.85,
+            ),
             itemCount: professionalThemes.length,
             itemBuilder: (context, index) {
               final theme = professionalThemes[index];
               final bool isSelected = theme.name == currentTheme.name;
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: theme.accentColor.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          ),
+                        ]
+                      : [],
+                ),
                 child: InkWell(
                   onTap: () {
                     context.read<ThemeCubit>().updateTheme(theme);
                   },
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(24),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: isSelected ? theme.accentColor : Colors.white10,
-                        width: isSelected ? 2 : 1,
+                        color: isSelected
+                            ? theme.accentColor
+                            : Colors.white.withOpacity(0.05),
+                        width: isSelected ? 3 : 1,
                       ),
                     ),
-                    child: Row(
+                    child: Stack(
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: theme.accentColor,
-                            shape: BoxShape.circle,
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Palette Preview Dots
+                              Row(
+                                children: [
+                                  _buildPaletteDot(theme.backgroundColor),
+                                  _buildPaletteDot(theme.accentColor),
+                                  _buildPaletteDot(theme.textColor),
+                                ],
+                              ),
+                              const Spacer(),
+                              Text(
+                                theme.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: theme.textColor,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isSelected ? "Active" : "Apply",
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? theme.accentColor
+                                      : theme.subTextColor.withOpacity(0.6),
+                                  fontSize: 11,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w900
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: isSelected
-                              ? const Icon(
-                                  Icons.check,
-                                  color: Colors.white,
-                                  size: 20,
-                                )
-                              : null,
                         ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: Text(
-                            theme.name,
-                            style: TextStyle(
-                              color: theme.textColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                        if (isSelected)
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: CircleAvatar(
+                              radius: 10,
+                              backgroundColor: theme.accentColor,
+                              child: const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 12,
+                              ),
                             ),
                           ),
-                        ),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          color: theme.subTextColor,
-                          size: 14,
-                        ),
                       ],
                     ),
                   ),
@@ -96,6 +140,19 @@ class ProfessionalThemePage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPaletteDot(Color color) {
+    return Container(
+      margin: const EdgeInsets.only(right: 6),
+      height: 12,
+      width: 12,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white24, width: 0.5),
+      ),
     );
   }
 }
