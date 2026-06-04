@@ -60,12 +60,10 @@ class _MyAppState extends State<MyApp> {
               '/filehuball': (context) => const Filehubs(),
               '/filehubRoom': (context) => const RoomFilehubs(),
               '/archiveroom': (context) => const ArchiveRoom(),
-              '/changepassword': (context) =>
-                  ChangePassword(isDark: true, onThemeChange: (val) {}),
+              '/changepassword': (context) => const ChangePassword(),
               '/allFlaggedMessage': (context) =>
                   AllFlaggedMessage(isDark: true, onThemeChange: (val) {}),
-              '/switchAccount': (context) =>
-                  SwitchAccount(isDark: true, onThemeChange: (val) {}),
+              '/switchAccount': (context) => const SwitchAccount(),
               '/allnotification': (context) =>
                   AllNotificationPage(isDark: true, onThemeChange: (val) {}),
             },
