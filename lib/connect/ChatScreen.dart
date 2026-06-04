@@ -471,6 +471,7 @@ participants: $participants
           index: index,
           conversationId: conversationId,
           company_id: company_id,
+          appTheme: appTheme,
           onEdit: () {
             String decryptedText = "";
             try {
@@ -497,6 +498,7 @@ class _MessageBubble extends StatelessWidget {
   final int index;
   final String conversationId;
   final String company_id;
+  final AppThemeModel appTheme;
   final VoidCallback? onEdit;
 
   const _MessageBubble({
@@ -507,6 +509,7 @@ class _MessageBubble extends StatelessWidget {
     required this.index,
     required this.conversationId,
     required this.company_id,
+    required this.appTheme,
     this.onEdit,
   });
 
@@ -514,11 +517,11 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     // Dynamic colors for bubble text and background
     final Color textColor = isMe
-        ? Colors.white
-        : (isDark ? Colors.white : const Color(0xFF1E293B));
+        ? appTheme.msgSenderText
+        : appTheme.msgReceiverText;
     final Color bubbleColor = isMe
-        ? (isDark ? const Color(0xFF2B2F55) : const Color(0xFF4C8DFF))
-        : Theme.of(context).cardColor;
+        ? appTheme.msgSenderBubble
+        : appTheme.msgReceiverBubble;
 
     // Decryption and formatting happen only when this specific bubble builds
     String decryptedText = "";
@@ -905,7 +908,8 @@ class _MessageBubble extends StatelessWidget {
                               const Icon(
                                 Icons.done_all,
                                 size: 14,
-                                color: Colors.white70,
+                                color: Colors
+                                    .white70, // Me bubbles are usually dark enough
                               ),
                             ],
                           ],
@@ -1268,7 +1272,16 @@ class _AttachmentList extends StatelessWidget {
             child: Icon(
               isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
               size: 20,
-              color: isStarred ? Colors.red : Colors.white70,
+              color: isStarred
+                  ? Colors.red
+                  : (msg['sender'].toString() ==
+                            context.read<ChatBloc>().state.myId
+                        ? Colors.white70
+                        : context
+                              .read<ThemeCubit>()
+                              .state
+                              .msgReceiverText
+                              .withOpacity(0.5)),
             ),
           ),
         ),

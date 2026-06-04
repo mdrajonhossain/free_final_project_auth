@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'AppColors.dart';
 import 'package:freeli/theme/ProfessionalThemePage.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:freeli/theme/themeList.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isDark;
@@ -27,217 +30,200 @@ class AppDrawer extends StatelessWidget {
     final String? teamName = userData?['company_name'];
     final String? imgUrl = userData?['img'];
 
-    const Color primaryBlue = Color(0xFF0C1F5E);
-    const Color surfaceBlue = Color(0xFF152A6E);
-
-    return Drawer(
-      backgroundColor: primaryBlue,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          /// ================= HEADER =================
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-            decoration: const BoxDecoration(
-              color: surfaceBlue,
-              borderRadius: BorderRadius.only(bottomRight: Radius.circular(30)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ================= TOP ROW =================
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, theme) {
+        return Drawer(
+          backgroundColor: theme.backgroundColor,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              /// ================= HEADER =================
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: const BorderRadius.only(
+                    bottomRight: Radius.circular(30),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Image.asset('assets/logo.webp', height: 30),
-
+                    // ================= TOP ROW =================
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // 🔁 SWITCH COMPANY BUTTON
-                        InkWell(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/switchAccount');
-                          },
-                          borderRadius: BorderRadius.circular(30),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              shape: BoxShape.circle,
+                        Image.asset('assets/logo.webp', height: 30),
+                        Row(
+                          children: [
+                            // 🔁 SWITCH COMPANY BUTTON
+                            InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/switchAccount');
+                              },
+                              borderRadius: BorderRadius.circular(30),
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: theme.textColor.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.swap_horiz_rounded,
+                                  color: theme.textColor,
+                                  size: 30,
+                                ),
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.swap_horiz_rounded,
-                              color: Color.fromARGB(255, 235, 232, 233),
-                              size: 30,
+                            const SizedBox(width: 10),
+                            // PROFILE IMAGE
+                            CircleAvatar(
+                              radius: 35,
+                              backgroundColor: theme.textColor.withOpacity(0.2),
+                              backgroundImage: imgUrl != null
+                                  ? NetworkImage(imgUrl)
+                                  : null,
+                              child: imgUrl == null
+                                  ? Icon(
+                                      Icons.person,
+                                      color: theme.textColor,
+                                      size: 40,
+                                    )
+                                  : null,
                             ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 10),
-
-                        // PROFILE IMAGE
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundColor: Colors.white24,
-                          backgroundImage: imgUrl != null
-                              ? NetworkImage(imgUrl)
-                              : null,
-                          child: imgUrl == null
-                              ? const Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                  size: 40,
-                                )
-                              : null,
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 15),
-
-                // ================= NAME =================
-                Text(
-                  name,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                if (email != null)
-                  Text(
-                    email,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 13,
-                    ),
-                  ),
-
-                Text(
-                  teamName ??
-                      (userData == null
-                          ? "Sign in to sync your data"
-                          : "No Team"),
-                  style: TextStyle(
-                    color: email != null
-                        ? Colors.white.withOpacity(0.6)
-                        : Colors.white.withOpacity(0.7),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          /// ================= PRIMARY MENU (2 COLUMN GRID) =================
-          // Padding(
-          //   padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
-          //   child: GridView.count(
-          //     shrinkWrap: true,
-          //     padding: EdgeInsets.zero,
-          //     physics: const NeverScrollableScrollPhysics(),
-          //     crossAxisCount: 2,
-          //     mainAxisSpacing: 5,
-          //     crossAxisSpacing: 5,
-          //     childAspectRatio: 2.6,
-          //     children: [
-          //       _gridItem(Icons.task_alt, "Tasks", () {}),
-          //       _gridItem(Icons.folder_open_outlined, "FileHub", () {
-          //         Navigator.pop(context);
-          //         Navigator.pushNamed(context, '/filehuball');
-          //       }),
-          //       _gridItem(Icons.analytics_outlined, "Daily Sales", () {}),
-          //     ],
-          //   ),
-          // ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 2),
-            child: Divider(color: Colors.white12, indent: 20, endIndent: 20),
-          ),
-
-          /// ================= SECONDARY MENU =================
-          _drawerItem(
-            Icons.archive_outlined,
-            "Archive rooms",
-            () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/archiveroom');
-            },
-            trailing: archiveCount > 0
-                ? Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      archiveCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
+                    const SizedBox(height: 15),
+                    // ================= NAME =================
+                    Text(
+                      name,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: theme.textColor,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  )
-                : null,
-          ),
-          _drawerItem(Icons.flag_outlined, "Flagged messages", () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/allFlaggedMessage');
-          }),
-          _drawerItem(
-            Icons.notifications_none_outlined,
-            "All notifications",
-            () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/allnotification');
-            },
-          ),
-          _drawerItem(Icons.lock_outline, "Change password", () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/changepassword');
-          }),
-          _drawerItem(
-            Icons.admin_panel_settings_outlined,
-            "Admin settings",
-            () {},
-          ),
-          _drawerItem(
-            Icons.theater_comedy,
-            "Theme",
-            () => onThemeChange(!isDark),
-            trailing: Icon(
-              isDark ? Icons.wb_sunny_rounded : Icons.nightlight_round,
-              color: isDark ? Colors.yellow : Colors.white70,
-              size: 20,
-            ),
-          ),
-          _drawerItem(Icons.palette_outlined, "Professional Themes", () {
-            Navigator.pop(context);
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfessionalThemePage()),
-            );
-          }),
+                    if (email != null)
+                      Text(
+                        email,
+                        style: TextStyle(
+                          color: theme.subTextColor,
+                          fontSize: 13,
+                        ),
+                      ),
+                    Text(
+                      teamName ??
+                          (userData == null
+                              ? "Sign in to sync your data"
+                              : "No Team"),
+                      style: TextStyle(
+                        color: theme.subTextColor.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-          const SizedBox(height: 30),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 2),
+                child: Divider(
+                  color: Colors.white12,
+                  indent: 20,
+                  endIndent: 20,
+                ),
+              ),
 
-          /// ================= LOGOUT =================
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _signOutButton(),
+              /// ================= SECONDARY MENU =================
+              _drawerItem(
+                Icons.archive_outlined,
+                "Archive rooms",
+                () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/archiveroom');
+                },
+                theme: theme,
+                trailing: archiveCount > 0
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          archiveCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              _drawerItem(Icons.flag_outlined, "Flagged messages", () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/allFlaggedMessage');
+              }, theme: theme),
+              _drawerItem(
+                Icons.notifications_none_outlined,
+                "All notifications",
+                () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/allnotification');
+                },
+                theme: theme,
+              ),
+              _drawerItem(Icons.lock_outline, "Change password", () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/changepassword');
+              }, theme: theme),
+              _drawerItem(
+                Icons.admin_panel_settings_outlined,
+                "Admin settings",
+                () {},
+                theme: theme,
+              ),
+              _drawerItem(
+                Icons.theater_comedy,
+                "Cycle Theme",
+                () => context.read<ThemeCubit>().toggleTheme(),
+                theme: theme,
+                trailing: Icon(
+                  Icons.sync_rounded,
+                  color: theme.accentColor,
+                  size: 20,
+                ),
+              ),
+              _drawerItem(Icons.palette_outlined, "Professional Themes", () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ProfessionalThemePage(),
+                  ),
+                );
+              }, theme: theme),
+
+              const SizedBox(height: 30),
+
+              /// ================= LOGOUT =================
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _signOutButton(),
+              ),
+
+              const SizedBox(height: 20),
+            ],
           ),
-
-          const SizedBox(height: 20),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -246,13 +232,14 @@ class AppDrawer extends StatelessWidget {
     IconData icon,
     String title,
     VoidCallback onTap, {
+    required AppThemeModel theme,
     Widget? trailing,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Colors.white70, size: 22),
+      leading: Icon(icon, color: theme.subTextColor, size: 22),
       title: Text(
         title,
-        style: const TextStyle(color: Colors.white, fontSize: 15),
+        style: TextStyle(color: theme.textColor, fontSize: 15),
       ),
       trailing: trailing,
       onTap: onTap,
