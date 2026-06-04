@@ -5,6 +5,7 @@ import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 import 'package:freeli/theme/themeList.dart';
 import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import './mention_input.dart';
 
 class ChatInput extends StatefulWidget {
   final TextEditingController controller;
@@ -18,6 +19,7 @@ class ChatInput extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onAttachmentsPicked;
   final bool showAttachmentIcon;
   final bool group;
+  final List<MentionUser> mentionableUsers;
 
   const ChatInput({
     super.key,
@@ -31,6 +33,7 @@ class ChatInput extends StatefulWidget {
     required this.chatBloc,
     this.group = false,
     this.userEmail,
+    this.mentionableUsers = const [],
     this.showAttachmentIcon = true,
   });
 
@@ -115,15 +118,17 @@ class _ChatInputState extends State<ChatInput> {
 
                             // TEXT FIELD
                             Expanded(
-                              child: TextField(
+                              child: MentionTextField(
                                 focusNode: _focusNode,
                                 controller: widget.controller,
+                                users: widget.mentionableUsers,
+                                popupBackgroundColor: appTheme.cardColor,
                                 onTap: () {
                                   if (_showEmoji) {
                                     setState(() => _showEmoji = false);
                                   }
                                 },
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 15,
                                 ),
@@ -131,7 +136,10 @@ class _ChatInputState extends State<ChatInput> {
                                 maxLines: 5,
                                 decoration: const InputDecoration(
                                   hintText: "Message...",
-                                  hintStyle: TextStyle(color: Colors.white38),
+                                  hintStyle: TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 15,
+                                  ),
                                   border: InputBorder.none,
                                 ),
                               ),

@@ -9,6 +9,8 @@ import 'package:freeli/controller/api/api_service.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import '../controller/stateBloc/message/chat_bloc.dart';
 import 'ChatSkeleton.dart';
+import './mention_input.dart';
+import 'dart:convert';
 import './crypto_utils.dart';
 import './format_utils.dart';
 import './file_utils.dart';
@@ -39,6 +41,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String convImg = "";
   bool _isEditing = false;
   String? _editingMsgId;
+  List<MentionUser> _mentionableUsers = [];
 
   @override
   void initState() {
@@ -65,9 +68,51 @@ class _ChatScreenState extends State<ChatScreen> {
           ApiServer().markAsRead(conversationId);
 
           _chatBloc.add(ChatFetchRequested(conversationId));
+          _fetchMentionableUsers();
         });
       }
     });
+  }
+
+  Future<void> _fetchMentionableUsers() async {
+    if (company_id.isEmpty) return;
+    try {
+      final List<Map<String, dynamic>> users = await ApiServer().fetchAllUsers(
+        company_id,
+      );
+
+      // Ensure we have a valid myId for filtering, fetching if necessary
+      String myId = _chatBloc.state.myId;
+      if (myId.isEmpty) {
+        try {
+          final me = await ApiServer().fetchMe();
+          myId = (me['id'] ?? me['_id'] ?? me['uid']).toString();
+        } catch (e) {
+          debugPrint("Could not fetch myId for filtering: $e");
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _mentionableUsers = users
+              .where((u) {
+                final uid = (u['id'] ?? u['_id'] ?? u['uid']).toString();
+                // Strictly filter out the current user
+                return uid != myId && myId.isNotEmpty;
+              })
+              .map(
+                (u) => MentionUser(
+                  id: (u['id'] ?? u['_id'] ?? u['uid']).toString(),
+                  name: (u['firstname'] ?? u['name'] ?? 'User').toString(),
+                  imageUrl: (u['img'] ?? u['image'])?.toString(),
+                ),
+              )
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching company users for mentions: $e");
+    }
   }
 
   void _scrollListener() {
@@ -354,6 +399,7 @@ participants: $participants
                     ChatInput(
                       controller: _messageController,
                       onSend: _sendMessage,
+                      mentionableUsers: _mentionableUsers,
                       companyId: company_id,
                       group: conversation_type == "group",
                       userEmail: state.userData?['email']?.toString(),
