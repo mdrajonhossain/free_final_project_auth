@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'AppColors.dart';
+import 'package:freeli/theme/ProfessionalThemePage.dart';
 
 class AppDrawer extends StatelessWidget {
   final bool isDark;
@@ -218,6 +219,13 @@ class AppDrawer extends StatelessWidget {
               size: 20,
             ),
           ),
+          _drawerItem(Icons.palette_outlined, "Professional Themes", () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfessionalThemePage()),
+            );
+          }),
 
           const SizedBox(height: 30),
 

@@ -6,18 +6,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../AppDrawer.dart';
 import 'tags_page.dart';
 import 'links_page.dart';
-import '../../AppColors.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'FileHubSkeleton.dart';
 
 class RoomFilehubs extends StatefulWidget {
-  final bool isDark;
-  final Function(bool) onThemeChange;
-
-  const RoomFilehubs({
-    super.key,
-    required this.isDark,
-    required this.onThemeChange,
-  });
+  const RoomFilehubs({super.key});
 
   @override
   State<RoomFilehubs> createState() => RoomFilehubsState();
@@ -130,109 +125,109 @@ class RoomFilehubsState extends State<RoomFilehubs> {
 
   @override
   Widget build(BuildContext context) {
-    // Extract tags from galleryData
-    final List<Widget> pages = [
-      TagsPage(isDark: widget.isDark, tags: tagsList),
-      FileHubPage(
-        isDark: widget.isDark,
-        files: hubFiles,
-        userData: userData,
-        onRefresh: fetchFileList,
-      ), // Assuming FileHubPage takes files
-      LinksPage(
-        isDark: widget.isDark,
-        links: linksList,
-        onRefresh: fetchFilehubData,
-      ), // Assuming LinksPage takes links
-    ];
-
-    final Color navColor = widget.isDark
-        ? AppColors.colorBlack
-        : AppColors.colorBlue;
-
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(widget.isDark),
-      endDrawer: AppDrawer(
-        isDark: widget.isDark,
-        onThemeChange: widget.onThemeChange,
-        userData: userData,
-        archiveCount: archiveCount, // Pass archiveCount
-        onLogout: _handleLogout,
-      ),
-
-      /// ================= APP BAR =================
-      appBar: AppBar(
-        backgroundColor: AppColors.getBackgroundColor(widget.isDark),
-        elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        automaticallyImplyLeading: false,
-        titleSpacing: 5,
-        title: Image.asset('assets/logo.webp', height: 45),
-        actions: [
-          Builder(
-            builder: (context) {
-              return IconButton(
-                constraints: const BoxConstraints(),
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                onPressed: () => Scaffold.of(context).openEndDrawer(),
-                icon: const Icon(Icons.menu, color: Colors.white),
-                tooltip: 'Toggle menu',
-              );
-            },
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+        final List<Widget> pages = [
+          TagsPage(tags: tagsList),
+          FileHubPage(
+            files: hubFiles,
+            userData: userData,
+            onRefresh: fetchFileList,
           ),
-          const SizedBox(width: 3),
-        ],
-      ),
+          LinksPage(
+            isDark: isDark,
+            links: linksList,
+            onRefresh: fetchFilehubData,
+          ),
+        ];
 
-      /// ================= BODY =================
-      body: isLoading
-          ? FileHubSkeleton(
-              isDark: widget.isDark,
-            ) // Show skeleton while loading
-          : errorMessage != null
-          ? Center(
-              child: Text(
-                errorMessage!,
-                style: const TextStyle(color: Colors.redAccent),
-                textAlign: TextAlign.center,
+        return Scaffold(
+          backgroundColor: appTheme.backgroundColor,
+          endDrawer: AppDrawer(
+            isDark: isDark,
+            onThemeChange: (val) {},
+            userData: userData,
+            archiveCount: archiveCount,
+            onLogout: _handleLogout,
+          ),
+
+          /// ================= APP BAR =================
+          appBar: AppBar(
+            backgroundColor: appTheme.backgroundColor,
+            elevation: 0,
+            centerTitle: false,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            automaticallyImplyLeading: false,
+            titleSpacing: 5,
+            title: Image.asset('assets/logo.webp', height: 45),
+            actions: [
+              Builder(
+                builder: (context) {
+                  return IconButton(
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    onPressed: () => Scaffold.of(context).openEndDrawer(),
+                    icon: const Icon(Icons.menu, color: Colors.white),
+                    tooltip: 'Toggle menu',
+                  );
+                },
               ),
-            )
-          : pages[_currentIndex],
+              const SizedBox(width: 3),
+            ],
+          ),
 
-      /// ================= BOTTOM NAV =================
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        backgroundColor: navColor,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white.withOpacity(0.5),
-        elevation: 10,
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-        ),
-        unselectedLabelStyle: const TextStyle(fontSize: 12),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.sell_rounded), label: 'Tag'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.folder_copy_rounded),
-            label: 'FileHub',
+          /// ================= BODY =================
+          body: isLoading
+              ? FileHubSkeleton(isDark: isDark)
+              : errorMessage != null
+              ? Center(
+                  child: Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.redAccent),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : pages[_currentIndex],
+
+          /// ================= BOTTOM NAV =================
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            backgroundColor: appTheme.backgroundColor,
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white.withOpacity(0.5),
+            elevation: 10,
+            type: BottomNavigationBarType.fixed,
+            selectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.sell_rounded),
+                label: 'Tag',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.folder_copy_rounded),
+                label: 'FileHub',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.link_rounded),
+                label: 'Link',
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.link_rounded),
-            label: 'Link',
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

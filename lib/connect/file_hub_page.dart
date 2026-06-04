@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:freeli/AppColors.dart';
 import 'package:freeli/connect/FullImageViewer.dart';
 import 'package:freeli/connect/PopUpFile/ForwardMessageScreen.dart';
 import 'package:freeli/connect/PopUpFile/PublicTag.dart';

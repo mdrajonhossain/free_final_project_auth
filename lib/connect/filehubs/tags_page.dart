@@ -6,16 +6,16 @@ import 'FileHubSkeleton.dart';
 import '../PopUpFile/PublicTag.dart';
 import '../PopUpFile/ForwardMessageScreen.dart';
 import '../FullImageViewer.dart';
-import '../../AppColors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 
 // IMPORTANT: ensure this import exists in your project
 // import 'api_server.dart';
 
 class TagsPage extends StatefulWidget {
-  final bool isDark;
   final List<dynamic> tags;
-
-  const TagsPage({super.key, required this.isDark, this.tags = const []});
+  const TagsPage({super.key, this.tags = const []});
 
   @override
   State<TagsPage> createState() => _TagsPageState();
@@ -323,17 +323,21 @@ class _TagsPageState extends State<TagsPage> {
         });
       },
       child: AnimatedContainer(
+        // Use appTheme properties
         duration: const Duration(milliseconds: 250),
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
+          // Use appTheme properties
           color: isSelected
-              ? AppColors.getAccentColor(isDark)
-              : surfaceColor.withOpacity(0.5),
+              ? context.read<ThemeCubit>().state.accentColor
+              : surfaceColor.withOpacity(
+                  0.5,
+                ), // surfaceColor will be appTheme.backgroundColor
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
             color: isSelected
-                ? AppColors.getAccentColor(isDark)
+                ? context.read<ThemeCubit>().state.accentColor
                 : isDark
                 ? Colors.white.withOpacity(.05)
                 : Colors.black.withOpacity(.05),
@@ -354,10 +358,10 @@ class _TagsPageState extends State<TagsPage> {
   /// FILE ITEM
   Widget _buildFileItem(
     dynamic file,
-    bool isDark,
-    Color textColor,
-    Color subTextColor,
-    Color cardColor,
+    bool isDark, // This will be derived from appTheme
+    Color textColor, // This will be appTheme.textColor
+    Color subTextColor, // This will be appTheme.subTextColor
+    Color cardColor, // This will be appTheme.cardColor
     String? currentUserId, // New parameter for current user's ID
   ) {
     final String originalName =
@@ -405,7 +409,10 @@ class _TagsPageState extends State<TagsPage> {
       onLongPress: () {
         showModalBottomSheet(
           context: context,
-          backgroundColor: AppColors.getBackgroundColor(isDark),
+          backgroundColor: context
+              .read<ThemeCubit>()
+              .state
+              .backgroundColor, // Use appTheme.backgroundColor
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -481,7 +488,10 @@ class _TagsPageState extends State<TagsPage> {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
-                        backgroundColor: AppColors.getBackgroundColor(isDark),
+                        backgroundColor: context
+                            .read<ThemeCubit>()
+                            .state
+                            .backgroundColor, // Use appTheme.backgroundColor
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(24),
@@ -516,7 +526,10 @@ class _TagsPageState extends State<TagsPage> {
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
-                        backgroundColor: AppColors.getBackgroundColor(isDark),
+                        backgroundColor: context
+                            .read<ThemeCubit>()
+                            .state
+                            .backgroundColor, // Use appTheme.backgroundColor
                         shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(24),
@@ -590,7 +603,11 @@ class _TagsPageState extends State<TagsPage> {
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.white.withOpacity(0.08)
-                      : const Color(0xFF4C8DFF).withOpacity(0.1),
+                      : context
+                            .read<ThemeCubit>()
+                            .state
+                            .accentColor
+                            .withOpacity(0.1), // Use appTheme.accentColor
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: isImage
@@ -609,7 +626,10 @@ class _TagsPageState extends State<TagsPage> {
                         FileUtils.getFileIcon(location),
                         color: isDark
                             ? Colors.white70
-                            : const Color(0xFF4C8DFF),
+                            : context
+                                  .read<ThemeCubit>()
+                                  .state
+                                  .accentColor, // Use appTheme.accentColor
                         size: 24,
                       ),
               ),
@@ -649,7 +669,10 @@ class _TagsPageState extends State<TagsPage> {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
-                          backgroundColor: AppColors.getBackgroundColor(isDark),
+                          backgroundColor: context
+                              .read<ThemeCubit>()
+                              .state
+                              .backgroundColor, // Use appTheme.backgroundColor
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(24),
@@ -692,23 +715,35 @@ class _TagsPageState extends State<TagsPage> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.getAccentColor(
-                                      isDark,
-                                    ).withOpacity(0.12),
+                                    color: context
+                                        .read<ThemeCubit>()
+                                        .state
+                                        .accentColor
+                                        .withOpacity(
+                                          0.12,
+                                        ), // Use appTheme.accentColor
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color: AppColors.getAccentColor(
-                                        isDark,
-                                      ).withOpacity(0.3),
+                                      color: context
+                                          .read<ThemeCubit>()
+                                          .state
+                                          .accentColor
+                                          .withOpacity(
+                                            0.3,
+                                          ), // Use appTheme.accentColor
                                     ),
                                   ),
                                   child: Text(
                                     data['title'] ?? "",
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: isDark
+                                      color:
+                                          isDark // This is fine as it's a contrast choice
                                           ? Colors.white
-                                          : AppColors.getAccentColor(isDark),
+                                          : context
+                                                .read<ThemeCubit>()
+                                                .state
+                                                .accentColor, // Use appTheme.accentColor
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -806,342 +841,353 @@ class _TagsPageState extends State<TagsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = widget.isDark;
-    final Color backgroundColor = AppColors.getBackgroundColor(isDark);
-    final Color cardColor = isDark
-        ? Colors.white.withOpacity(0.05)
-        : Colors.black.withOpacity(0.05);
-    final Color surfaceColor = isDark
-        ? AppColors.colorBlack
-        : AppColors.colorBlue;
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+        final Color backgroundColor = appTheme.backgroundColor;
+        final Color cardColor = appTheme.cardColor;
+        final Color surfaceColor =
+            appTheme.backgroundColor; // Using background for surface
+        final Color textColor = appTheme.textColor;
+        final Color subTextColor = appTheme.subTextColor;
 
-    final textColor = (isDark || backgroundColor == AppColors.colorBlue)
-        ? Colors.white
-        : Colors.black87;
-    final subTextColor = (isDark || backgroundColor == AppColors.colorBlue)
-        ? Colors.white70
-        : Colors.black54;
+        /// COUNTS
+        int allCount = 0;
+        int docsCount = 0;
+        int imageCount = 0;
+        int voiceCount = 0;
+        int audioCount = 0;
+        int videoCount = 0;
 
-    /// COUNTS
-    int allCount = 0;
-    int docsCount = 0;
-    int imageCount = 0;
-    int voiceCount = 0;
-    int audioCount = 0;
-    int videoCount = 0;
+        if (_isShowingFiles) {
+          allCount = _tagFiles.length;
+          docsCount = _tagFiles.where((file) {
+            final String category = (file['file_category'] ?? "")
+                .toString()
+                .toLowerCase();
+            return category == "docs" || category == "other";
+          }).length;
 
-    if (_isShowingFiles) {
-      allCount = _tagFiles.length;
-      docsCount = _tagFiles.where((file) {
-        final String category = (file['file_category'] ?? "")
-            .toString()
-            .toLowerCase();
-        return category == "docs" || category == "other";
-      }).length;
+          imageCount = _tagFiles.where((file) {
+            return (file['file_category'] ?? "").toString().toLowerCase() ==
+                "image";
+          }).length;
 
-      imageCount = _tagFiles.where((file) {
-        return (file['file_category'] ?? "").toString().toLowerCase() ==
-            "image";
-      }).length;
+          voiceCount = _tagFiles.where((file) {
+            return (file['file_category'] ?? "").toString().toLowerCase() ==
+                "voice";
+          }).length;
 
-      voiceCount = _tagFiles.where((file) {
-        return (file['file_category'] ?? "").toString().toLowerCase() ==
-            "voice";
-      }).length;
+          audioCount = _tagFiles.where((file) {
+            return (file['file_category'] ?? "").toString().toLowerCase() ==
+                "audio";
+          }).length;
 
-      audioCount = _tagFiles.where((file) {
-        return (file['file_category'] ?? "").toString().toLowerCase() ==
-            "audio";
-      }).length;
+          videoCount = _tagFiles.where((file) {
+            return (file['file_category'] ?? "").toString().toLowerCase() ==
+                "video";
+          }).length;
+        }
 
-      videoCount = _tagFiles.where((file) {
-        return (file['file_category'] ?? "").toString().toLowerCase() ==
-            "video";
-      }).length;
-    }
+        return Scaffold(
+          backgroundColor: backgroundColor,
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// HEADER
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
-              child: Row(
-                children: [
-                  if (_isShowingFiles)
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _isShowingFiles = false;
-                          _runFilter(_searchController.text);
-                        });
-                      },
-                      icon: Icon(
-                        Icons.arrow_back_ios,
-                        color: textColor,
-                        size: 20,
-                      ),
-                    ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _isShowingFiles ? _selectedTagName : "Tags",
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: _isShowingFiles ? 24 : 28,
-                            fontWeight: FontWeight.w800,
+          body: SafeArea(
+            child: Column(
+              children: [
+                /// HEADER
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
+                  child: Row(
+                    children: [
+                      if (_isShowingFiles)
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _isShowingFiles = false;
+                              _runFilter(_searchController.text);
+                            });
+                          },
+                          icon: Icon(
+                            Icons.arrow_back_ios, // Already correct
+                            color: textColor, // Already correct
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(height: 5),
-                        Text(
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _isShowingFiles ? _selectedTagName : "Tags",
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: _isShowingFiles ? 24 : 28,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              _isShowingFiles
+                                  ? "Viewing files associated with this tag"
+                                  : "Manage all project tags professionally",
+                              style: TextStyle(
+                                color: subTextColor,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: appTheme.cardColor.withOpacity(
+                            0.5,
+                          ), // Use appTheme.cardColor
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Text(
                           _isShowingFiles
-                              ? "Viewing files associated with this tag"
-                              : "Manage all project tags professionally",
-                          style: TextStyle(color: subTextColor, fontSize: 13),
+                              ? "${_filteredFiles.length}"
+                              : "${_filteredTags.length}",
+                          style: TextStyle(
+                            // Already correct
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                /// CATEGORY
+                if (_isShowingFiles)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        _buildCategoryChip(
+                          "All file(s)",
+                          0,
+                          allCount,
+                          surfaceColor,
+                          textColor,
+                          isDark,
+                        ),
+                        _buildCategoryChip(
+                          "Doc(s)",
+                          1,
+                          docsCount,
+                          surfaceColor,
+                          textColor,
+                          isDark,
+                        ),
+                        _buildCategoryChip(
+                          "Image(s)",
+                          2,
+                          imageCount,
+                          surfaceColor,
+                          textColor,
+                          isDark,
+                        ),
+                        _buildCategoryChip(
+                          "Voice(s)",
+                          3,
+                          voiceCount,
+                          surfaceColor,
+                          textColor,
+                          isDark,
+                        ),
+                        _buildCategoryChip(
+                          "Audio(s)",
+                          4,
+                          audioCount,
+                          surfaceColor,
+                          textColor,
+                          isDark,
+                        ),
+                        _buildCategoryChip(
+                          "Video(s)",
+                          5,
+                          videoCount,
+                          surfaceColor,
+                          textColor,
+                          isDark,
                         ),
                       ],
                     ),
                   ),
 
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
+                if (_isShowingFiles) const SizedBox(height: 12),
+
+                /// SEARCH
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    height: 58,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withOpacity(.06)
-                          : Colors.blue.withOpacity(.08),
-                      borderRadius: BorderRadius.circular(18),
+                      color: surfaceColor,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      _isShowingFiles
-                          ? "${_filteredFiles.length}"
-                          : "${_filteredTags.length}",
-                      style: TextStyle(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _runFilter,
+                      style: TextStyle(color: textColor),
+                      decoration: InputDecoration(
+                        border: InputBorder.none,
+                        hintText: _isShowingFiles
+                            ? "Search files..."
+                            : "Search tags...",
+                        hintStyle: TextStyle(color: subTextColor),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: subTextColor,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 18,
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            /// CATEGORY
-            if (_isShowingFiles)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
                 ),
-                child: Row(
-                  children: [
-                    _buildCategoryChip(
-                      "All file(s)",
-                      0,
-                      allCount,
-                      surfaceColor,
-                      textColor,
-                      isDark,
-                    ),
-                    _buildCategoryChip(
-                      "Doc(s)",
-                      1,
-                      docsCount,
-                      surfaceColor,
-                      textColor,
-                      isDark,
-                    ),
-                    _buildCategoryChip(
-                      "Image(s)",
-                      2,
-                      imageCount,
-                      surfaceColor,
-                      textColor,
-                      isDark,
-                    ),
-                    _buildCategoryChip(
-                      "Voice(s)",
-                      3,
-                      voiceCount,
-                      surfaceColor,
-                      textColor,
-                      isDark,
-                    ),
-                    _buildCategoryChip(
-                      "Audio(s)",
-                      4,
-                      audioCount,
-                      surfaceColor,
-                      textColor,
-                      isDark,
-                    ),
-                    _buildCategoryChip(
-                      "Video(s)",
-                      5,
-                      videoCount,
-                      surfaceColor,
-                      textColor,
-                      isDark,
-                    ),
-                  ],
-                ),
-              ),
 
-            if (_isShowingFiles) const SizedBox(height: 12),
+                const SizedBox(height: 18),
 
-            /// SEARCH
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                height: 58,
-                decoration: BoxDecoration(
-                  color: surfaceColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _runFilter,
-                  style: TextStyle(color: textColor),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: _isShowingFiles
-                        ? "Search files..."
-                        : "Search tags...",
-                    hintStyle: TextStyle(color: subTextColor),
-                    prefixIcon: Icon(Icons.search_rounded, color: subTextColor),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 18),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 18),
-
-            /// LIST
-            Expanded(
-              child: _isLoadingFiles
-                  ? FileHubSkeleton(
-                      isDark: isDark,
-                      type: _isShowingFiles ? 'file' : 'tag',
-                    )
-                  : _isShowingFiles
-                  ? ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      controller: _fileScrollController,
-                      itemCount:
-                          _filteredFiles.length +
-                          (_filePage < _totalFilePages ? 1 : 0),
-                      padding: const EdgeInsets.only(
-                        left: 20,
-                        right: 20,
-                        bottom: 30,
-                      ),
-                      itemBuilder: (context, index) {
-                        if (index == _filteredFiles.length) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          );
-                        }
-                        return _buildFileItem(
-                          _filteredFiles[index],
-                          isDark,
-                          textColor,
-                          subTextColor,
-                          cardColor,
-                          _myId, // Pass _myId here
-                        );
-                      },
-                    )
-                  : ListView.builder(
-                      itemCount: _filteredTags.length,
-                      itemBuilder: (context, index) {
-                        final tag = _filteredTags[index];
-
-                        final String title = tag['title'] ?? 'Untitled';
-                        final String count = (tag['i_connected'] ?? 0)
-                            .toString();
-                        final Color tagColor = _parseHexColor(tag['tag_color']);
-                        final String tagId = tag['tag_id'].toString();
-
-                        return GestureDetector(
-                          onTap: () {
-                            get_tag_file(tagId, title);
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(
-                              bottom: 8,
-                              left: 10,
-                              right: 10,
-                            ),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: cardColor,
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 14,
-                                  height: 14,
-                                  decoration: BoxDecoration(
-                                    color: tagColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        "$count connected files",
-                                        style: TextStyle(
-                                          color: subTextColor,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                  color: subTextColor,
-                                ),
-                              ],
-                            ),
+                /// LIST
+                Expanded(
+                  child: _isLoadingFiles
+                      ? FileHubSkeleton(
+                          isDark: isDark,
+                          type: _isShowingFiles ? 'file' : 'tag',
+                        )
+                      : _isShowingFiles
+                      ? ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          controller: _fileScrollController,
+                          itemCount:
+                              _filteredFiles.length +
+                              (_filePage < _totalFilePages ? 1 : 0),
+                          padding: const EdgeInsets.only(
+                            left: 20,
+                            right: 20,
+                            bottom: 30,
                           ),
-                        );
-                      },
-                    ),
+                          itemBuilder: (context, index) {
+                            if (index == _filteredFiles.length) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 20,
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ), // This is fine
+                                ),
+                              );
+                            }
+                            return _buildFileItem(
+                              _filteredFiles[index],
+                              isDark,
+                              textColor,
+                              subTextColor,
+                              cardColor,
+                              _myId, // Pass _myId here
+                            );
+                          },
+                        )
+                      : ListView.builder(
+                          itemCount: _filteredTags.length,
+                          itemBuilder: (context, index) {
+                            final tag = _filteredTags[index];
+
+                            final String title = tag['title'] ?? 'Untitled';
+                            final String count = (tag['i_connected'] ?? 0)
+                                .toString();
+                            final Color tagColor = _parseHexColor(
+                              tag['tag_color'],
+                            );
+                            final String tagId = tag['tag_id'].toString();
+
+                            return GestureDetector(
+                              onTap: () {
+                                get_tag_file(tagId, title);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(
+                                  bottom: 8,
+                                  left: 10,
+                                  right: 10,
+                                ),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: cardColor,
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 14,
+                                      height: 14,
+                                      decoration: BoxDecoration(
+                                        color: tagColor,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: textColor,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Text(
+                                            "$count connected files",
+                                            style: TextStyle(
+                                              color: subTextColor,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
+                                      color: subTextColor,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

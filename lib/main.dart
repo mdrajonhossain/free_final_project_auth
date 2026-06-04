@@ -7,13 +7,13 @@ import 'package:freeli/connect/archiveroom/archiveroom.dart';
 import 'package:freeli/connect/filehubs/filehubs.dart';
 import 'package:freeli/connect/filehubs_Room/RoomFilehubs.dart';
 import 'package:freeli/connect/swichAccount/SwitchAccount.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'CompanyListScreen.dart';
-import 'AppColors.dart';
 import 'LoginScreen.dart';
 import 'OtpScreen.dart';
-import 'TrastedScreen.dart';
 import 'HomePage.dart';
 import 'controller/api/api_service.dart';
 import 'controller/stateBloc/message/chat_bloc.dart';
@@ -32,27 +32,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool isDark = false;
-
   @override
   void initState() {
     super.initState();
-    _loadTheme();
-  }
-
-  Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      isDark = prefs.getBool('isDark') ?? true;
-    });
-  }
-
-  Future<void> toggleTheme(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDark', value);
-    setState(() {
-      isDark = value;
-    });
   }
 
   @override
@@ -61,35 +43,33 @@ class _MyAppState extends State<MyApp> {
       providers: [
         BlocProvider(create: (_) => LoginBloc()),
         BlocProvider(create: (_) => ChatBloc()),
+        BlocProvider(create: (_) => ThemeCubit()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        initialRoute: '/',
-        routes: {
-          '/': (context) => const SplashPage(),
-          '/login': (context) =>
-              LoginScreen(isDark: isDark, onThemeChange: toggleTheme),
-          '/otp': (context) =>
-              OtpScreen(isDark: isDark, onThemeChange: toggleTheme),
-          '/company': (context) =>
-              CompanyListScreen(isDark: isDark, onThemeChange: toggleTheme),
-          '/home': (context) =>
-              HomePage(isDark: isDark, onThemeChange: toggleTheme),
-          '/chat': (context) => ChatScreen(isDark: isDark),
-          '/filehuball': (context) =>
-              Filehubs(isDark: isDark, onThemeChange: toggleTheme),
-          '/filehubRoom': (context) =>
-              RoomFilehubs(isDark: isDark, onThemeChange: toggleTheme),
-          '/archiveroom': (context) =>
-              ArchiveRoom(isDark: isDark, onThemeChange: toggleTheme),
-          '/changepassword': (context) =>
-              ChangePassword(isDark: isDark, onThemeChange: toggleTheme),
-          '/allFlaggedMessage': (context) =>
-              AllFlaggedMessage(isDark: isDark, onThemeChange: toggleTheme),
-          '/switchAccount': (context) =>
-              SwitchAccount(isDark: isDark, onThemeChange: toggleTheme),
-          '/allnotification': (context) =>
-              AllNotificationPage(isDark: isDark, onThemeChange: toggleTheme),
+      child: BlocBuilder<ThemeCubit, AppThemeModel>(
+        builder: (context, appTheme) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const SplashPage(),
+              '/login': (context) => const LoginScreen(),
+              '/otp': (context) => const OtpScreen(),
+              '/company': (context) => const CompanyListScreen(),
+              '/home': (context) => const HomePage(),
+              '/chat': (context) => const ChatScreen(),
+              '/filehuball': (context) => const Filehubs(),
+              '/filehubRoom': (context) => const RoomFilehubs(),
+              '/archiveroom': (context) => const ArchiveRoom(),
+              '/changepassword': (context) =>
+                  ChangePassword(isDark: true, onThemeChange: (val) {}),
+              '/allFlaggedMessage': (context) =>
+                  AllFlaggedMessage(isDark: true, onThemeChange: (val) {}),
+              '/switchAccount': (context) =>
+                  SwitchAccount(isDark: true, onThemeChange: (val) {}),
+              '/allnotification': (context) =>
+                  AllNotificationPage(isDark: true, onThemeChange: (val) {}),
+            },
+          );
         },
       ),
     );
@@ -145,34 +125,41 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.colorBlack,
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.colorBlue, AppColors.colorBlack],
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        return Scaffold(
+          backgroundColor: appTheme.backgroundColor,
+          body: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  appTheme.accentColor.withOpacity(0.8),
+                  appTheme.backgroundColor,
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                FadeTransition(
+                  opacity: _animation,
+                  child: Image.asset('assets/logo.webp', width: 220),
+                ),
+                const Spacer(),
+                const CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white24),
+                ),
+                const SizedBox(height: 50),
+              ],
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(),
-            FadeTransition(
-              opacity: _animation,
-              child: Image.asset('assets/logo.webp', width: 220),
-            ),
-            const Spacer(),
-            const CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white24),
-            ),
-            const SizedBox(height: 50),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

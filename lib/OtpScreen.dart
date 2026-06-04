@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'AppColors.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:freeli/theme/ProfessionalThemePage.dart';
 
 import 'package:freeli/controller/stateBloc/LoginBloc.dart';
 import 'package:freeli/controller/stateBloc/LoginEven.dart';
 import 'package:freeli/controller/stateBloc/LoginState.dart';
 
 class OtpScreen extends StatefulWidget {
-  final bool isDark;
-  final Function(bool) onThemeChange;
-
-  const OtpScreen({
-    super.key,
-    required this.isDark,
-    required this.onThemeChange,
-  });
+  const OtpScreen({super.key});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -118,181 +113,195 @@ class _OtpScreenState extends State<OtpScreen> {
     final String step = args['step'] ?? 'validate';
     final String email = args['email'] ?? '';
 
-    final bgColor = AppColors.getBackgroundColor(widget.isDark);
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+        final bgColor = appTheme.backgroundColor;
+        final textColor = appTheme.textColor;
+        final subTextColor = appTheme.subTextColor;
 
-    double screenWidth = MediaQuery.of(context).size.width;
-    double boxSize = (screenWidth - 120) / 6; // perfect fit 6 boxes
+        double screenWidth = MediaQuery.of(context).size.width;
+        double boxSize = (screenWidth - 120) / 6; // perfect fit 6 boxes
 
-    return BlocListener<LoginBloc, LoginState>(
-      listener: (context, state) {
-        if (state is LoginSuccess) {
-          final loginData = state.data;
-          print("8888888888888888: $loginData"); // Debug print
-          if (loginData['status'] == true) {
-            if (loginData['next_step'] == "company") {
-              Navigator.pushNamed(
-                context,
-                "/company",
-                arguments: {
-                  "email": email,
-                  "session_token": loginData['session_token'],
-                  "code": getOtp(),
-                  "step": "company",
-                  "companies": loginData['companies'],
-                },
+        return BlocListener<LoginBloc, LoginState>(
+          listener: (context, state) {
+            if (state is LoginSuccess) {
+              final loginData = state.data;
+              print("8888888888888888: $loginData"); // Debug print
+              if (loginData['status'] == true) {
+                if (loginData['next_step'] == "company") {
+                  Navigator.pushNamed(
+                    context,
+                    "/company",
+                    arguments: {
+                      "email": email,
+                      "session_token": loginData['session_token'],
+                      "code": getOtp(),
+                      "step": "company",
+                      "companies": loginData['companies'],
+                    },
+                  );
+                }
+              }
+            } else if (state is LoginFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.error),
+                  backgroundColor: Colors.red,
+                ),
               );
             }
-          }
-        } else if (state is LoginFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.error), backgroundColor: Colors.red),
-          );
-        }
-      },
-      child: Scaffold(
-        backgroundColor: bgColor,
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.shield_outlined,
-                          size: 80,
-                          color: Colors.white70,
-                        ),
-
-                        const SizedBox(height: 30),
-
-                        const Text(
-                          "Verification Code",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        const Text(
-                          "A 6-digit code has been sent to your email.\nPlease enter it below to continue.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        /// 🔢 FIXED OTP ROW
-                        Row(
+          },
+          child: Scaffold(
+            backgroundColor: bgColor,
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(6, (i) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              child: otpBox(i, boxSize),
-                            );
-                          }),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        /// 🔁 RESEND
-                        TextButton(
-                          onPressed: resendOtp,
-                          child: const Text(
-                            "Didn't receive the code? Resend OTP",
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        ),
-
-                        const SizedBox(height: 35),
-
-                        /// 🔘 VERIFY BUTTON
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: AppColors.getPrimaryGradient(
-                                widget.isDark,
-                              ),
-                              borderRadius: BorderRadius.circular(15),
+                          children: [
+                            Icon(
+                              Icons.shield_outlined,
+                              size: 80,
+                              color: subTextColor,
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(15),
-                                onTap: () => verifyOtp(
-                                  email: email,
-                                  sessionToken: sessionToken,
-                                  step: step,
+
+                            const SizedBox(height: 30),
+
+                            Text(
+                              "Verification Code",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            Text(
+                              "A 6-digit code has been sent to your email.\nPlease enter it below to continue.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: subTextColor,
+                                fontSize: 14,
+                              ),
+                            ),
+
+                            const SizedBox(height: 40),
+
+                            /// 🔢 FIXED OTP ROW
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(6, (i) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  child: otpBox(i, boxSize),
+                                );
+                              }),
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            /// 🔁 RESEND
+                            TextButton(
+                              onPressed: resendOtp,
+                              child: Text(
+                                "Didn't receive the code? Resend OTP",
+                                style: TextStyle(color: subTextColor),
+                              ),
+                            ),
+
+                            const SizedBox(height: 35),
+
+                            /// 🔘 VERIFY BUTTON
+                            SizedBox(
+                              width: double.infinity,
+                              height: 52,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: appTheme.accentColor,
+                                  borderRadius: BorderRadius.circular(15),
                                 ),
-                                child: Center(
-                                  child: BlocBuilder<LoginBloc, LoginState>(
-                                    builder: (context, state) {
-                                      if (state is LoginLoading) {
-                                        return const SizedBox(
-                                          height: 24,
-                                          width: 24,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2,
-                                          ),
-                                        );
-                                      }
-                                      return const Text(
-                                        "Verify & Continue",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 16,
-                                        ),
-                                      );
-                                    },
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(15),
+                                    onTap: () => verifyOtp(
+                                      email: email,
+                                      sessionToken: sessionToken,
+                                      step: step,
+                                    ),
+                                    child: Center(
+                                      child: BlocBuilder<LoginBloc, LoginState>(
+                                        builder: (context, state) {
+                                          if (state is LoginLoading) {
+                                            return const SizedBox(
+                                              height: 24,
+                                              width: 24,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2,
+                                              ),
+                                            );
+                                          }
+                                          return Text(
+                                            "Verify & Continue",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
+
+                            const SizedBox(height: 30),
+
+                            _buildThemeToggles(appTheme),
+                          ],
                         ),
-
-                        const SizedBox(height: 30),
-
-                        _buildThemeToggles(),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              );
-            },
+                  );
+                },
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildThemeToggles() {
+  Widget _buildThemeToggles(AppThemeModel appTheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        IconButton(
-          onPressed: () => widget.onThemeChange(false),
-          icon: const Icon(Icons.wb_sunny),
-          color: widget.isDark ? Colors.yellow.withOpacity(0.5) : Colors.yellow,
-        ),
-        IconButton(
-          onPressed: () => widget.onThemeChange(true),
-          icon: const Icon(Icons.nightlight_round),
-          color: widget.isDark ? Colors.white : Colors.blueGrey,
+        TextButton.icon(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfessionalThemePage()),
+          ),
+          icon: Icon(Icons.palette_outlined, color: appTheme.accentColor),
+          label: Text(
+            "Select Professional Theme",
+            style: TextStyle(color: appTheme.accentColor),
+          ),
         ),
       ],
     );

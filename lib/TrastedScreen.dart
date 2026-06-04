@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'AppColors.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:freeli/theme/ProfessionalThemePage.dart';
 
 class TrastedScreen extends StatefulWidget {
-  final bool isDark;
-  final Function(bool) onThemeChange;
-
-  const TrastedScreen({
-    super.key,
-    required this.isDark,
-    required this.onThemeChange,
-  });
+  const TrastedScreen({super.key});
 
   @override
   State<TrastedScreen> createState() => _TrastedScreenState();
@@ -45,120 +41,127 @@ class _TrastedScreenState extends State<TrastedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = AppColors.getBackgroundColor(widget.isDark);
-    const textColor = Colors.white;
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bgColor = appTheme.backgroundColor;
+        final textColor = appTheme.textColor;
+        final subTextColor = appTheme.subTextColor;
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 40,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 20),
-
-                      const Text(
-                        "Security Preferences",
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+        return Scaffold(
+          backgroundColor: bgColor,
+          body: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 40,
                       ),
-                      const SizedBox(height: 12),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          "Choose how you'd like to secure your account on this device for future sign-ins.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 15,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 48),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 20),
 
-                      /// ✅ Option 1: Trusted Card
-                      _buildOptionCard(
-                        title: "Trust this device",
-                        subtitle:
-                            "You won't be asked for an OTP on this device again.",
-                        option: 1,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      /// ✅ Option 2: Untrusted Card
-                      _buildOptionCard(
-                        title: "Ask every time",
-                        subtitle:
-                            "Recommended if this is a shared or public device.",
-                        option: 2,
-                      ),
-
-                      const SizedBox(height: 60),
-
-                      /// ✅ Professional Gradient Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: AppColors.getPrimaryGradient(
-                              widget.isDark,
+                          Text(
+                            "Security Preferences",
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
-                            borderRadius: BorderRadius.circular(15),
                           ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(15),
-                              onTap: isLoading ? null : _handleContinue,
-                              child: Center(
-                                child: isLoading
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Text(
-                                        "Confirm & Continue",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 16,
-                                        ),
-                                      ),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              "Choose how you'd like to secure your account on this device for future sign-ins.",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: subTextColor,
+                                fontSize: 15,
+                                height: 1.4,
                               ),
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 48),
+
+                          /// ✅ Option 1: Trusted Card
+                          _buildOptionCard(
+                            title: "Trust this device",
+                            subtitle:
+                                "You won't be asked for an OTP on this device again.",
+                            option: 1,
+                            appTheme: appTheme,
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          /// ✅ Option 2: Untrusted Card
+                          _buildOptionCard(
+                            title: "Ask every time",
+                            subtitle:
+                                "Recommended if this is a shared or public device.",
+                            option: 2,
+                            appTheme: appTheme,
+                          ),
+
+                          const SizedBox(height: 60),
+
+                          /// ✅ Professional Gradient Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: appTheme.accentColor,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(15),
+                                  onTap: isLoading ? null : _handleContinue,
+                                  child: Center(
+                                    child: isLoading
+                                        ? const SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Text(
+                                            "Confirm & Continue",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          _buildThemeToggles(appTheme),
+                          const SizedBox(height: 20),
+                        ],
                       ),
-                      const SizedBox(height: 30),
-                      _buildThemeToggles(),
-                      const SizedBox(height: 20),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -166,6 +169,7 @@ class _TrastedScreenState extends State<TrastedScreen> {
     required String title,
     required String subtitle,
     required int option,
+    required AppThemeModel appTheme,
   }) {
     final isSelected = selectedOption == option;
     return Padding(
@@ -182,7 +186,9 @@ class _TrastedScreenState extends State<TrastedScreen> {
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? Colors.lightBlueAccent : Colors.white24,
+              color: isSelected
+                  ? appTheme.accentColor
+                  : appTheme.subTextColor.withOpacity(0.3),
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -194,8 +200,8 @@ class _TrastedScreenState extends State<TrastedScreen> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: appTheme.textColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -203,8 +209,8 @@ class _TrastedScreenState extends State<TrastedScreen> {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: appTheme.subTextColor,
                         fontSize: 12,
                       ),
                     ),
@@ -217,7 +223,7 @@ class _TrastedScreenState extends State<TrastedScreen> {
                   value: option,
                   groupValue: selectedOption,
                   onChanged: (val) => setState(() => selectedOption = val!),
-                  activeColor: Colors.lightBlueAccent,
+                  activeColor: appTheme.accentColor,
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -229,17 +235,20 @@ class _TrastedScreenState extends State<TrastedScreen> {
     );
   }
 
-  Widget _buildThemeToggles() {
+  Widget _buildThemeToggles(AppThemeModel appTheme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        IconButton(
-          onPressed: () => widget.onThemeChange(false),
-          icon: const Icon(Icons.wb_sunny, color: Colors.yellow),
-        ),
-        IconButton(
-          onPressed: () => widget.onThemeChange(true),
-          icon: const Icon(Icons.nightlight_round, color: Colors.white),
+        TextButton.icon(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfessionalThemePage()),
+          ),
+          icon: Icon(Icons.palette_outlined, color: appTheme.accentColor),
+          label: Text(
+            "Select Professional Theme",
+            style: TextStyle(color: appTheme.accentColor),
+          ),
         ),
       ],
     );

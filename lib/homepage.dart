@@ -5,7 +5,6 @@ import 'package:freeli/connect/roomFilter.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/api/xmpp_server.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
-import 'AppColors.dart';
 import 'package:freeli/config/config.dart';
 import 'connect/ChatsTab.dart';
 import 'connect/CallsTab.dart';
@@ -16,16 +15,11 @@ import 'dart:ui';
 import 'package:freeli/connect/crypto_utils.dart';
 import 'dart:convert';
 import 'IncomingCallPopup.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 
 class HomePage extends StatefulWidget {
-  final bool isDark;
-  final Function(bool) onThemeChange;
-
-  const HomePage({
-    super.key,
-    required this.isDark,
-    required this.onThemeChange,
-  });
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -396,162 +390,169 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = AppColors.getBackgroundColor(widget.isDark);
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
 
-    // Data fetch না হওয়া পর্যন্ত লোডার দেখানো হচ্ছে যাতে null pointer error না হয়
-    if (isLoading || userData == null) {
-      return Scaffold(
-        backgroundColor: bgColor,
-        body: const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
-      );
-    }
-
-    List<dynamic>? filteredRooms = conversationRooms;
-
-    // Category Filtering Logic
-    if (_selectedFilter != 'all') {
-      final myId = userData?['id']?.toString();
-      filteredRooms = filteredRooms?.where((room) {
-        final creatorId = room['created_by']?.toString();
-        final isGroup = room['group'] == 'yes';
-
-        switch (_selectedFilter) {
-          case 'me':
-            return creatorId == myId;
-          case 'others':
-            return creatorId != myId;
-          case 'rooms':
-            return isGroup;
-          case 'direct':
-            return !isGroup;
-          default:
-            return true;
+        if (isLoading || userData == null) {
+          return Scaffold(
+            backgroundColor: appTheme.backgroundColor,
+            body: const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          );
         }
-      }).toList();
-    }
 
-    // Search Filtering Logic
-    if (_isSearching && _searchController.text.isNotEmpty) {
-      filteredRooms = filteredRooms?.where((room) {
-        final title = room['title']?.toString().toLowerCase() ?? "";
-        return title.contains(_searchController.text.toLowerCase());
-      }).toList();
-    }
+        List<dynamic>? filteredRooms = conversationRooms;
 
-    // Calculate total unread messages from all conversation rooms
-    int totalUnread = 0;
-    if (conversationRooms != null) {
-      for (var room in conversationRooms!) {
-        final count = room['unread_count'];
-        if (count != null) {
-          totalUnread += int.tryParse(count.toString()) ?? 0;
+        // Category Filtering Logic
+        if (_selectedFilter != 'all') {
+          final myId = userData?['id']?.toString();
+          filteredRooms = filteredRooms?.where((room) {
+            final creatorId = room['created_by']?.toString();
+            final isGroup = room['group'] == 'yes';
+
+            switch (_selectedFilter) {
+              case 'me':
+                return creatorId == myId;
+              case 'others':
+                return creatorId != myId;
+              case 'rooms':
+                return isGroup;
+              case 'direct':
+                return !isGroup;
+              default:
+                return true;
+            }
+          }).toList();
         }
-      }
-    }
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: bgColor,
-        endDrawer: AppDrawer(
-          archiveCount: archiveCount,
-          isDark: widget.isDark,
-          onThemeChange: widget.onThemeChange,
-          userData: userData,
-          onLogout: _handleLogout,
-        ),
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: widget.isDark
-              ? AppColors.getBackgroundColor(true)
-              : const Color.fromARGB(255, 12, 31, 94),
-          elevation: 0,
-          title: _isSearching
-              ? TextField(
-                  controller: _searchController,
-                  autofocus: true,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    hintText: "Search...",
-                    hintStyle: TextStyle(color: Colors.white60),
-                    border: InputBorder.none,
+        // Search Filtering Logic
+        if (_isSearching && _searchController.text.isNotEmpty) {
+          filteredRooms = filteredRooms?.where((room) {
+            final title = room['title']?.toString().toLowerCase() ?? "";
+            return title.contains(_searchController.text.toLowerCase());
+          }).toList();
+        }
+
+        // Calculate total unread messages from all conversation rooms
+        int totalUnread = 0;
+        if (conversationRooms != null) {
+          for (var room in conversationRooms!) {
+            final count = room['unread_count'];
+            if (count != null) {
+              totalUnread += int.tryParse(count.toString()) ?? 0;
+            }
+          }
+        }
+
+        return DefaultTabController(
+          length: 3,
+          child: Scaffold(
+            backgroundColor: appTheme.backgroundColor,
+            endDrawer: AppDrawer(
+              archiveCount: archiveCount,
+              isDark: isDark,
+              onThemeChange: (val) {},
+              userData: userData,
+              onLogout: _handleLogout,
+            ),
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: appTheme.backgroundColor,
+              elevation: 0,
+              title: _isSearching
+                  ? TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      style: TextStyle(
+                        color: appTheme.textColor,
+                      ), // Already correct
+                      decoration: InputDecoration(
+                        // Already correct
+                        hintText: "Search...",
+                        hintStyle: TextStyle(
+                          color: appTheme.subTextColor,
+                        ), // Already correct
+                        border: InputBorder.none,
+                      ),
+                      onChanged: (value) => setState(() {}),
+                    )
+                  : Image.asset('assets/logo.webp', height: 45),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    _isSearching ? Icons.close : Icons.search,
+                    color: appTheme.textColor, // Already correct
                   ),
-                  onChanged: (value) => setState(() {}),
-                )
-              : Image.asset('assets/logo.webp', height: 45),
-          actions: [
-            IconButton(
-              icon: Icon(
-                _isSearching ? Icons.close : Icons.search,
-                color: Colors.white,
-              ),
-              onPressed: () => setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) _searchController.clear();
-              }),
-            ),
-            Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-                onPressed: () => Scaffold.of(context).openEndDrawer(),
-              ),
-            ),
-          ],
-          bottom: TabBar(
-            indicatorColor: widget.isDark
-                ? AppColors.getAccentColor(true)
-                : Colors.white,
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white.withOpacity(0.7),
-            dividerColor: Colors.transparent,
-            indicator: UnderlineTabIndicator(
-              borderSide: BorderSide(
-                color: widget.isDark
-                    ? AppColors.getAccentColor(true)
-                    : Colors.white,
-                width: 2,
-              ),
-            ),
-
-            tabs: [
-              Tab(
-                icon: Badge(
-                  label: Text(totalUnread.toString()),
-                  isLabelVisible: totalUnread > 0,
-                  child: const Icon(Icons.chat),
+                  onPressed: () => setState(() {
+                    _isSearching = !_isSearching;
+                    if (!_isSearching) _searchController.clear();
+                  }),
                 ),
-                text: "Chats",
+                Builder(
+                  builder: (context) => IconButton(
+                    icon: Icon(
+                      Icons.menu,
+                      color: appTheme.textColor,
+                      size: 28,
+                    ), // Already correct
+                    onPressed: () => Scaffold.of(context).openEndDrawer(),
+                  ),
+                ),
+              ],
+              bottom: TabBar(
+                indicatorColor: appTheme.accentColor,
+                labelColor: appTheme.textColor,
+                unselectedLabelColor: appTheme.subTextColor,
+                dividerColor: Colors.transparent,
+                indicator: UnderlineTabIndicator(
+                  borderSide: BorderSide(
+                    color: appTheme.accentColor, // Already correct
+                    width: 2,
+                  ),
+                ),
+
+                tabs: [
+                  Tab(
+                    icon: Badge(
+                      backgroundColor: appTheme.accentColor, // Already correct
+                      label: Text(
+                        totalUnread.toString(),
+                        style: TextStyle(
+                          color: appTheme.backgroundColor,
+                          fontSize: 10,
+                        ), // Already correct
+                      ),
+                      isLabelVisible: totalUnread > 0,
+                      child: const Icon(Icons.chat),
+                    ),
+                    text: "Chats",
+                  ),
+                  const Tab(icon: Icon(Icons.call), text: "Calls"),
+                  const Tab(icon: Icon(Icons.dashboard), text: "Filehubs"),
+                ],
               ),
-              const Tab(icon: Icon(Icons.call), text: "Calls"),
-              const Tab(icon: Icon(Icons.dashboard), text: "Filehubs"),
-            ],
+            ),
+            body: TabBarView(
+              children: [
+                ChatsTab(
+                  conversationRooms: filteredRooms,
+                  userMe: userData?['id']?.toString(),
+                  userId: userData?['id']?.toString(),
+                  companyId: userData?['company_id']?.toString(),
+                  onRoomTap: _markRoomAsRead,
+                ),
+                CallsTab(
+                  userId: userData?['id']?.toString(),
+                  companyId: userData?['company_id']?.toString(),
+                ),
+                const Filehubs(),
+              ],
+            ),
           ),
-        ),
-        body: TabBarView(
-          children: [
-            ChatsTab(
-              conversationRooms: filteredRooms,
-              userMe: userData?['id']?.toString(),
-              userId: userData?['id']?.toString(),
-              companyId: userData?['company_id']?.toString(),
-              isDark: widget.isDark,
-              onRoomTap: _markRoomAsRead,
-            ),
-            CallsTab(
-              userId: userData?['id']?.toString(),
-              companyId: userData?['company_id']?.toString(),
-              isDark: widget.isDark,
-            ),
-            Filehubs(
-              isDark: widget.isDark,
-              onThemeChange: widget.onThemeChange,
-              userMe: userData,
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

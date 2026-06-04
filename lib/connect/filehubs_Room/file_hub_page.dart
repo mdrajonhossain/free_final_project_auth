@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:freeli/AppColors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/FullImageViewer.dart';
 import 'package:freeli/connect/PopUpFile/ForwardMessageScreen.dart';
 import 'package:freeli/connect/PopUpFile/PublicTag.dart';
 import 'package:freeli/connect/file_utils.dart';
 import 'package:freeli/controller/api/api_service.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FileHubPage extends StatefulWidget {
@@ -120,25 +122,19 @@ class _FileHubPageState extends State<FileHubPage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = widget.isDark;
-    final Color backgroundColor = AppColors.getBackgroundColor(isDark);
-    final Color cardColor = isDark
-        ? Colors.white.withOpacity(0.05)
-        : Colors.black.withOpacity(0.05);
-    final Color surfaceColor = AppColors.getBackgroundColor(isDark);
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final Color backgroundColor = appTheme.backgroundColor;
+        final Color cardColor = appTheme.cardColor;
+        final Color textColor = appTheme.textColor;
+        final Color subTextColor = appTheme.subTextColor;
+        final bool isDark = backgroundColor.computeLuminance() < 0.5;
 
-    final textColor = (isDark || backgroundColor == AppColors.colorBlue)
-        ? Colors.white
-        : Colors.black87;
-    final subTextColor = (isDark || backgroundColor == AppColors.colorBlue)
-        ? Colors.white70
-        : Colors.black54;
+        /// API FILES
+        final List<dynamic> allFiles = _localFiles;
 
-    /// API FILES
-    final List<dynamic> allFiles = _localFiles;
-
-    /// FILTER CATEGORY
-    List<dynamic> filteredFiles = allFiles.where((file) {
+        /// FILTER CATEGORY
+        List<dynamic> filteredFiles = allFiles.where((file) {
       final String category = (file['file_category'] ?? "")
           .toString()
           .toLowerCase();
@@ -206,8 +202,8 @@ class _FileHubPageState extends State<FileHubPage> {
       return (file['file_category'] ?? "").toString().toLowerCase() == "video";
     }).length;
 
-    /// FILE ITEM BUILDER (Professional View)
-    Widget buildFileItem(dynamic file) {
+        /// FILE ITEM BUILDER (Professional View)
+        Widget buildFileItem(dynamic file) {
       final String originalName =
           file['originalname'] ??
           file['original_name'] ??
@@ -253,12 +249,12 @@ class _FileHubPageState extends State<FileHubPage> {
         onLongPress: () {
           showModalBottomSheet(
             context: context,
-            backgroundColor: AppColors.getBackgroundColor(isDark),
+            backgroundColor: appTheme.backgroundColor,
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             builder: (context) {
-              final itemColor = isDark ? Colors.white : const Color(0xFF1B1D28);
+              final itemColor = textColor;
               return SafeArea(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -329,7 +325,7 @@ class _FileHubPageState extends State<FileHubPage> {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
-                          backgroundColor: AppColors.getBackgroundColor(isDark),
+                          backgroundColor: appTheme.backgroundColor,
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(24),
@@ -376,7 +372,7 @@ class _FileHubPageState extends State<FileHubPage> {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
-                          backgroundColor: AppColors.getBackgroundColor(isDark),
+                          backgroundColor: appTheme.backgroundColor,
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(
                               top: Radius.circular(24),
@@ -459,7 +455,7 @@ class _FileHubPageState extends State<FileHubPage> {
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withOpacity(0.08)
-                        : AppColors.getAccentColor(isDark).withOpacity(0.1),
+                      : appTheme.accentColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: isImage
@@ -476,9 +472,7 @@ class _FileHubPageState extends State<FileHubPage> {
                         )
                       : Icon(
                           FileUtils.getFileIcon(location),
-                          color: isDark
-                              ? Colors.white70
-                              : AppColors.getAccentColor(isDark),
+                        color: isDark ? Colors.white70 : appTheme.accentColor,
                           size: 24,
                         ),
                 ),
@@ -523,9 +517,7 @@ class _FileHubPageState extends State<FileHubPage> {
                           showModalBottomSheet(
                             context: context,
                             isScrollControlled: true,
-                            backgroundColor: AppColors.getBackgroundColor(
-                              isDark,
-                            ),
+                            backgroundColor: appTheme.backgroundColor,
                             shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.vertical(
                                 top: Radius.circular(24),
@@ -578,23 +570,17 @@ class _FileHubPageState extends State<FileHubPage> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.getAccentColor(
-                                        isDark,
-                                      ).withOpacity(0.12),
+                                      color: appTheme.accentColor.withOpacity(0.12),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: AppColors.getAccentColor(
-                                          isDark,
-                                        ).withOpacity(0.3),
+                                        color: appTheme.accentColor.withOpacity(0.3),
                                       ),
                                     ),
                                     child: Text(
                                       data['title'] ?? "",
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: isDark
-                                            ? Colors.white
-                                            : AppColors.getAccentColor(isDark),
+                                        color: isDark ? Colors.white : appTheme.accentColor,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -690,14 +676,14 @@ class _FileHubPageState extends State<FileHubPage> {
 
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.getAccentColor(isDark)
-                : surfaceColor.withOpacity(0.5),
+                ? appTheme.accentColor
+                : backgroundColor.withOpacity(0.5),
 
             borderRadius: BorderRadius.circular(22),
 
             border: Border.all(
               color: isSelected
-                  ? AppColors.getAccentColor(isDark)
+                  ? appTheme.accentColor
                   : isDark
                   ? Colors.white.withOpacity(.1)
                   : Colors.black.withOpacity(.04),
@@ -794,8 +780,7 @@ class _FileHubPageState extends State<FileHubPage> {
                     child: Container(
                       constraints: const BoxConstraints(minHeight: 58),
                       decoration: BoxDecoration(
-                        color: surfaceColor,
-
+                        color: backgroundColor,
                         borderRadius: BorderRadius.circular(18),
 
                         border: Border.all(

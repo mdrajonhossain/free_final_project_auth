@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../AppColors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 
 class FileHubSkeleton extends StatelessWidget {
   final bool? isDark;
@@ -9,27 +11,31 @@ class FileHubSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool effectiveIsDark =
-        isDark ?? Theme.of(context).brightness == Brightness.dark;
-    final Color shimmerColor = effectiveIsDark
-        ? Colors.white.withOpacity(0.08)
-        : AppColors.colorBlue.withOpacity(0.15);
-    final Color highlightColor = effectiveIsDark
-        ? AppColors.colorBlack.withOpacity(0.4)
-        : AppColors.colorBlue.withOpacity(0.3);
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool effectiveIsDark =
+            appTheme.backgroundColor.computeLuminance() < 0.5;
+        final Color shimmerColor = effectiveIsDark
+            ? Colors.white.withOpacity(0.08)
+            : Colors.grey.withOpacity(0.15);
+        final Color highlightColor = effectiveIsDark
+            ? Colors.black.withOpacity(0.4)
+            : Colors.grey.withOpacity(0.3);
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      itemCount: 10, // Increased count for better initial fill
-      itemBuilder: (context, index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: highlightColor,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: _buildUnifiedSkeletonItem(shimmerColor, type),
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          itemCount: 10,
+          itemBuilder: (context, index) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: highlightColor,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: _buildUnifiedSkeletonItem(shimmerColor, type),
+            );
+          },
         );
       },
     );

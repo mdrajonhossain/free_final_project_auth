@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:freeli/connect/PopUpFile/ConversationRoomLongClick.dart';
 import 'package:freeli/connect/PopUpFile/DirectMessagePopup.dart';
-import '../AppColors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 import '../skeleton.dart'; // Import the skeleton loader
 import 'crypto_utils.dart';
 import 'format_utils.dart';
@@ -12,7 +14,6 @@ class ChatsTab extends StatefulWidget {
   final String? userMe;
   final String? userId;
   final String? companyId;
-  final bool isDark;
   final Function(String)? onRoomTap; // Callback to HomePage
 
   const ChatsTab({
@@ -21,7 +22,6 @@ class ChatsTab extends StatefulWidget {
     this.userMe,
     this.userId,
     this.companyId,
-    this.isDark = true,
     this.onRoomTap,
   });
 
@@ -69,63 +69,70 @@ class _ChatsTabState extends State<ChatsTab>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(widget.isDark),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(
-          bottom: 80, // bottom space
-          right: 8, // right space
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _buildMenuItem(
-              label: "Direct message",
-              icon: Icons.person_add_alt_1_rounded,
-              onPressed: () {
-                _toggleMenu();
-                DirectMessagePopup.show(
-                  context,
-                  widget.conversationRooms,
-                  isDark: widget.isDark,
-                );
-              },
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+        return Scaffold(
+          backgroundColor: appTheme.backgroundColor,
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(
+              bottom: 80, // bottom space
+              right: 8, // right space
             ),
-            const SizedBox(height: 16),
-            _buildMenuItem(
-              label: "Create room",
-              icon: Icons.groups_rounded,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        CreateRoomScreen(isDark: widget.isDark),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildMenuItem(
+                  label: "Direct message",
+                  icon: Icons.person_add_alt_1_rounded,
+                  appTheme: appTheme,
+                  onPressed: () {
+                    _toggleMenu();
+                    DirectMessagePopup.show(
+                      context,
+                      widget.conversationRooms,
+                      isDark: isDark,
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildMenuItem(
+                  label: "Create room",
+                  icon: Icons.groups_rounded,
+                  appTheme: appTheme,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CreateRoomScreen(),
+                      ),
+                    );
+                    _toggleMenu();
+                  },
+                ),
+                const SizedBox(height: 16),
+                FloatingActionButton(
+                  onPressed: _toggleMenu,
+                  backgroundColor: appTheme.accentColor,
+                  child: RotationTransition(
+                    turns: Tween(begin: 0.0, end: 0.125).animate(_animation),
+                    child: const Icon(Icons.add, color: Colors.white, size: 40),
                   ),
-                );
-                _toggleMenu();
-              },
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            FloatingActionButton(
-              onPressed: _toggleMenu,
-              backgroundColor: AppColors.getAccentColor(widget.isDark),
-              child: RotationTransition(
-                turns: Tween(begin: 0.0, end: 0.125).animate(_animation),
-                child: const Icon(Icons.add, color: Colors.white, size: 40),
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: _buildTabContent(context),
+          ),
+          body: _buildTabContent(context, appTheme),
+        );
+      },
     );
   }
 
   Widget _buildMenuItem({
     required String label,
     required IconData icon,
+    required AppThemeModel appTheme,
     required VoidCallback onPressed,
   }) {
     return ScaleTransition(
@@ -149,7 +156,7 @@ class _ChatsTabState extends State<ChatsTab>
             const SizedBox(width: 12),
             FloatingActionButton.small(
               onPressed: onPressed,
-              backgroundColor: AppColors.getAccentColor(widget.isDark),
+              backgroundColor: appTheme.accentColor,
               child: Icon(icon, color: Colors.white),
             ),
           ],
@@ -158,8 +165,9 @@ class _ChatsTabState extends State<ChatsTab>
     );
   }
 
-  Widget _buildTabContent(BuildContext context) {
-    final cardColor = widget.isDark
+  Widget _buildTabContent(BuildContext context, AppThemeModel appTheme) {
+    final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+    final cardColor = isDark
         ? Colors.white.withOpacity(0.05)
         : Colors.black.withOpacity(0.05);
     final String myId = (widget.userMe ?? widget.userId)?.toString() ?? "";
@@ -169,10 +177,10 @@ class _ChatsTabState extends State<ChatsTab>
     }
 
     if (widget.conversationRooms!.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           "No conversations yet",
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: appTheme.subTextColor),
         ),
       );
     }
@@ -334,7 +342,7 @@ class _ChatsTabState extends State<ChatsTab>
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.getAccentColor(widget.isDark),
+                  backgroundColor: appTheme.accentColor,
                   backgroundImage: imageUrl.isNotEmpty
                       ? NetworkImage(imageUrl)
                       : null,
@@ -362,8 +370,8 @@ class _ChatsTabState extends State<ChatsTab>
             ),
             title: Text(
               title,
-              style: const TextStyle(
-                color: Colors.white, // White text for visibility
+              style: TextStyle(
+                color: appTheme.textColor, // Theme based color
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -371,8 +379,8 @@ class _ChatsTabState extends State<ChatsTab>
               lastMsg,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: appTheme.subTextColor,
               ), // Lighter text for visibility
             ),
             trailing: Column(
@@ -382,7 +390,7 @@ class _ChatsTabState extends State<ChatsTab>
                 /// DATE / TIME (TOP)
                 Text(
                   displayTime,
-                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  style: TextStyle(color: appTheme.subTextColor, fontSize: 11),
                 ),
 
                 const SizedBox(height: 6),

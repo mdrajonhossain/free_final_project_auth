@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:freeli/connect/PopUpFile/EmojiPickerPopup.dart';
 import 'package:freeli/connect/PopUpFile/attchmentPopup.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
-import '../AppColors.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChatInput extends StatefulWidget {
   final TextEditingController controller;
@@ -54,162 +56,166 @@ class _ChatInputState extends State<ChatInput> {
 
   @override
   Widget build(BuildContext context) {
-    final bool effectiveIsDark =
-        widget.isDark ?? Theme.of(context).brightness == Brightness.dark;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (_showEmoji)
-          EmojiPickerView(
-            controller: widget.controller,
-            onClose: () => setState(() => _showEmoji = false),
-          ),
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_showEmoji)
+              EmojiPickerView(
+                controller: widget.controller,
+                onClose: () => setState(() => _showEmoji = false),
+              ),
 
-        SafeArea(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 10, 14, 14),
-            decoration: BoxDecoration(
-              color: AppColors.getPrimaryGradient(effectiveIsDark).colors[0],
-              border: Border(
-                top: BorderSide(color: Colors.white.withOpacity(0.05)),
+            SafeArea(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 14, 14),
+                decoration: BoxDecoration(
+                  color: appTheme.backgroundColor,
+                  border: Border(
+                    top: BorderSide(color: Colors.white.withOpacity(0.05)),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // LOCK ICON
+                            widget.group
+                                ? Row(
+                                    children: [
+                                      const SizedBox(width: 14),
+                                      Container(
+                                        height: 34,
+                                        width: 34,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.08),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.lock_rounded,
+                                          color: Colors.white.withOpacity(0.7),
+                                          size: 18,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                    ],
+                                  )
+                                : const SizedBox(width: 18),
+
+                            // TEXT FIELD
+                            Expanded(
+                              child: TextField(
+                                focusNode: _focusNode,
+                                controller: widget.controller,
+                                onTap: () {
+                                  if (_showEmoji) {
+                                    setState(() => _showEmoji = false);
+                                  }
+                                },
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                ),
+                                minLines: 1,
+                                maxLines: 5,
+                                decoration: const InputDecoration(
+                                  hintText: "Message...",
+                                  hintStyle: TextStyle(color: Colors.white38),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+
+                            // ATTACHMENT ICON
+                            if (widget.showAttachmentIcon)
+                              IconButton(
+                                onPressed: () async {
+                                  final results = await AttachmentPopup.show(
+                                    context,
+                                    userEmail: widget.userEmail,
+                                    companyId: widget.companyId,
+                                    conversationId: widget.conversationId,
+                                    participants: widget.participants,
+                                    chatBloc: widget.chatBloc,
+                                  );
+
+                                  if (results != null && results.isNotEmpty) {
+                                    widget.onAttachmentsPicked(results);
+                                  }
+                                },
+                                icon: Icon(
+                                  Icons.attach_file_rounded,
+                                  color: Colors.white.withOpacity(0.6),
+                                  size: 22,
+                                ),
+                                visualDensity: VisualDensity.compact,
+                              ),
+
+                            // EMOJI ICON
+                            IconButton(
+                              onPressed: _toggleEmoji,
+                              icon: Icon(
+                                _showEmoji
+                                    ? Icons.keyboard_rounded
+                                    : Icons.emoji_emotions_rounded,
+                                color: _showEmoji
+                                    ? const Color(0xff7C5CFF)
+                                    : Colors.white.withOpacity(0.6),
+                                size: 22,
+                              ),
+                              visualDensity: VisualDensity.compact,
+                            ),
+
+                            const SizedBox(width: 4),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    // SEND BUTTON
+                    GestureDetector(
+                      onTap: widget.onSend,
+                      child: Container(
+                        height: 54,
+                        width: 54,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          color: appTheme.accentColor,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.send_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                    ),
-                    child: Row(
-                      children: [
-                        // LOCK ICON
-                        widget.group
-                            ? Row(
-                                children: [
-                                  const SizedBox(width: 14),
-                                  Container(
-                                    height: 34,
-                                    width: 34,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.08),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.lock_rounded,
-                                      color: Colors.white.withOpacity(0.7),
-                                      size: 18,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                ],
-                              )
-                            : const SizedBox(width: 18),
-
-                        // TEXT FIELD
-                        Expanded(
-                          child: TextField(
-                            focusNode: _focusNode,
-                            controller: widget.controller,
-                            onTap: () {
-                              if (_showEmoji) {
-                                setState(() => _showEmoji = false);
-                              }
-                            },
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                            ),
-                            minLines: 1,
-                            maxLines: 5,
-                            decoration: const InputDecoration(
-                              hintText: "Message...",
-                              hintStyle: TextStyle(color: Colors.white38),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-
-                        // ATTACHMENT ICON
-                        if (widget.showAttachmentIcon)
-                          IconButton(
-                            onPressed: () async {
-                              final results = await AttachmentPopup.show(
-                                context,
-                                userEmail: widget.userEmail,
-                                companyId: widget.companyId,
-                                conversationId: widget.conversationId,
-                                participants: widget.participants,
-                                chatBloc: widget.chatBloc,
-                              );
-
-                              if (results != null && results.isNotEmpty) {
-                                widget.onAttachmentsPicked(results);
-                              }
-                            },
-                            icon: Icon(
-                              Icons.attach_file_rounded,
-                              color: Colors.white.withOpacity(0.6),
-                              size: 22,
-                            ),
-                            visualDensity: VisualDensity.compact,
-                          ),
-
-                        // EMOJI ICON
-                        IconButton(
-                          onPressed: _toggleEmoji,
-                          icon: Icon(
-                            _showEmoji
-                                ? Icons.keyboard_rounded
-                                : Icons.emoji_emotions_rounded,
-                            color: _showEmoji
-                                ? const Color(0xff7C5CFF)
-                                : Colors.white.withOpacity(0.6),
-                            size: 22,
-                          ),
-                          visualDensity: VisualDensity.compact,
-                        ),
-
-                        const SizedBox(width: 4),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // SEND BUTTON
-                GestureDetector(
-                  onTap: widget.onSend,
-                  child: Container(
-                    height: 54,
-                    width: 54,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      color: AppColors.getAccentColor(effectiveIsDark),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.send_rounded,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

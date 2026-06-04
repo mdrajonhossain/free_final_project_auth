@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../AppColors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 
 class UserSelectionScreen extends StatefulWidget {
   final bool isDark;
@@ -37,297 +39,248 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF16213E),
-
-      // =========================
-      // APPBAR
-      // =========================
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: AppColors.getPrimaryGradient(widget.isDark),
-          ),
-        ),
-        title: const Text(
-          "Select Members",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-
-      // =========================
-      // BODY
-      // =========================
-      body: Column(
-        children: [
-          const SizedBox(height: 10),
-
-          // =========================
-          // MEMBER COUNT
-          // =========================
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            child: Row(
-              children: [
-                Text(
-                  "${_selectedUserIds.length} Members Selected",
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        return Scaffold(
+          backgroundColor: appTheme.backgroundColor,
+          appBar: AppBar(
+            elevation: 0,
+            centerTitle: true,
+            backgroundColor: appTheme.accentColor,
+            title: const Text(
+              "Select Members",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
-
-          const SizedBox(height: 10),
-
-          // =========================
-          // USER LIST
-          // =========================
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              itemCount: widget.allUsers.length,
-              itemBuilder: (context, index) {
-                final user = widget.allUsers[index];
-
-                final String userId = user['id']?.toString() ?? '';
-
-                final String firstName = user['firstname']?.toString() ?? "";
-
-                final String lastName = user['lastname']?.toString() ?? "";
-
-                final String name =
-                    (firstName.isNotEmpty || lastName.isNotEmpty)
-                    ? "$firstName $lastName".trim()
-                    : (user['fnln']?.toString() ?? "");
-
-                final String img = user['img'] ?? "";
-
-                final bool isSelected = _selectedUserIds.contains(userId);
-
-                final bool isCurrentUser = userId == widget.currentUserId;
-
-                if (userId.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.white.withOpacity(0.08)
-                        : Colors.white.withOpacity(0.04),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.getAccentColor(
-                              widget.isDark,
-                            ).withOpacity(0.5)
-                          : Colors.white.withOpacity(0.04),
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-
-                    // =========================
-                    // AVATAR
-                    // =========================
-                    leading: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.white10,
-                          backgroundImage: img.isNotEmpty
-                              ? NetworkImage(img)
-                              : null,
-                          child: img.isEmpty
-                              ? const Icon(Icons.person, color: Colors.grey)
-                              : null,
-                        ),
-
-                        if (isSelected)
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              height: 16,
-                              width: 16,
-                              decoration: BoxDecoration(
-                                color: AppColors.getAccentColor(widget.isDark),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF16213E),
-                                  width: 2,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 10,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-
-                    // =========================
-                    // NAME
-                    // =========================
-                    title: Text(
-                      name.isEmpty ? "Unknown User" : name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+          body: Column(
+            children: [
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: Row(
+                  children: [
+                    Text(
+                      "${_selectedUserIds.length} Members Selected",
+                      style: TextStyle(
+                        color: appTheme.subTextColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  itemCount: widget.allUsers.length,
+                  itemBuilder: (context, index) {
+                    final user = widget.allUsers[index];
+                    final String userId = user['id']?.toString() ?? '';
+                    final String firstName =
+                        user['firstname']?.toString() ?? "";
+                    final String lastName = user['lastname']?.toString() ?? "";
+                    final String name =
+                        (firstName.isNotEmpty || lastName.isNotEmpty)
+                        ? "$firstName $lastName".trim()
+                        : (user['fnln']?.toString() ?? "");
+                    final String img = user['img'] ?? "";
+                    final bool isSelected = _selectedUserIds.contains(userId);
+                    final bool isCurrentUser = userId == widget.currentUserId;
 
-                    subtitle: isCurrentUser
-                        ? const Padding(
-                            padding: EdgeInsets.only(top: 4),
-                            child: Text(
-                              "Creator",
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          )
-                        : null,
+                    if (userId.isEmpty) return const SizedBox.shrink();
 
-                    // =========================
-                    // CHECKBOX
-                    // =========================
-                    trailing: isCurrentUser
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? appTheme.textColor.withOpacity(0.08)
+                            : appTheme.textColor.withOpacity(0.04),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isSelected
+                              ? appTheme.accentColor.withOpacity(0.5)
+                              : appTheme.textColor.withOpacity(0.04),
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        leading: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: Colors.white10,
+                              backgroundImage: img.isNotEmpty
+                                  ? NetworkImage(img)
+                                  : null,
+                              child: img.isEmpty
+                                  ? const Icon(Icons.person, color: Colors.grey)
+                                  : null,
                             ),
-                            decoration: BoxDecoration(
-                              color: AppColors.getAccentColor(
-                                widget.isDark,
-                              ).withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            child: const Text(
-                              "You",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                            if (isSelected)
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  height: 16,
+                                  width: 16,
+                                  decoration: BoxDecoration(
+                                    color: appTheme.accentColor,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: appTheme.backgroundColor,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 10,
+                                  ),
+                                ),
                               ),
-                            ),
-                          )
-                        : Transform.scale(
-                            scale: 1.05,
-                            child: Checkbox(
-                              value: isSelected,
-                              onChanged: (bool? value) {
+                          ],
+                        ),
+                        title: Text(
+                          name.isEmpty ? "Unknown User" : name,
+                          style: TextStyle(
+                            color: appTheme.textColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: isCurrentUser
+                            ? const Padding(
+                                padding: EdgeInsets.only(top: 4),
+                                child: Text(
+                                  "Creator",
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              )
+                            : null,
+                        trailing: isCurrentUser
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: appTheme.accentColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Text(
+                                  "You",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )
+                            : Transform.scale(
+                                scale: 1.05,
+                                child: Checkbox(
+                                  value: isSelected,
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        _selectedUserIds.add(userId);
+                                      } else {
+                                        _selectedUserIds.remove(userId);
+                                      }
+                                    });
+                                  },
+                                  activeColor: appTheme.accentColor,
+                                  checkColor: Colors.white,
+                                  side: BorderSide(
+                                    color: appTheme.subTextColor.withOpacity(
+                                      0.4,
+                                    ),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                ),
+                              ),
+                        onTap: isCurrentUser
+                            ? null
+                            : () {
                                 setState(() {
-                                  if (value == true) {
-                                    _selectedUserIds.add(userId);
-                                  } else {
+                                  if (isSelected) {
                                     _selectedUserIds.remove(userId);
+                                  } else {
+                                    _selectedUserIds.add(userId);
                                   }
                                 });
                               },
-                              activeColor: AppColors.getAccentColor(
-                                widget.isDark,
-                              ),
-                              checkColor: Colors.white,
-                              side: BorderSide(
-                                color: Colors.white.withOpacity(0.4),
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                            ),
-                          ),
-
-                    onTap: isCurrentUser
-                        ? null
-                        : () {
-                            setState(() {
-                              if (isSelected) {
-                                _selectedUserIds.remove(userId);
-                              } else {
-                                _selectedUserIds.add(userId);
-                              }
-                            });
-                          },
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // =========================
-          // DONE BUTTON
-          // =========================
-          Container(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPadding + 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF16213E),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 18,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context, _selectedUserIds);
+                      ),
+                    );
                   },
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    backgroundColor: AppColors.getAccentColor(widget.isDark),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPadding + 14),
+                decoration: BoxDecoration(
+                  color: appTheme.backgroundColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 18,
+                      offset: const Offset(0, -4),
                     ),
-                  ),
-                  child: Text(
-                    "Done (${_selectedUserIds.length})",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, _selectedUserIds);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: appTheme.accentColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(
+                        "Done (${_selectedUserIds.length})",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

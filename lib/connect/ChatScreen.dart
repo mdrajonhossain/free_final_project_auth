@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/PopUpFile/ForwardMessageScreen.dart';
 import 'package:freeli/connect/PopUpFile/UserProfilePopup.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:freeli/connect/PopUpFile/PublicTag.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import '../controller/stateBloc/message/chat_bloc.dart';
-import '../AppColors.dart';
 import 'ChatSkeleton.dart';
 import './crypto_utils.dart';
 import './format_utils.dart';
@@ -19,8 +20,7 @@ import './FullImageViewer.dart';
 import './jitsi_call_service.dart';
 
 class ChatScreen extends StatefulWidget {
-  final bool isDark;
-  const ChatScreen({super.key, required this.isDark});
+  const ChatScreen({super.key});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -169,48 +169,50 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
 
-    return BlocBuilder<ChatBloc, ChatState>(
-      builder: (context, state) {
-        if (state.isLoading) {
-          return Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: const ChatSkeleton(),
-          );
-        }
+        return BlocBuilder<ChatBloc, ChatState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return Scaffold(
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                body: const ChatSkeleton(),
+              );
+            }
 
-        return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          appBar: AppBar(
-            elevation: 0,
-            backgroundColor: AppColors.getBackgroundColor(widget.isDark),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-            titleSpacing: -5,
-            title: Row(
-              children: [
-                _buildRoomImage(),
-                const SizedBox(width: 12),
-                _buildRoomTitle(),
-                GestureDetector(
-                  onTap: () async {
-                    final args =
-                        ModalRoute.of(context)?.settings.arguments as Map?;
-                    final userId =
-                        state.userData?['id']?.toString() ??
-                        args?['user_id']?.toString();
-                    final companyId = company_id.isNotEmpty
-                        ? company_id
-                        : (state.userData?['company_id']?.toString() ??
-                              args?['company_id']?.toString());
+            return Scaffold(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              appBar: AppBar(
+                elevation: 0,
+                backgroundColor: appTheme.backgroundColor,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                titleSpacing: -5,
+                title: Row(
+                  children: [
+                    _buildRoomImage(),
+                    const SizedBox(width: 12),
+                    _buildRoomTitle(),
+                    GestureDetector(
+                      onTap: () async {
+                        final args =
+                            ModalRoute.of(context)?.settings.arguments as Map?;
+                        final userId =
+                            state.userData?['id']?.toString() ??
+                            args?['user_id']?.toString();
+                        final companyId = company_id.isNotEmpty
+                            ? company_id
+                            : (state.userData?['company_id']?.toString() ??
+                                  args?['company_id']?.toString());
 
-                    if (userId == null || companyId == null) return;
+                        if (userId == null || companyId == null) return;
 
-                    try {
-                      print("""
+                        try {
+                          print("""
 userId: $userId
 companyId: $companyId
 conversationId: $conversationId
@@ -222,148 +224,153 @@ userAvatar: ${state.userData?['img']}
 isVideo: false
 participants: $participants
 """);
-                      await JitsiCallService.joinCall(
-                        context: context,
-                        userId: userId,
-                        companyId: companyId,
-                        conversationId: conversationId,
-                        conversationType: conversation_type,
-                        participants: (participants as List?)?.toList() ?? [],
-                        roomTitle: roomTitle,
-                        userName: state.userData?['firstname'] ?? "User",
-                        userEmail: state.userData?['email'],
-                        userAvatar: state.userData?['img']?.toString(),
-                        isVideo: false,
-                      );
-                    } catch (e) {
-                      // Dismiss loading animation on error
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Call Error: $e")),
-                        );
-                      }
-                    }
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.call,
-                      size: 28,
-                      color: Colors.green,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, "/filehubRoom");
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.folder_open_rounded,
-                      size: 28,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 14),
-                // GestureDetector(
-                //   onTap: () => ChatMoreScreen.show(context),
-                //   child: Container(
-                //     margin: const EdgeInsets.only(left: 8),
-                //     padding: const EdgeInsets.all(6),
-                //     decoration: BoxDecoration(
-                //       borderRadius: BorderRadius.circular(10),
-                //     ),
-                //     child: const Icon(
-                //       Icons.more_vert,
-                //       size: 28,
-                //       color: Colors.white70,
-                //     ),
-                //   ),
-                // ),
-              ],
-            ),
-          ),
-          body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: state.messages.isEmpty
-                      ? _buildEmptyMessages()
-                      : _buildMessageList(state),
-                ),
-                if (_isEditing)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    color: isDark
-                        ? Colors.white.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.05),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.edit,
-                          color: Colors.greenAccent,
-                          size: 16,
+                          await JitsiCallService.joinCall(
+                            context: context,
+                            userId: userId,
+                            companyId: companyId,
+                            conversationId: conversationId,
+                            conversationType: conversation_type,
+                            participants:
+                                (participants as List?)?.toList() ?? [],
+                            roomTitle: roomTitle,
+                            userName: state.userData?['firstname'] ?? "User",
+                            userEmail: state.userData?['email'],
+                            userAvatar: state.userData?['img']?.toString(),
+                            isVideo: false,
+                          );
+                        } catch (e) {
+                          // Dismiss loading animation on error
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Call Error: $e")),
+                            );
+                          }
+                        }
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            "Editing message",
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black87,
-                              fontSize: 13,
+                        child: const Icon(
+                          Icons.call,
+                          size: 28,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, "/filehubRoom");
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.folder_open_rounded,
+                          size: 28,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 14),
+                    // GestureDetector(
+                    //   onTap: () => ChatMoreScreen.show(context),
+                    //   child: Container(
+                    //     margin: const EdgeInsets.only(left: 8),
+                    //     padding: const EdgeInsets.all(6),
+                    //     decoration: BoxDecoration(
+                    //       borderRadius: BorderRadius.circular(10),
+                    //     ),
+                    //     child: const Icon(
+                    //       Icons.more_vert,
+                    //       size: 28,
+                    //       color: Colors.white70,
+                    //     ),
+                    //   ),
+                    // ),
+                  ],
+                ),
+              ),
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: state.messages.isEmpty
+                          ? _buildEmptyMessages()
+                          : _buildMessageList(state, appTheme),
+                    ),
+                    if (_isEditing)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.black.withOpacity(0.05),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.edit,
+                              color: Colors.greenAccent,
+                              size: 16,
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Editing message",
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: isDark ? Colors.white70 : Colors.black54,
+                                size: 18,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                setState(() {
+                                  _isEditing = false;
+                                  _editingMsgId = null;
+                                  _messageController.clear();
+                                });
+                              },
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.close,
-                            color: isDark ? Colors.white70 : Colors.black54,
-                            size: 18,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () {
-                            setState(() {
-                              _isEditing = false;
-                              _editingMsgId = null;
-                              _messageController.clear();
-                            });
-                          },
-                        ),
-                      ],
+                      ),
+                    ChatInput(
+                      controller: _messageController,
+                      onSend: _sendMessage,
+                      companyId: company_id,
+                      group: conversation_type == "group",
+                      userEmail: state.userData?['email']?.toString(),
+                      conversationId: conversationId,
+                      participants: participants,
+                      chatBloc: _chatBloc,
+                      onAttachmentsPicked: (results) {
+                        // Handle picked attachments here
+                        debugPrint("Picked ${results.length} attachments");
+                        // You can add logic to send them or show a preview
+                      },
                     ),
-                  ),
-                ChatInput(
-                  controller: _messageController,
-                  onSend: _sendMessage,
-                  companyId: company_id,
-                  group: conversation_type == "group",
-                  userEmail: state.userData?['email']?.toString(),
-                  conversationId: conversationId,
-                  participants: participants,
-                  chatBloc: _chatBloc,
-                  onAttachmentsPicked: (results) {
-                    // Handle picked attachments here
-                    debugPrint("Picked ${results.length} attachments");
-                    // You can add logic to send them or show a preview
-                  },
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -375,7 +382,7 @@ participants: $participants
       width: 42,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        color: AppColors.getAccentColor(widget.isDark),
+        color: context.read<ThemeCubit>().state.accentColor,
       ),
       child: convImg.isNotEmpty
           ? ClipRRect(
@@ -428,7 +435,7 @@ participants: $participants
     );
   }
 
-  Widget _buildMessageList(ChatState state) {
+  Widget _buildMessageList(ChatState state, AppThemeModel appTheme) {
     return ListView.builder(
       reverse: true,
       controller: _scrollController,
@@ -459,7 +466,7 @@ participants: $participants
         return _MessageBubble(
           key: ValueKey(msg['id'] ?? index),
           msg: msg,
-          isDark: widget.isDark,
+          isDark: appTheme.backgroundColor.computeLuminance() < 0.5,
           isMe: isMe,
           index: index,
           conversationId: conversationId,
@@ -614,7 +621,6 @@ class _MessageBubble extends StatelessWidget {
                             ),
                           ),
                           builder: (ctx) => ForwardMessageScreen(
-                            isDark: isDark,
                             messageToForward: {
                               ...msg,
                               'conversation_id':

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:freeli/AppColors.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 
 class PublicTag extends StatefulWidget {
   final Map<String, dynamic> tagList;
@@ -226,160 +227,174 @@ class _PublicTagState extends State<PublicTag> {
         }).toList() ??
         [];
 
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.getBackgroundColor(isDark),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      height: MediaQuery.of(context).size.height * 0.75,
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(10),
-            ),
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final textColor = appTheme.textColor;
+        final subTextColor = appTheme.subTextColor;
+
+        return Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(
-                  child: Text(
-                    "Assign tag(s) to the file",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (_hasChanges)
-                  TextButton.icon(
-                    // Enable button only if there are changes
-                    onPressed: _isSaving ? null : _handleApply,
-                    icon: _isSaving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send_rounded),
-                    label: Text("Apply (${_selectedTagIds.length})"),
-                  )
-                else
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.black54),
-                  ),
-              ],
-            ),
+          decoration: BoxDecoration(
+            color: appTheme.backgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 5, 20, 10),
-            child: TextField(
-              onChanged: (value) {
-                setState(() => searchQuery = value);
-              },
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "Search tags...",
-                hintStyle: const TextStyle(color: Colors.white38),
-                prefixIcon: const Icon(Icons.search, color: Colors.white60),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+          height: MediaQuery.of(context).size.height * 0.75,
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            ),
-          ),
-          // List
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                ? Center(
-                    child: Text(
-                      "Error: $_error",
-                      style: const TextStyle(color: Colors.red),
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Assign tag(s) to the file",
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  )
-                : filteredList.isEmpty
-                ? const Center(
-                    child: Text(
-                      "No tags found",
-                      style: TextStyle(color: Colors.white54),
+                    if (_hasChanges)
+                      TextButton.icon(
+                        // Enable button only if there are changes
+                        onPressed: _isSaving ? null : _handleApply,
+                        icon: _isSaving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.send_rounded),
+                        label: Text("Apply (${_selectedTagIds.length})"),
+                      )
+                    else
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(Icons.close, color: subTextColor),
+                      ),
+                  ],
+                ),
+              ),
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 5, 20, 10),
+                child: TextField(
+                  onChanged: (value) {
+                    setState(() => searchQuery = value);
+                  },
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    hintText: "Search tags...",
+                    hintStyle: TextStyle(color: subTextColor.withOpacity(0.5)),
+                    prefixIcon: Icon(Icons.search, color: subTextColor),
+                    filled: true,
+                    fillColor: textColor.withOpacity(0.05),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: filteredList.length,
-                    padding: const EdgeInsets.only(top: 5, bottom: 20),
-                    itemBuilder: (context, index) {
-                      final tag = filteredList[index];
-                      final String title =
-                          tag['title']?.toString() ?? "No Title";
-                      final String tagId =
-                          tag['tag_id']?.toString().trim() ?? "";
-                      final Color tagColor = _parseColor(
-                        tag['tag_color']?.toString(),
-                      );
-                      final bool isSelected = _selectedTagIds.contains(tagId);
-
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 2,
-                        ),
-                        leading: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: tagColor,
-                        ),
-                        title: Text(
-                          title,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        trailing: isSelected
-                            ? const Icon(Icons.check_circle, color: Colors.blue)
-                            : const Icon(
-                                Icons.circle_outlined,
-                                color: Colors.grey,
-                              ),
-                        onTap: () {
-                          if (tagId.isNotEmpty) {
-                            setState(() {
-                              if (isSelected) {
-                                _selectedTagIds.remove(tagId);
-                              } else {
-                                _selectedTagIds.add(tagId);
-                              }
-                              _hasChanges =
-                                  _selectedTagIds
-                                      .difference(_initialSelectedTagIds)
-                                      .isNotEmpty ||
-                                  _initialSelectedTagIds
-                                      .difference(_selectedTagIds)
-                                      .isNotEmpty;
-                            });
-                          }
-                        },
-                      );
-                    },
                   ),
+                ),
+              ),
+              // List
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                    ? Center(
+                        child: Text(
+                          "Error: $_error",
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      )
+                    : filteredList.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No tags found",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredList.length,
+                        padding: const EdgeInsets.only(top: 5, bottom: 20),
+                        itemBuilder: (context, index) {
+                          final tag = filteredList[index];
+                          final String title =
+                              tag['title']?.toString() ?? "No Title";
+                          final String tagId =
+                              tag['tag_id']?.toString().trim() ?? "";
+                          final Color tagColor = _parseColor(
+                            tag['tag_color']?.toString(),
+                          );
+                          final bool isSelected = _selectedTagIds.contains(
+                            tagId,
+                          );
+
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 2,
+                            ),
+                            leading: CircleAvatar(
+                              radius: 12,
+                              backgroundColor: tagColor,
+                            ),
+                            title: Text(
+                              title,
+                              style: TextStyle(color: textColor),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.blue,
+                                  )
+                                : const Icon(
+                                    Icons.circle_outlined,
+                                    color: Colors.grey,
+                                  ),
+                            onTap: () {
+                              if (tagId.isNotEmpty) {
+                                setState(() {
+                                  if (isSelected) {
+                                    _selectedTagIds.remove(tagId);
+                                  } else {
+                                    _selectedTagIds.add(tagId);
+                                  }
+                                  _hasChanges =
+                                      _selectedTagIds
+                                          .difference(_initialSelectedTagIds)
+                                          .isNotEmpty ||
+                                      _initialSelectedTagIds
+                                          .difference(_selectedTagIds)
+                                          .isNotEmpty;
+                                });
+                              }
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/controller/api/api_service.dart';
-import '../AppColors.dart';
+import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
 
 import 'user_selection_screen.dart'; // Import the new user selection screen
 
 class CreateRoomScreen extends StatefulWidget {
-  final bool isDark;
-  const CreateRoomScreen({super.key, required this.isDark});
+  const CreateRoomScreen({super.key});
 
   @override
   State<CreateRoomScreen> createState() => _CreateRoomScreenState();
@@ -282,260 +283,264 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(widget.isDark),
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+        final Color bgColor = appTheme.backgroundColor;
+        final Color textColor = appTheme.textColor;
+        final Color subTextColor = appTheme.subTextColor;
+        final Color accentColor = appTheme.accentColor;
 
-      /// APPBAR
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: AppColors.getPrimaryGradient(widget.isDark),
+        return Scaffold(
+          backgroundColor: bgColor,
+
+          /// APPBAR
+          appBar: AppBar(
+            elevation: 0,
+            centerTitle: true,
+            backgroundColor: bgColor,
+            title: Text(
+              "Create Room",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+              ),
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              color: textColor,
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
-        ),
-        title: const Text(
-          "Create Room",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          color: Colors.white,
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
 
-      /// BODY
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// DISPLAY PHOTO
-              _sectionTitle("Display photo"),
+          /// BODY
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// DISPLAY PHOTO
+                  _sectionTitle("Display photo", textColor),
 
-              const SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    /// IMAGE
-                    Container(
-                      height: 64,
-                      width: 64,
-                      decoration: BoxDecoration(
-                        color: Colors.white10,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.add_a_photo_rounded,
-                        color: Colors.grey,
-                        size: 28,
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: appTheme.cardColor,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.1),
+                        width: 1,
                       ),
                     ),
-
-                    const SizedBox(width: 16),
-
-                    /// UPLOAD BUTTON
-                    Expanded(
-                      child: Container(
-                        height: 54,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: AppColors.getAccentColor(
-                              widget.isDark,
-                            ).withOpacity(0.5),
-                            width: 1.2,
+                    child: Row(
+                      children: [
+                        /// IMAGE
+                        Container(
+                          height: 64,
+                          width: 64,
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            shape: BoxShape.circle,
                           ),
-                          color: AppColors.getAccentColor(
-                            widget.isDark,
-                          ).withOpacity(0.1),
+                          child: const Icon(
+                            Icons.add_a_photo_rounded,
+                            color: Colors.grey,
+                            size: 28,
+                          ),
                         ),
-                        child: Center(
-                          child: Text(
-                            "Upload",
-                            style: TextStyle(
-                              color: AppColors.getAccentColor(widget.isDark),
-                              fontWeight: FontWeight.w600,
+
+                        const SizedBox(width: 16),
+
+                        /// UPLOAD BUTTON
+                        Expanded(
+                          child: Container(
+                            height: 54,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: accentColor.withOpacity(0.5),
+                                width: 1.2,
+                              ),
+                              color: accentColor.withOpacity(0.1),
+                            ),
+                            child: Center(
+                              child: Text(
+                                "Upload",
+                                style: TextStyle(
+                                  color: accentColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              /// ROOM NAME
-              _sectionTitle("Title of room*"),
-
-              const SizedBox(height: 10),
-
-              _buildTextField(
-                controller: _roomNameController,
-                hint: "Name of the room",
-              ),
-
-              const SizedBox(height: 22),
-
-              /// CATEGORY
-              _sectionTitle("Room category*"),
-
-              const SizedBox(height: 10),
-
-              _buildDropdown(
-                value: selectedCategory,
-                hint: "Select a room category",
-                items: categories,
-                onChanged: (v) {
-                  setState(() {
-                    selectedCategory = v;
-                  });
-                },
-              ),
-
-              const SizedBox(height: 22),
-
-              /// TEAM
-              _sectionTitle("Select team*"),
-
-              const SizedBox(height: 10),
-
-              _buildDropdown(
-                value: selectedTeam,
-                hint: "Select team",
-                items: teams,
-                onChanged: _onTeamSelected,
-              ),
-
-              const SizedBox(height: 22),
-
-              /// TAGS
-              _sectionTitle("Shared team tag[s]"),
-
-              const SizedBox(height: 10),
-
-              _buildAddBox(title: "Click to add"),
-
-              const SizedBox(height: 22),
-
-              /// ADD MEMBERS BUTTON
-              _sectionTitle("Room member[s]"),
-
-              const SizedBox(height: 10),
-
-              _buildActionBox(title: "Add members"),
-
-              const SizedBox(height: 12),
-
-              /// DYNAMIC MEMBER LIST
-              /// DYNAMIC MEMBER LIST
-              ..._buildMemberList(),
-
-              const SizedBox(height: 22),
-
-              /// GUESTS
-              _sectionTitle("Room guest[s]"),
-
-              const SizedBox(height: 10),
-
-              _buildActionBox(title: "Invite guest(s)"),
-
-              const SizedBox(height: 40),
-
-              /// BUTTONS
-              Row(
-                children: [
-                  /// BACK
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white24),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        "Back",
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
+                      ],
                     ),
                   ),
 
-                  const SizedBox(width: 14),
+                  const SizedBox(height: 24),
 
-                  /// CREATE BUTTON
-                  Expanded(
-                    child: Container(
-                      height: 54,
-                      decoration: BoxDecoration(
-                        gradient: AppColors.getPrimaryGradient(widget.isDark),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.getBackgroundColor(
-                            widget.isDark,
+                  /// ROOM NAME
+                  _sectionTitle("Title of room*", textColor),
+
+                  const SizedBox(height: 10),
+
+                  _buildTextField(
+                    controller: _roomNameController,
+                    hint: "Name of the room",
+                    appTheme: appTheme,
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  /// CATEGORY
+                  _sectionTitle("Room category*", textColor),
+
+                  const SizedBox(height: 10),
+
+                  _buildDropdown(
+                    value: selectedCategory,
+                    hint: "Select a room category",
+                    items: categories,
+                    appTheme: appTheme,
+                    onChanged: (v) {
+                      setState(() {
+                        selectedCategory = v;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  /// TEAM
+                  _sectionTitle("Select team*", textColor),
+
+                  const SizedBox(height: 10),
+
+                  _buildDropdown(
+                    value: selectedTeam,
+                    hint: "Select team",
+                    items: teams,
+                    appTheme: appTheme,
+                    onChanged: _onTeamSelected,
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  /// TAGS
+                  _sectionTitle("Shared team tag[s]", textColor),
+
+                  const SizedBox(height: 10),
+
+                  _buildAddBox(title: "Click to add", appTheme: appTheme),
+
+                  const SizedBox(height: 22),
+
+                  /// ADD MEMBERS BUTTON
+                  _sectionTitle("Room member[s]", textColor),
+
+                  const SizedBox(height: 10),
+
+                  _buildActionBox(title: "Add members", appTheme: appTheme),
+
+                  const SizedBox(height: 12),
+
+                  /// DYNAMIC MEMBER LIST
+                  /// DYNAMIC MEMBER LIST
+                  ..._buildMemberList(appTheme),
+
+                  const SizedBox(height: 22),
+
+                  /// GUESTS
+                  _sectionTitle("Room guest[s]", textColor),
+
+                  const SizedBox(height: 10),
+
+                  _buildActionBox(title: "Invite guest(s)", appTheme: appTheme),
+
+                  const SizedBox(height: 40),
+
+                  /// BUTTONS
+                  Row(
+                    children: [
+                      /// BACK
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: textColor,
+                            side: BorderSide(
+                              color: subTextColor.withOpacity(0.3),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text(
+                            "Back",
+                            style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
-                        onPressed: _isLoading ? null : _handleCreate,
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                "Create",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: Colors.white,
-                                ),
-                              ),
                       ),
-                    ),
+
+                      const SizedBox(width: 14),
+
+                      /// CREATE BUTTON
+                      Expanded(
+                        child: Container(
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            onPressed: _isLoading ? null : _handleCreate,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Create",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  List<Widget> _buildMemberList() {
+  List<Widget> _buildMemberList(AppThemeModel appTheme) {
     final List<Widget> list = [];
     for (final String id in participants) {
       final user = _allUsers.firstWhere(
@@ -558,9 +563,9 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: appTheme.cardColor,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: appTheme.subTextColor.withOpacity(0.1)),
           ),
           child: Row(
             children: [
@@ -589,7 +594,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                       isMe ? 'Creator' : (isAdmin ? 'Admin' : 'Member'),
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.white.withOpacity(0.5),
+                        color: appTheme.subTextColor,
                       ),
                     ),
                   ],
@@ -601,10 +606,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                   onPressed: () => _makeAdmin(isAdmin ? 'remove' : 'add', id),
                   child: Text(
                     isAdmin ? "Remove Admin" : "Make Admin",
-                    style: TextStyle(
-                      color: AppColors.getAccentColor(widget.isDark),
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: appTheme.accentColor, fontSize: 12),
                   ),
                 ),
                 IconButton(
@@ -623,7 +625,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white10,
+                    color: appTheme.backgroundColor,
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: const Text(
@@ -631,7 +633,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white70,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -647,7 +649,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
           padding: EdgeInsets.symmetric(vertical: 10),
           child: Text(
             "No members added yet.",
-            style: TextStyle(color: Colors.white38, fontSize: 13),
+            style: TextStyle(color: Colors.grey, fontSize: 13),
           ),
         ),
       ];
@@ -656,13 +658,13 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   }
 
   /// SECTION TITLE
-  Widget _sectionTitle(String title) {
+  Widget _sectionTitle(String title, Color textColor) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: Colors.white70,
+        color: textColor.withOpacity(0.7),
       ),
     );
   }
@@ -671,33 +673,31 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
+    required AppThemeModel appTheme,
   }) {
     return TextField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: appTheme.textColor),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38),
+        hintStyle: TextStyle(color: appTheme.subTextColor),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.05),
+        fillColor: appTheme.cardColor,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+          borderSide: BorderSide(color: appTheme.subTextColor.withOpacity(0.1)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+          borderSide: BorderSide(color: appTheme.subTextColor.withOpacity(0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: AppColors.getAccentColor(widget.isDark),
-            width: 1.4,
-          ),
+          borderSide: BorderSide(color: appTheme.accentColor, width: 1.4),
         ),
       ),
     );
@@ -708,21 +708,22 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
     required String? value,
     required String hint,
     required List<String> items,
+    required AppThemeModel appTheme,
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: appTheme.cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: appTheme.subTextColor.withOpacity(0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          hint: Text(hint, style: const TextStyle(color: Colors.white38)),
-          dropdownColor: const Color(0xff1B2335),
-          style: const TextStyle(color: Colors.white),
+          hint: Text(hint, style: TextStyle(color: appTheme.subTextColor)),
+          dropdownColor: appTheme.backgroundColor,
+          style: TextStyle(color: appTheme.textColor),
           isExpanded: true,
           borderRadius: BorderRadius.circular(14),
           icon: const Icon(
@@ -739,22 +740,29 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   }
 
   /// ADD BOX
-  Widget _buildAddBox({required String title}) {
+  Widget _buildAddBox({
+    required String title,
+    required AppThemeModel appTheme,
+  }) {
     return Container(
       height: 54,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: appTheme.cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: appTheme.subTextColor.withOpacity(0.1)),
       ),
       alignment: Alignment.centerLeft,
-      child: Text(title, style: const TextStyle(color: Colors.white38)),
+      child: Text(title, style: TextStyle(color: appTheme.subTextColor)),
     );
   }
 
   /// ACTION BOX
-  Widget _buildActionBox({required String title}) {
+  Widget _buildActionBox({
+    required String title,
+    required AppThemeModel appTheme,
+  }) {
+    final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
     return GestureDetector(
       onTap: () async {
         if (title == "Add members") {
@@ -769,7 +777,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => UserSelectionScreen(
-                isDark: widget.isDark,
+                isDark: isDark,
                 allUsers: _allUsers,
                 initialSelectedUserIds: participants,
                 currentUserId: _userData?['id']?.toString() ?? "",
@@ -797,17 +805,17 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
         height: 56,
         padding: const EdgeInsets.symmetric(horizontal: 18),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.08),
+          color: appTheme.cardColor,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: appTheme.subTextColor.withOpacity(0.1)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: appTheme.textColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -815,10 +823,10 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
               height: 28,
               width: 28,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(.15),
+                color: appTheme.accentColor.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.add, color: Colors.white, size: 18),
+              child: Icon(Icons.add, color: appTheme.accentColor, size: 18),
             ),
           ],
         ),
