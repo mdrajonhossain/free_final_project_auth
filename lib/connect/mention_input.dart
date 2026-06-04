@@ -71,6 +71,12 @@ class _MentionTextFieldState extends State<MentionTextField> {
   }
 
   void _onTextChanged() {
+    // If no mentionable users are provided (e.g. in private rooms), disable the logic
+    if (widget.users.isEmpty) {
+      _hideOverlay();
+      return;
+    }
+
     final text = widget.controller.text;
     final selection = widget.controller.selection;
 

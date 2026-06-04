@@ -75,7 +75,15 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _fetchMentionableUsers() async {
-    if (company_id.isEmpty) return;
+    // @mentions are only available for group conversations
+    if (company_id.isEmpty || conversation_type != "group") {
+      if (mounted) {
+        setState(() {
+          _mentionableUsers = [];
+        });
+      }
+      return;
+    }
     try {
       final List<Map<String, dynamic>> users = await ApiServer().fetchAllUsers(
         company_id,
@@ -92,13 +100,19 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       }
 
+      // participants লিস্টকে String লিস্টে রূপান্তর করা
+      final List pList = participants is List ? participants : [];
+      final List<String> participantIds = pList
+          .map((e) => e.toString())
+          .toList();
+
       if (mounted) {
         setState(() {
-          _mentionableUsers = users
+          final List<MentionUser> mentionList = users
               .where((u) {
                 final uid = (u['id'] ?? u['_id'] ?? u['uid']).toString();
-                // Strictly filter out the current user
-                return uid != myId && myId.isNotEmpty;
+                // রুমের মেম্বার হতে হবে এবং নিজে হওয়া যাবে না
+                return participantIds.contains(uid) && uid != myId;
               })
               .map(
                 (u) => MentionUser(
@@ -108,6 +122,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               )
               .toList();
+
+          // React এর মতো 'Everyone' অপশন যোগ করা (যদি মেম্বার থাকে)
+          if (mentionList.isNotEmpty) {
+            final String everyoneIds = mentionList.map((e) => e.id).join(',');
+            mentionList.insert(
+              0,
+              MentionUser(id: everyoneIds, name: 'Everyone', imageUrl: null),
+            );
+          }
+          _mentionableUsers = mentionList;
         });
       }
     } catch (e) {
@@ -399,7 +423,10 @@ participants: $participants
                     ChatInput(
                       controller: _messageController,
                       onSend: _sendMessage,
-                      mentionableUsers: _mentionableUsers,
+                      // Ensure no mentions are possible if it's not a group room
+                      mentionableUsers: conversation_type == "group"
+                          ? _mentionableUsers
+                          : [],
                       companyId: company_id,
                       group: conversation_type == "group",
                       userEmail: state.userData?['email']?.toString(),
