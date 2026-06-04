@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:freeli/theme/themeList.dart';
 
 class ChatSkeleton extends StatefulWidget {
   const ChatSkeleton({super.key});
@@ -10,18 +13,20 @@ class ChatSkeleton extends StatefulWidget {
 class _ChatSkeletonState extends State<ChatSkeleton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-
-  final Color bg = const Color(0xff0B1120);
-  final Color surface = const Color(0xff111827);
-  final Color bubble = const Color(0xff1F2937);
+  late Animation<double> _opacityAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1300),
-    )..repeat();
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+
+    _opacityAnimation = Tween<double>(
+      begin: 0.4,
+      end: 0.8,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -32,208 +37,99 @@ class _ChatSkeletonState extends State<ChatSkeleton>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _header(),
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, theme) {
+        final isDark = theme.backgroundColor.computeLuminance() < 0.5;
+        final baseColor = isDark
+            ? theme.cardColor.withOpacity(0.8)
+            : Colors.grey.withOpacity(0.2);
 
-            Expanded(
-              child: ListView.builder(
-                reverse: true,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 16,
-                ),
-                itemCount: 10,
-                itemBuilder: (context, index) {
-                  final bool isMe = index % 2 == 0;
-                  return _message(isMe);
-                },
-              ),
-            ),
-
-            _input(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ================= HEADER =================
-
-  Widget _header() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(
-        color: surface, // Use the defined surface color for consistency
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.05)),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Placeholder for Back Button
-          _box(24, 24, 12), // Small square with rounded corners for an icon
-          const SizedBox(width: 12),
-
-          // Placeholder for Profile Image
-          _box(
-            40,
-            40,
-            20,
-          ), // Circular avatar placeholder (radius half of width/height)
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Placeholder for Title
-                _box(16, 120, 6), // Represents a line of text for the title
-                const SizedBox(height: 4),
-                // Placeholder for Subtitle
-                _box(
-                  10,
-                  80,
-                  5,
-                ), // Represents a smaller line of text for the subtitle
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ================= MESSAGE =================
-
-  Widget _message(bool isMe) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: isMe
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        children: [
-          if (!isMe) ...[_box(36, 36, 100), const SizedBox(width: 10)],
-
-          Flexible(
-            child: Column(
-              crossAxisAlignment: isMe
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
-              children: [
-                if (!isMe) _box(10, 70, 5),
-                if (!isMe) const SizedBox(height: 6),
-
-                Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.70,
-                  ),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isMe ? const Color(0xff2B2F55) : bubble,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(20),
-                      topRight: const Radius.circular(20),
-                      bottomLeft: Radius.circular(isMe ? 20 : 6),
-                      bottomRight: Radius.circular(isMe ? 6 : 20),
-                    ),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
-                  ),
-                  child: Column(
+        return Container(
+          color: theme.backgroundColor,
+          child: ListView.builder(
+            itemCount: 8,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            physics: const NeverScrollableScrollPhysics(),
+            itemBuilder: (context, index) {
+              bool isMe = index % 3 == 0; // Alternating pattern for me/other
+              return FadeTransition(
+                opacity: _opacityAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Row(
+                    mainAxisAlignment: isMe
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _box(12, double.infinity, 6),
-                      const SizedBox(height: 10),
-                      _box(12, 140, 6),
-                      const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: _box(10, 50, 6),
+                      if (!isMe) ...[
+                        CircleAvatar(radius: 18, backgroundColor: baseColor),
+                        const SizedBox(width: 10),
+                      ],
+                      Column(
+                        crossAxisAlignment: isMe
+                            ? CrossAxisAlignment.end
+                            : CrossAxisAlignment.start,
+                        children: [
+                          // Name Placeholder
+                          Container(
+                            height: 10,
+                            width: 60,
+                            margin: const EdgeInsets.only(bottom: 6),
+                            decoration: BoxDecoration(
+                              color: baseColor,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          // Message Bubble Placeholder
+                          Container(
+                            height: 45,
+                            width:
+                                MediaQuery.of(context).size.width *
+                                (index % 2 == 0 ? 0.6 : 0.45),
+                            decoration: BoxDecoration(
+                              color: isMe
+                                  ? theme.accentColor.withOpacity(0.2)
+                                  : baseColor,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(isMe ? 18 : 4),
+                                topRight: Radius.circular(isMe ? 4 : 18),
+                                bottomLeft: const Radius.circular(18),
+                                bottomRight: const Radius.circular(18),
+                              ),
+                              border: Border.all(
+                                color: isDark ? Colors.white10 : Colors.black12,
+                                width: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          // Time Placeholder
+                          Container(
+                            height: 8,
+                            width: 35,
+                            decoration: BoxDecoration(
+                              color: baseColor.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
                       ),
+                      if (isMe) ...[
+                        const SizedBox(width: 10),
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: theme.accentColor.withOpacity(0.15),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
-
-          if (isMe) ...[const SizedBox(width: 10), _box(36, 36, 100)],
-        ],
-      ),
-    );
-  }
-
-  // ================= INPUT =================
-
-  Widget _input() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-      decoration: BoxDecoration(
-        color: surface,
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 52,
-              decoration: BoxDecoration(
-                color: bubble,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.white.withOpacity(0.04)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: _box(12, 100, 6),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          _box(52, 52, 16),
-        ],
-      ),
-    );
-  }
-
-  // ================= SHIMMER BOX =================
-
-  Widget _box(double h, double w, double r) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(r),
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          return Container(
-            height: h,
-            width: w,
-            color: bubble,
-            child: FractionallySizedBox(
-              alignment: Alignment(-1 + (_controller.value * 2), 0),
-              widthFactor: 0.35,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.02),
-                      Colors.white.withOpacity(0.10),
-                      Colors.white.withOpacity(0.02),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+        );
+      },
     );
   }
 }
