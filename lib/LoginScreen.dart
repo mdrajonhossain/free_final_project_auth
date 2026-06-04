@@ -397,7 +397,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           icon: const Icon(Icons.palette_outlined),
-                          label: const Text("Select Professional Theme"),
+                          label: const Text("Select Theme"),
                         ),
                       ],
                     ),

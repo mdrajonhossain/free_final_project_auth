@@ -201,7 +201,7 @@ class AppDrawer extends StatelessWidget {
                   size: 20,
                 ),
               ),
-              _drawerItem(Icons.palette_outlined, "Professional Themes", () {
+              _drawerItem(Icons.palette_outlined, "All themes", () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,

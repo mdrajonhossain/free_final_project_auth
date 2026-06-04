@@ -299,7 +299,7 @@ class _OtpScreenState extends State<OtpScreen> {
           ),
           icon: Icon(Icons.palette_outlined, color: appTheme.accentColor),
           label: Text(
-            "Select Professional Theme",
+            "Select Theme",
             style: TextStyle(color: appTheme.accentColor),
           ),
         ),

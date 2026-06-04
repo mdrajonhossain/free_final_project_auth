@@ -209,7 +209,7 @@ class _CompanyListScreenState extends State<CompanyListScreen> {
                             color: accentColor,
                           ), // Use appTheme.accentColor
                           label: Text(
-                            "Select Professional Theme",
+                            "Select Theme",
                             style: TextStyle(
                               color: accentColor,
                             ), // Use appTheme.accentColor

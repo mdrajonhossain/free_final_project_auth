@@ -17,7 +17,7 @@ class ProfessionalThemePage extends StatelessWidget {
             elevation: 0,
             centerTitle: true,
             title: Text(
-              "Professional Themes",
+              "Themes Management",
               style: TextStyle(
                 color: currentTheme.textColor,
                 fontWeight: FontWeight.bold,
