@@ -434,3 +434,13 @@ mutation mute_conversation(\$input: muteConversationData!) {
   }
 }
 """;
+
+const String RoomArchiveMutation = """
+mutation room_archive(\$input: roomModifyData!) {
+  room_archive(input: \$input) {
+    status
+    data
+    message    
+  }
+}
+""";

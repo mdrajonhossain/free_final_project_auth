@@ -1023,4 +1023,22 @@ class ApiServer {
       return {"status": false, "message": e.toString()};
     }
   }
+
+  Future<Map<String, dynamic>> archiveConversationActionRoom({
+    required String conversation_id,
+    required String action,
+  }) async {
+    try {
+      final response = await ApiServer.call(
+        RoomArchiveMutation,
+        variables: {
+          "input": {"conversation_id": conversation_id, "action": action},
+        },
+      );
+      return Map<String, dynamic>.from(response['room_archive'] ?? {});
+    } catch (e) {
+      debugPrint("Archive Error: $e");
+      return {"status": false, "message": e.toString()};
+    }
+  }
 }

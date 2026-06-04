@@ -136,7 +136,7 @@ const String roomsQuery = """
       group
       # team_id
       # privacy
-      # archive
+      archive
       # status
       conv_img
       # topic_type

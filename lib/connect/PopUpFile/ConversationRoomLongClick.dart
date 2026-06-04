@@ -146,9 +146,29 @@ class ConversationRoomLongClick {
                     isArchived ? "Unarchive Room" : "Archive Room",
                     style: const TextStyle(color: Colors.white),
                   ),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
-                    onArchiveToggle(!isArchived);
+                    final String convId =
+                        room['conversation_id']?.toString() ?? "";
+                    final String action = isArchived ? "no" : "yes";
+
+                    try {
+                      final result = await ApiServer()
+                          .archiveConversationActionRoom(
+                            conversation_id: convId,
+                            action: action,
+                          );
+
+                      if (result['status'] == true) {
+                        onArchiveToggle(!isArchived);
+                      } else {
+                        debugPrint(
+                          "Archive action rejected: ${result['message']}",
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint("Archive API call failed: $e");
+                    }
                   },
                 ),
 
