@@ -43,7 +43,7 @@ final List<AppThemeModel> professionalThemes = [
     msgSenderText: Colors.white,
     msgReceiverText: Colors.white,
     msgBackgroundColor: const Color(
-      0xFFC7BCBB,
+      0xFF0B132B,
     ), // User's requested comfortable grey
     msgStatusIconColor: const Color(0xFF5BC0BE),
   ),
