@@ -25,8 +25,22 @@ class ConversationRoomLongClick {
         final bool isArchived = room['archive'] == "yes";
         final bool isLocked = room['close_for'] == "yes";
 
-        final bool isPinned = pinList.contains(currentUserId);
-        final bool isMuted = muteList.contains(currentUserId);
+        final bool isPinned = pinList.any(
+          (id) => id.toString() == currentUserId,
+        );
+        final bool isMuted = muteList.any(
+          (id) => id.toString() == currentUserId,
+        );
+
+        final bool isGroup = room['group'] == 'yes';
+
+        // Ensure adminList is a List and handle potential object structures
+        final dynamic adminData = room['participants_admin'];
+        final List adminList = adminData is List ? adminData : [];
+        // Check if current user ID exists in the admin array
+        final bool isAdmin = adminList.any(
+          (id) => id.toString() == currentUserId,
+        );
 
         return Padding(
           padding: const EdgeInsets.only(
@@ -109,30 +123,34 @@ class ConversationRoomLongClick {
               ),
 
               /// LOCK / UNLOCK
-              ListTile(
-                leading: const Icon(Icons.lock, color: Colors.red),
-                title: Text(
-                  isLocked ? "Unlock Room" : "Lock Room",
-                  style: const TextStyle(color: Colors.white),
+              // Only visible in Group rooms if the user is an Admin
+              if (isGroup && isAdmin)
+                ListTile(
+                  leading: const Icon(Icons.lock, color: Colors.red),
+                  title: Text(
+                    isLocked ? "Unlock Room" : "Lock Room",
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onLockToggle(!isLocked);
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  onLockToggle(!isLocked);
-                },
-              ),
 
               /// ARCHIVE / UNARCHIVE
-              ListTile(
-                leading: const Icon(Icons.archive, color: Colors.green),
-                title: Text(
-                  isArchived ? "Unarchive Room" : "Archive Room",
-                  style: const TextStyle(color: Colors.white),
+              // Only visible in Group rooms if the user is an Admin
+              if (isGroup && isAdmin)
+                ListTile(
+                  leading: const Icon(Icons.archive, color: Colors.green),
+                  title: Text(
+                    isArchived ? "Unarchive Room" : "Archive Room",
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onArchiveToggle(!isArchived);
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  onArchiveToggle(!isArchived);
-                },
-              ),
 
               const SizedBox(height: 10),
             ],

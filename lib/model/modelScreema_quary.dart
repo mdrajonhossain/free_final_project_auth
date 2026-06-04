@@ -157,7 +157,7 @@ const String roomsQuery = """
       # conv_is_active
       participants
       participants_name
-      # participants_admin
+      participants_admin
       # participants_guest
       # is_active
       # is_pinned_users
