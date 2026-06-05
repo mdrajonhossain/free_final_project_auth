@@ -415,6 +415,9 @@ class ApiServer {
     Map<String, dynamic>? attachFiles,
     List<String>? tags,
     List<Map<String, dynamic>>? allAttachment,
+    bool isSecret = false,
+    List<String>? secretUsers,
+    String? msgTitle,
   }) async {
     try {
       final variables = {
@@ -430,7 +433,9 @@ class ApiServer {
           "referenceId": "",
           "reference_type": "",
           "reply_for_msgid": "",
-          "is_secret": false,
+          "is_secret": isSecret,
+          if (secretUsers != null) "secret_user": secretUsers,
+          if (msgTitle != null) "msg_title": msgTitle,
           if (tags != null && tags.isNotEmpty) "tag_list": tags,
           if (attachFiles != null) "attach_files": attachFiles,
           if (allAttachment != null && allAttachment.isNotEmpty)

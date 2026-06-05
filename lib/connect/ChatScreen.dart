@@ -606,6 +606,8 @@ class _MessageBubble extends StatelessWidget {
     }
 
     final String cleanText = FormatUtils.stripHtml(decryptedText);
+    final String msgTitle = (msg['msg_title'] ?? '').toString();
+    final bool isSecret = msg['is_secret'] == true;
     final String msgId = msg['msg_id'] ?? msg['id'];
     final String userImage = msg['senderimg']?.toString() ?? "";
 
@@ -872,6 +874,35 @@ class _MessageBubble extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (isSecret || msgTitle.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isSecret)
+                                  Icon(
+                                    Icons.lock_rounded,
+                                    size: 12,
+                                    color: isMe
+                                        ? Colors.white70
+                                        : Colors.orangeAccent,
+                                  ),
+                                if (isSecret) const SizedBox(width: 4),
+                                if (msgTitle.isNotEmpty)
+                                  Flexible(
+                                    child: Text(
+                                      msgTitle,
+                                      style: TextStyle(
+                                        color: textColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
                         // Filter out technical JSON strings or object data indicators
                         if (cleanText.isNotEmpty &&
                             !cleanText.trim().startsWith('{') &&

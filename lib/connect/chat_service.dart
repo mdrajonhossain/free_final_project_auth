@@ -15,6 +15,9 @@ class ChatService {
     Map<String, dynamic>? attachFiles,
     List<String>? tags,
     List<Map<String, dynamic>>? allAttachment,
+    bool isSecret = false,
+    List<String>? secretUsers,
+    String? msgTitle,
   }) async {
     final text = controller.text.trim();
     final bool hasFiles =
@@ -44,6 +47,9 @@ class ChatService {
         tags: effectiveTags,
         allAttachment: effectiveAllAttachment,
         msgType: finalMsgType,
+        isSecret: isSecret,
+        secretUsers: secretUsers,
+        msgTitle: msgTitle,
       ),
     );
 

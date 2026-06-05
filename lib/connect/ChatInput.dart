@@ -6,6 +6,7 @@ import 'package:freeli/theme/themeList.dart';
 import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import './mention_input.dart';
+import './chat_service.dart';
 import './PopUpFile/PrivateMessagePopUp.dart';
 
 class ChatInput extends StatefulWidget {
@@ -122,12 +123,152 @@ class _ChatInputState extends State<ChatInput> {
                                                 (
                                                   title,
                                                   recipientIds,
-                                                  files,
+                                                  uploadedFiles,
                                                   tags,
                                                   message,
                                                 ) {
-                                                  debugPrint(
-                                                    "Creating private room: $title with recipients: $recipientIds, Files: ${files.length}, Tags: $tags, Message: $message",
+                                                  List<String> imgFiles = [];
+                                                  List<String> audioFiles = [];
+                                                  List<String> videoFiles = [];
+                                                  List<String> otherFiles = [];
+                                                  List<Map<String, dynamic>>
+                                                  sanitizedAllFiles = [];
+
+                                                  for (var file
+                                                      in uploadedFiles) {
+                                                    final String bucket =
+                                                        file['bucket'] ?? '';
+                                                    final String key =
+                                                        file['key'] ?? '';
+                                                    final String path =
+                                                        (bucket.isNotEmpty &&
+                                                            key.isNotEmpty)
+                                                        ? "$bucket/$key"
+                                                        : "";
+
+                                                    // Robust extraction of mimetype and size
+                                                    String mimeType =
+                                                        file['mimetype'] ??
+                                                        file['contentType'] ??
+                                                        '';
+                                                    int fileSize =
+                                                        int.tryParse(
+                                                          file['size']
+                                                                  ?.toString() ??
+                                                              '0',
+                                                        ) ??
+                                                        0;
+
+                                                    final transforms =
+                                                        file['transforms']
+                                                            as List?;
+                                                    if (mimeType.isEmpty &&
+                                                        transforms != null &&
+                                                        transforms.isNotEmpty) {
+                                                      mimeType =
+                                                          transforms[0]['mimetype'] ??
+                                                          transforms[0]['contentType'] ??
+                                                          transforms[0]['content_type'] ??
+                                                          '';
+                                                    }
+                                                    if (fileSize == 0 &&
+                                                        transforms != null &&
+                                                        transforms.isNotEmpty) {
+                                                      fileSize =
+                                                          int.tryParse(
+                                                            transforms[0]['size']
+                                                                    ?.toString() ??
+                                                                '0',
+                                                          ) ??
+                                                          0;
+                                                    }
+
+                                                    if (mimeType.startsWith(
+                                                      'image/',
+                                                    )) {
+                                                      imgFiles.add(path);
+                                                    } else if (mimeType
+                                                        .startsWith('audio/')) {
+                                                      audioFiles.add(path);
+                                                    } else if (mimeType
+                                                        .startsWith('video/')) {
+                                                      videoFiles.add(path);
+                                                    } else {
+                                                      otherFiles.add(path);
+                                                    }
+
+                                                    sanitizedAllFiles.add({
+                                                      "originalname":
+                                                          file['originalname'] ??
+                                                          "",
+                                                      "mimetype": mimeType,
+                                                      "voriginalName":
+                                                          file['voriginalName'] ??
+                                                          file['voriginal_name'] ??
+                                                          "",
+                                                      "size": fileSize,
+                                                      "bucket": bucket,
+                                                      "key": key,
+                                                      "acl":
+                                                          file['acl'] ??
+                                                          "public-read",
+                                                      "referenceId": "",
+                                                      "reference_type": "",
+                                                    });
+                                                  }
+
+                                                  final attachFiles = {
+                                                    "imgfile": imgFiles,
+                                                    "audiofile": audioFiles,
+                                                    "videofile": videoFiles,
+                                                    "otherfile": otherFiles,
+                                                    "allfiles":
+                                                        sanitizedAllFiles,
+                                                  };
+
+                                                  final allAttachment =
+                                                      sanitizedAllFiles
+                                                          .map(
+                                                            (_) => {
+                                                              "tag_list": tags,
+                                                              "has_tag":
+                                                                  tags.isNotEmpty
+                                                                  ? "Y"
+                                                                  : "N",
+                                                            },
+                                                          )
+                                                          .toList();
+
+                                                  ChatService.sendMessage(
+                                                    context: context,
+                                                    controller:
+                                                        TextEditingController(
+                                                          text: message,
+                                                        ),
+                                                    conversationId:
+                                                        widget.conversationId,
+                                                    companyId: widget.companyId,
+                                                    participants: [
+                                                      widget
+                                                          .chatBloc
+                                                          .state
+                                                          .myId,
+                                                      ...recipientIds,
+                                                    ],
+                                                    chatBloc: widget.chatBloc,
+                                                    onScroll: () {},
+                                                    isSecret: true,
+                                                    secretUsers: recipientIds,
+                                                    msgTitle: title,
+                                                    attachFiles:
+                                                        uploadedFiles.isNotEmpty
+                                                        ? attachFiles
+                                                        : null,
+                                                    tags: tags,
+                                                    allAttachment: allAttachment
+                                                        .cast<
+                                                          Map<String, dynamic>
+                                                        >(),
                                                   );
                                                 },
                                           );

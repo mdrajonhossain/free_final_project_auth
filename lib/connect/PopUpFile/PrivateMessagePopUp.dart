@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:freeli/connect/ChatInput.dart';
+import 'package:freeli/controller/api/api_files_upload.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 import 'package:freeli/controller/api/api_service.dart';
 
@@ -14,7 +15,7 @@ class PrivateMessagePopUp {
     Function(
       String title,
       List<String> recipientIds,
-      List<PlatformFile> files,
+      List<Map<String, dynamic>> uploadedFiles,
       List<String> tags,
       String message,
     )?
@@ -30,6 +31,9 @@ class PrivateMessagePopUp {
     int currentStep = 1;
     List<String> selectedUserIds = [];
     List<PlatformFile> pickedFiles = [];
+    List<Map<String, dynamic>> uploadedFilesMetadata = [];
+    Map<String, double> uploadProgress = {};
+    bool isUploading = false;
     List<String> tags = [];
     List<Map<String, dynamic>> publicTags = [];
     bool isLoadingTags = true;
@@ -87,7 +91,17 @@ class PrivateMessagePopUp {
                                   screenWidth,
                                 ),
                               if (currentStep == 2)
-                                _buildStep2(context, setState, pickedFiles),
+                                _buildStep2(
+                                  context,
+                                  setState,
+                                  pickedFiles,
+                                  isUploading,
+                                  uploadProgress,
+                                  userEmail,
+                                  (metadata) {
+                                    uploadedFilesMetadata.addAll(metadata);
+                                  },
+                                ),
                               if (currentStep == 3)
                                 _buildStep3(
                                   context,
@@ -106,7 +120,9 @@ class PrivateMessagePopUp {
                                     if (currentStep == 1) {
                                       isNextActive = selectedUserIds.isNotEmpty;
                                     } else if (currentStep == 2) {
-                                      isNextActive = pickedFiles.isNotEmpty;
+                                      isNextActive =
+                                          pickedFiles.isNotEmpty &&
+                                          !isUploading;
                                     }
 
                                     return _buildActionButtons(
@@ -170,7 +186,7 @@ class PrivateMessagePopUp {
                             onCreate?.call(
                               titleController.text.trim(),
                               selectedUserIds,
-                              pickedFiles,
+                              uploadedFilesMetadata,
                               tags,
                               messageController.text.trim(),
                             );
@@ -401,6 +417,10 @@ class PrivateMessagePopUp {
     BuildContext context,
     StateSetter setState,
     List<PlatformFile> pickedFiles,
+    bool isUploading,
+    Map<String, double> uploadProgress,
+    String? userEmail,
+    Function(List<Map<String, dynamic>>) onUploadComplete,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,14 +440,59 @@ class PrivateMessagePopUp {
         ),
         const SizedBox(height: 20),
         InkWell(
-          onTap: () async {
-            final result = await FilePicker.platform.pickFiles(
-              allowMultiple: true,
-            );
-            if (result != null) {
-              setState(() => pickedFiles.addAll(result.files));
-            }
-          },
+          onTap: isUploading
+              ? null
+              : () async {
+                  final result = await FilePicker.platform.pickFiles(
+                    allowMultiple: true,
+                  );
+                  if (result == null || result.files.isEmpty) return;
+
+                  setState(() => isUploading = true);
+                  final email = userEmail ?? "default-user";
+                  final bucketName = email.replaceAll(
+                    RegExp(r'[^a-zA-Z0-9]'),
+                    '-',
+                  );
+
+                  for (var file in result.files) {
+                    if (file.path == null) continue;
+
+                    final sl =
+                        "${DateTime.now().microsecondsSinceEpoch}_${file.name.hashCode}";
+
+                    try {
+                      final response = await ApifilesServer().uploadFile(
+                        filePath: file.path!,
+                        fileName: file.name,
+                        bucketName: bucketName,
+                        sl: sl,
+                        onProgress: (int sent, int total) {
+                          setState(() {
+                            uploadProgress[file.name] = total > 0
+                                ? sent / total
+                                : 0;
+                          });
+                        },
+                      );
+
+                      if (response != null &&
+                          response['status'] == true &&
+                          response['file_info'] != null) {
+                        final metadata = List<Map<String, dynamic>>.from(
+                          response['file_info'],
+                        );
+                        onUploadComplete(metadata);
+                        setState(() {
+                          pickedFiles.add(file);
+                        });
+                      }
+                    } catch (e) {
+                      debugPrint("Error uploading ${file.name}: $e");
+                    }
+                  }
+                  setState(() => isUploading = false);
+                },
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 30),
@@ -439,15 +504,21 @@ class PrivateMessagePopUp {
                 style: BorderStyle.solid,
               ),
             ),
-            child: const Column(
+            child: Column(
               children: [
-                Icon(
-                  Icons.cloud_upload_outlined,
-                  color: Colors.indigoAccent,
-                  size: 40,
-                ),
+                if (isUploading)
+                  const CircularProgressIndicator(
+                    color: Colors.indigoAccent,
+                    strokeWidth: 2,
+                  )
+                else
+                  const Icon(
+                    Icons.cloud_upload_outlined,
+                    color: Colors.indigoAccent,
+                    size: 40,
+                  ),
                 SizedBox(height: 12),
-                Text(
+                const Text(
                   "Tap to select files",
                   style: TextStyle(color: Colors.white70),
                 ),
@@ -473,13 +544,34 @@ class PrivateMessagePopUp {
               itemCount: pickedFiles.length,
               itemBuilder: (context, index) => ListTile(
                 dense: true,
-                leading: const Icon(
+                leading: Icon(
                   Icons.insert_drive_file_outlined,
-                  color: Colors.white38,
+                  color: (uploadProgress[pickedFiles[index].name] ?? 0) >= 1.0
+                      ? Colors.greenAccent
+                      : Colors.white38,
                 ),
-                title: Text(
-                  pickedFiles[index].name,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      pickedFiles[index].name,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
+                    if (uploadProgress.containsKey(pickedFiles[index].name) &&
+                        uploadProgress[pickedFiles[index].name]! < 1.0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: LinearProgressIndicator(
+                          value: uploadProgress[pickedFiles[index].name],
+                          backgroundColor: Colors.white10,
+                          color: Colors.indigoAccent,
+                          minHeight: 2,
+                        ),
+                      ),
+                  ],
                 ),
                 trailing: IconButton(
                   icon: const Icon(
@@ -487,7 +579,14 @@ class PrivateMessagePopUp {
                     size: 18,
                     color: Colors.redAccent,
                   ),
-                  onPressed: () => setState(() => pickedFiles.removeAt(index)),
+                  onPressed: () {
+                    setState(() {
+                      final name = pickedFiles[index].name;
+                      pickedFiles.removeAt(index);
+                      uploadProgress.remove(name);
+                      // Note: In a production app, you might also want to trigger a server-side delete.
+                    });
+                  },
                 ),
               ),
             ),

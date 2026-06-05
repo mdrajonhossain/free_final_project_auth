@@ -22,6 +22,9 @@ class ChatMessageSent extends ChatEvent {
   final Map<String, dynamic>? attachFiles;
   final List<String>? tags;
   final List<Map<String, dynamic>>? allAttachment;
+  final bool isSecret;
+  final List<String>? secretUsers;
+  final String? msgTitle;
 
   ChatMessageSent({
     required this.text,
@@ -32,6 +35,9 @@ class ChatMessageSent extends ChatEvent {
     this.attachFiles,
     this.tags,
     this.allAttachment,
+    this.isSecret = false,
+    this.secretUsers,
+    this.msgTitle,
   });
 }
 

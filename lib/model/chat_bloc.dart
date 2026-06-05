@@ -113,6 +113,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           "https://wfss001.freeli.io/profile-pic/Photos/corporate-company-logo-png_seeklogo-425925@1764655943904.png",
       "msg_body": encryptedText,
       "created_at": DateTime.now().toIso8601String(),
+      "is_secret": event.isSecret,
+      "msg_title": event.msgTitle,
       "all_attachment": event.attachFiles?['allfiles'] ?? [],
     };
 
@@ -124,7 +126,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     try {
       // 2. Network Call
       final response = await apiServer.sendMessage(
-        msgBody: event.msgType == "text" ? encryptedText : event.text,
+        msgBody: (event.msgType == "text" || event.isSecret)
+            ? encryptedText
+            : event.text,
         conversationId: event.conversationId,
         companyId: event.companyId,
         senderId: state.myId,
@@ -135,6 +139,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         attachFiles: event.attachFiles,
         tags: event.tags,
         allAttachment: event.allAttachment,
+        isSecret: event.isSecret,
+        secretUsers: event.secretUsers,
+        msgTitle: event.msgTitle,
       );
 
       if (response == null) throw Exception("Empty response from server");
