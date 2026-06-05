@@ -98,6 +98,7 @@ class PrivateMessagePopUp {
                                   isUploading,
                                   uploadProgress,
                                   userEmail,
+                                  uploadedFilesMetadata,
                                   (metadata) {
                                     uploadedFilesMetadata.addAll(metadata);
                                   },
@@ -162,6 +163,18 @@ class PrivateMessagePopUp {
                           participants: selectedUserIds,
                           onAttachmentsPicked: (_) {},
                           onSend: () {
+                            if (isUploading) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Please wait for files to finish uploading",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: Colors.orangeAccent,
+                                ),
+                              );
+                              return;
+                            }
                             if (selectedUserIds.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -420,6 +433,7 @@ class PrivateMessagePopUp {
     bool isUploading,
     Map<String, double> uploadProgress,
     String? userEmail,
+    List<Map<String, dynamic>> uploadedFilesMetadata,
     Function(List<Map<String, dynamic>>) onUploadComplete,
   ) {
     return Column(
@@ -449,6 +463,7 @@ class PrivateMessagePopUp {
                   if (result == null || result.files.isEmpty) return;
 
                   setState(() => isUploading = true);
+                  setState(() => pickedFiles.addAll(result.files));
                   final email = userEmail ?? "default-user";
                   final bucketName = email.replaceAll(
                     RegExp(r'[^a-zA-Z0-9]'),
@@ -456,6 +471,9 @@ class PrivateMessagePopUp {
                   );
 
                   for (var file in result.files) {
+                    // যদি আপলোড শুরু হওয়ার আগেই ইউজার ফাইলটি রিমুভ করে দেয়
+                    if (!pickedFiles.any((f) => f.name == file.name)) continue;
+
                     if (file.path == null) continue;
 
                     final sl =
@@ -482,10 +500,10 @@ class PrivateMessagePopUp {
                         final metadata = List<Map<String, dynamic>>.from(
                           response['file_info'],
                         );
-                        onUploadComplete(metadata);
-                        setState(() {
-                          pickedFiles.add(file);
-                        });
+                        // Only add metadata if the user hasn't deleted the file while it was uploading
+                        if (pickedFiles.any((f) => f.name == file.name)) {
+                          onUploadComplete(metadata);
+                        }
                       }
                     } catch (e) {
                       debugPrint("Error uploading ${file.name}: $e");
@@ -544,11 +562,25 @@ class PrivateMessagePopUp {
               itemCount: pickedFiles.length,
               itemBuilder: (context, index) => ListTile(
                 dense: true,
-                leading: Icon(
-                  Icons.insert_drive_file_outlined,
-                  color: (uploadProgress[pickedFiles[index].name] ?? 0) >= 1.0
-                      ? Colors.greenAccent
-                      : Colors.white38,
+                leading: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child:
+                      uploadProgress.containsKey(pickedFiles[index].name) &&
+                          (uploadProgress[pickedFiles[index].name] ?? 0) < 1.0
+                      ? const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.indigoAccent,
+                        )
+                      : Icon(
+                          Icons.insert_drive_file_outlined,
+                          color:
+                              (uploadProgress[pickedFiles[index].name] ?? 0) >=
+                                  1.0
+                              ? Colors.greenAccent
+                              : Colors.white38,
+                          size: 18,
+                        ),
                 ),
                 title: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,7 +616,13 @@ class PrivateMessagePopUp {
                       final name = pickedFiles[index].name;
                       pickedFiles.removeAt(index);
                       uploadProgress.remove(name);
-                      // Note: In a production app, you might also want to trigger a server-side delete.
+
+                      // আরও শক্তিশালী ফিল্টারিং যাতে মেটাডেটা লিস্ট থেকে ফাইলটি নিশ্চিতভাবে ডিলিট হয়
+                      uploadedFilesMetadata.removeWhere(
+                        (m) =>
+                            (m['originalname'] ?? m['original_name']) == name ||
+                            (m['voriginalName'] ?? m['voriginal_name']) == name,
+                      );
                     });
                   },
                 ),
