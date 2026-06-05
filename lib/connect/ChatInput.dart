@@ -6,6 +6,7 @@ import 'package:freeli/theme/themeList.dart';
 import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import './mention_input.dart';
+import './PopUpFile/PrivateMessagePopUp.dart';
 
 class ChatInput extends StatefulWidget {
   final TextEditingController controller;
@@ -98,17 +99,55 @@ class _ChatInputState extends State<ChatInput> {
                                 ? Row(
                                     children: [
                                       const SizedBox(width: 14),
-                                      Container(
-                                        height: 34,
-                                        width: 34,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.08),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.lock_rounded,
-                                          color: Colors.white.withOpacity(0.7),
-                                          size: 18,
+                                      GestureDetector(
+                                        onTap: () {
+                                          PrivateMessagePopUp.show(
+                                            context,
+                                            companyId: widget.companyId,
+                                            chatBloc: widget.chatBloc,
+                                            userEmail: widget.userEmail,
+                                            users: widget.mentionableUsers
+                                                .where(
+                                                  (u) => u.name != 'Everyone',
+                                                )
+                                                .map(
+                                                  (u) => {
+                                                    'name': u.name,
+                                                    'image': u.imageUrl ?? '',
+                                                    'id': u.id,
+                                                  },
+                                                )
+                                                .toList(),
+                                            onCreate:
+                                                (
+                                                  title,
+                                                  recipientIds,
+                                                  files,
+                                                  tags,
+                                                  message,
+                                                ) {
+                                                  debugPrint(
+                                                    "Creating private room: $title with recipients: $recipientIds, Files: ${files.length}, Tags: $tags, Message: $message",
+                                                  );
+                                                },
+                                          );
+                                        },
+                                        child: Container(
+                                          height: 34,
+                                          width: 34,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(
+                                              0.08,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.lock_rounded,
+                                            color: Colors.white.withOpacity(
+                                              0.7,
+                                            ),
+                                            size: 18,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 10),
