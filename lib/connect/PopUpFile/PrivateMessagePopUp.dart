@@ -156,6 +156,16 @@ class PrivateMessagePopUp {
                               );
                               return;
                             }
+                            if (messageController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Please enter a message to send",
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
                             Navigator.pop(context);
                             onCreate?.call(
                               titleController.text.trim(),
