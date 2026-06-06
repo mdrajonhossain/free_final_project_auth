@@ -48,6 +48,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       );
       final List messages = (data['msgs'] as List?)?.reversed.toList() ?? [];
 
+      for (int i = 0; i < messages.length; i++) {
+        messages[i] = _normalizeMessage(Map<String, dynamic>.from(messages[i]));
+      }
+
       emit(
         state.copyWith(
           messages: messages,
@@ -77,6 +81,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         page: nextPage,
       );
       final List newMsgs = (data['msgs'] as List?)?.reversed.toList() ?? [];
+
+      for (int i = 0; i < newMsgs.length; i++) {
+        newMsgs[i] = _normalizeMessage(Map<String, dynamic>.from(newMsgs[i]));
+      }
 
       emit(
         state.copyWith(
@@ -142,9 +150,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       if (response == null) throw Exception("Empty response from server");
 
+      final normalizedResponse = _normalizeMessage(
+        Map<String, dynamic>.from(response),
+      );
+
       // 3. Update State: Replace optimistic message with real server response
       final List finalMessages = state.messages
-          .map((m) => m['msg_id'] == tempId ? response : m)
+          .map((m) => m['msg_id'] == tempId ? normalizedResponse : m)
           .toList();
 
       emit(state.copyWith(messages: finalMessages, error: null));
@@ -269,6 +281,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       if (event.message == null || event.message is! Map) return;
 
       Map<String, dynamic> msgMap = Map<String, dynamic>.from(event.message);
+
+      msgMap = _normalizeMessage(msgMap);
 
       // 1. Basic Filtering (Type and Conversation)
       // Handle deletion specifically if XMPP sends a 'delete_msg' type
@@ -411,5 +425,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       // If it looks like technical data but fails to parse, hide the text
       if (jsonStr.contains('"originalname"')) msgMap['msg_body'] = "";
     }
+  }
+
+  Map<String, dynamic> _normalizeMessage(Map<String, dynamic> msg) {
+    final dynamic secret = msg['is_secret'] ?? msg['isSecret'];
+    msg['is_secret'] =
+        secret == true ||
+        secret?.toString() == 'true' ||
+        secret?.toString() == '1';
+    return msg;
   }
 }

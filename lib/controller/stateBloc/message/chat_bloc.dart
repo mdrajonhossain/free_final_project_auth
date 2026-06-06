@@ -48,6 +48,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       );
       final List messages = (data['msgs'] as List?)?.reversed.toList() ?? [];
 
+      // Normalize all messages for consistent private message flags
+      for (int i = 0; i < messages.length; i++) {
+        messages[i] = _normalizeMessage(Map<String, dynamic>.from(messages[i]));
+      }
+
       emit(
         state.copyWith(
           messages: messages,
@@ -77,6 +82,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         page: nextPage,
       );
       final List newMsgs = (data['msgs'] as List?)?.reversed.toList() ?? [];
+
+      // Normalize more messages
+      for (int i = 0; i < newMsgs.length; i++) {
+        newMsgs[i] = _normalizeMessage(Map<String, dynamic>.from(newMsgs[i]));
+      }
 
       emit(
         state.copyWith(
@@ -142,9 +152,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       if (response == null) throw Exception("Empty response from server");
 
+      // Normalize server response
+      final normalizedResponse = _normalizeMessage(
+        Map<String, dynamic>.from(response),
+      );
+
       // 3. Update State: Replace optimistic message with real server response
       final List finalMessages = state.messages
-          .map((m) => m['msg_id'] == tempId ? response : m)
+          .map((m) => m['msg_id'] == tempId ? normalizedResponse : m)
           .toList();
 
       emit(state.copyWith(messages: finalMessages, error: null));
@@ -319,6 +334,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       Map<String, dynamic> msgMap = Map<String, dynamic>.from(event.message);
 
+      // Normalize incoming XMPP message
+      msgMap = _normalizeMessage(msgMap);
+
       // 1. Basic Filtering (Type and Conversation)
       // Handle deletion specifically if XMPP sends a 'delete_msg' type
       final String incomingMsgType =
@@ -350,7 +368,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
       final String? incomingConvId = msgMap['conversation_id']?.toString();
       final String? activeConvId = state.activeConversationId?.toString();
-      if (activeConvId == null || incomingConvId != activeConvId) return;
+
+      // Improve routing check to handle camelCase conversationId from XMPP
+      final String? finalConvId =
+          incomingConvId ?? msgMap['conversationId']?.toString();
+      if (activeConvId == null || finalConvId != activeConvId) return;
 
       final String msgId = (msgMap['msg_id'] ?? msgMap['id'] ?? "").toString();
       if (msgId.isEmpty) return;
@@ -460,5 +482,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       // If it looks like technical data but fails to parse, hide the text
       if (jsonStr.contains('"originalname"')) msgMap['msg_body'] = "";
     }
+  }
+
+  // Centralized normalization for private message flags and keys
+  Map<String, dynamic> _normalizeMessage(Map<String, dynamic> msg) {
+    // Check all possible keys for secret flag from different API/XMPP versions
+    final dynamic isSecretVal =
+        msg['is_secret'] ?? msg['isSecret'] ?? msg['secret'];
+    msg['is_secret'] =
+        isSecretVal == true ||
+        isSecretVal?.toString() == 'true' ||
+        isSecretVal?.toString() == '1';
+    return msg;
   }
 }

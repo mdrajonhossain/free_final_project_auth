@@ -235,7 +235,7 @@ query Messages(\$conversationId: String!, \$page: Int!) {
             # has_reply_attach
             # call_running
             # call_server_switch
-            # is_secret
+            is_secret
             # participants
             # call_participants
             # has_flagged

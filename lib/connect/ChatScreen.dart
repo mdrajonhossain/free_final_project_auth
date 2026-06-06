@@ -588,13 +588,25 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Robust check for secret flag covering all potential API and XMPP response formats
+    final bool isSecret =
+        msg['is_secret'] == true ||
+        msg['is_secret']?.toString() == 'true' ||
+        msg['is_secret']?.toString() == '1' ||
+        msg['isSecret'] == true ||
+        msg['isSecret']?.toString() == 'true' ||
+        msg['secret'] == true ||
+        msg['secret']?.toString() == 'true';
+
     // Dynamic colors for bubble text and background
     final Color textColor = isMe
         ? appTheme.msgSenderText
         : appTheme.msgReceiverText;
-    final Color bubbleColor = isMe
-        ? appTheme.msgSenderBubble
-        : appTheme.msgReceiverBubble;
+
+    // Dynamic background for private messages
+    final Color bubbleColor = isSecret
+        ? (isDark ? const Color(0xff2D3748) : const Color(0xffEDF2F7))
+        : (isMe ? appTheme.msgSenderBubble : appTheme.msgReceiverBubble);
 
     // Decryption and formatting happen only when this specific bubble builds
     String decryptedText = "";
@@ -607,7 +619,6 @@ class _MessageBubble extends StatelessWidget {
 
     final String cleanText = FormatUtils.stripHtml(decryptedText);
     final String msgTitle = (msg['msg_title'] ?? '').toString();
-    final bool isSecret = msg['is_secret'] == true;
     final String msgId = msg['msg_id'] ?? msg['id'];
     final String userImage = msg['senderimg']?.toString() ?? "";
 
@@ -856,13 +867,18 @@ class _MessageBubble extends StatelessWidget {
                         bottomLeft: const Radius.circular(22),
                         bottomRight: const Radius.circular(22),
                       ),
-                      border: Border.all(
-                        color: isMe
-                            ? Colors.white.withOpacity(0.05)
-                            : (isDark
+                      border: isSecret
+                          ? Border.all(
+                              color: Colors.orangeAccent.withOpacity(0.5),
+                              width: 1.5,
+                            )
+                          : Border.all(
+                              color: isMe
                                   ? Colors.white.withOpacity(0.05)
-                                  : Colors.black.withOpacity(0.05)),
-                      ),
+                                  : (isDark
+                                        ? Colors.white.withOpacity(0.05)
+                                        : Colors.black.withOpacity(0.05)),
+                            ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
@@ -874,22 +890,28 @@ class _MessageBubble extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (isSecret || msgTitle.isNotEmpty)
+                        if (isSecret)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                if (isSecret)
-                                  Icon(
-                                    Icons.lock_rounded,
-                                    size: 12,
-                                    color: isMe
-                                        ? Colors.white70
-                                        : Colors.orangeAccent,
+                                const Icon(
+                                  Icons.lock_rounded,
+                                  size: 14,
+                                  color: Colors.orangeAccent,
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  "Private Message",
+                                  style: TextStyle(
+                                    color: Colors.orangeAccent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                if (isSecret) const SizedBox(width: 4),
-                                if (msgTitle.isNotEmpty)
+                                ),
+                                if (msgTitle.isNotEmpty) ...[
+                                  const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
                                       msgTitle,
@@ -900,32 +922,171 @@ class _MessageBubble extends StatelessWidget {
                                       ),
                                     ),
                                   ),
+                                ],
                               ],
                             ),
-                          ),
-                        // Filter out technical JSON strings or object data indicators
-                        if (cleanText.isNotEmpty &&
-                            !cleanText.trim().startsWith('{') &&
-                            !cleanText.trim().startsWith('[') &&
-                            !cleanText.contains('"location"') &&
-                            !cleanText.contains('"originalname"') &&
-                            !cleanText.contains('[object Object]') &&
-                            cleanText.toLowerCase() != "null")
-                          Text(
-                            cleanText,
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 15,
-                              height: 1.5,
+                          )
+                        else if (msgTitle.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              msgTitle,
+                              style: TextStyle(
+                                color: textColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        _AttachmentList(
-                          attachments: msg['all_attachment'],
-                          messageId: messageId,
-                          msg: msg,
-                          company_id: company_id,
-                          isDark: isDark,
-                        ),
+                        if (isSecret) ...[
+                          const SizedBox(height: 8),
+                          // Show text content for secret messages, handle fallback for null/empty
+                          if (cleanText.isNotEmpty &&
+                              cleanText.toLowerCase() != "null")
+                            Text(
+                              // If cleaning left nothing but it's a secret text, show decrypted raw
+                              cleanText.isEmpty ? decryptedText : cleanText,
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 15,
+                                height: 1.5,
+                              ),
+                            ),
+                          // In case it's a secret message but body is null/technical JSON
+                          if (cleanText.isEmpty ||
+                              cleanText.toLowerCase() == "null")
+                            const Text(
+                              "(Locked Message Content)",
+                              style: TextStyle(
+                                color: Colors.orangeAccent,
+                                fontSize: 13,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+
+                          const SizedBox(height: 8),
+                          // 1. User List (Who can see this secret)
+                          if (msg['secret_users'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.people_outline,
+                                    size: 14,
+                                    color: Colors.orangeAccent,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 24,
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: (msg['secret_users'] is List)
+                                            ? (msg['secret_users'] as List)
+                                                  .length
+                                            : 1,
+                                        separatorBuilder: (_, __) =>
+                                            const SizedBox(width: 4),
+                                        itemBuilder: (context, i) =>
+                                            CircleAvatar(
+                                              radius: 11,
+                                              backgroundColor: Colors.white24,
+                                              child: const Icon(
+                                                Icons.person,
+                                                size: 14,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          // 2. Action Buttons Panel
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              _buildSecretAction(
+                                icon: Icons.remove_red_eye_outlined,
+                                label: "Quick view",
+                                color: Colors.blueAccent,
+                                onTap: () {},
+                              ),
+                              _buildSecretAction(
+                                icon: Icons.reply_all_rounded,
+                                label: "View & reply",
+                                color: Colors.greenAccent,
+                                onTap: () {},
+                              ),
+                              if (isMe) ...[
+                                _buildSecretAction(
+                                  icon: Icons.person_add_alt_1_outlined,
+                                  label: "Add",
+                                  color: Colors.orangeAccent,
+                                  onTap: () {},
+                                ),
+                                _buildSecretAction(
+                                  icon: Icons.edit_outlined,
+                                  label: "Edit",
+                                  color: Colors.cyanAccent,
+                                  onTap: onEdit ?? () {},
+                                ),
+                                _buildSecretAction(
+                                  icon: Icons.delete_outline,
+                                  label: "Delete",
+                                  color: Colors.redAccent,
+                                  onTap: () {
+                                    context.read<ChatBloc>().add(
+                                      ChatMessageDeleted(
+                                        conversationId: conversationId,
+                                        msgId: msgId,
+                                        onSuccess: () {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                "Secret message deleted",
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                        ] else ...[
+                          // Regular message content (Text and Attachments)
+                          if (cleanText.isNotEmpty &&
+                              !cleanText.trim().startsWith('{') &&
+                              !cleanText.trim().startsWith('[') &&
+                              !cleanText.contains('"location"') &&
+                              !cleanText.contains('"originalname"') &&
+                              !cleanText.contains('[object Object]') &&
+                              cleanText.toLowerCase() != "null")
+                            Text(
+                              cleanText,
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 15,
+                                height: 1.5,
+                              ),
+                            ),
+                          _AttachmentList(
+                            attachments: msg['all_attachment'],
+                            messageId: messageId,
+                            msg: msg,
+                            company_id: company_id,
+                            isDark: isDark,
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1048,6 +1209,40 @@ class _MessageBubble extends StatelessWidget {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecretAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.4), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
