@@ -188,13 +188,15 @@ class _ChatsTabState extends State<ChatsTab>
     final List<dynamic> sortedRooms = List.from(widget.conversationRooms!);
     if (sortedRooms.length > 1) {
       sortedRooms.sort((a, b) {
-        // 1. Priority: "Me" চ্যাট সবার উপরে
+        // 1. Priority: Current logged-in user's personal chat room ("Me") at the top
+        final String aConvId = a['conversation_id']?.toString() ?? "";
+        final String bConvId = b['conversation_id']?.toString() ?? "";
         bool aIsMe =
             a['title']?.toString().toLowerCase() == 'me' ||
-            (myId.isNotEmpty && a['conversation_id']?.toString() == myId);
+            (myId.isNotEmpty && aConvId == myId);
         bool bIsMe =
             b['title']?.toString().toLowerCase() == 'me' ||
-            (myId.isNotEmpty && b['conversation_id']?.toString() == myId);
+            (myId.isNotEmpty && bConvId == myId);
         if (aIsMe && !bIsMe) return -1;
         if (!aIsMe && bIsMe) return 1;
 

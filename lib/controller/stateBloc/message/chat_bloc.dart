@@ -37,13 +37,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ),
     );
     try {
-      Map<String, dynamic>? userData = state.userData;
-      String myId = state.myId;
-
-      if (myId.isEmpty) {
-        userData = await apiServer.fetchMe();
-        myId = userData?['id']?.toString() ?? "";
-      }
+      // Always fetch current user data to ensure 'Me' identity is synced with the active token
+      final Map<String, dynamic> userData = await apiServer.fetchMe();
+      final String myId = userData['id']?.toString() ?? "";
 
       final data = await apiServer.fetchMessages(
         event.conversationId,
