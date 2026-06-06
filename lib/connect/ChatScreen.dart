@@ -588,15 +588,13 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Robust check for secret flag covering all potential API and XMPP response formats
+    // Ensure we check the normalized 'is_secret' key first
     final bool isSecret =
         msg['is_secret'] == true ||
         msg['is_secret']?.toString() == 'true' ||
         msg['is_secret']?.toString() == '1' ||
         msg['isSecret'] == true ||
-        msg['isSecret']?.toString() == 'true' ||
-        msg['secret'] == true ||
-        msg['secret']?.toString() == 'true';
+        msg['isSecret']?.toString() == 'true';
 
     // Dynamic colors for bubble text and background
     final Color textColor = isMe
@@ -901,28 +899,6 @@ class _MessageBubble extends StatelessWidget {
                                   size: 14,
                                   color: Colors.orangeAccent,
                                 ),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  "Private Message",
-                                  style: TextStyle(
-                                    color: Colors.orangeAccent,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (msgTitle.isNotEmpty) ...[
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      msgTitle,
-                                      style: TextStyle(
-                                        color: textColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           )
@@ -940,30 +916,15 @@ class _MessageBubble extends StatelessWidget {
                           ),
                         if (isSecret) ...[
                           const SizedBox(height: 8),
-                          // Show text content for secret messages, handle fallback for null/empty
-                          if (cleanText.isNotEmpty &&
-                              cleanText.toLowerCase() != "null")
-                            Text(
-                              // If cleaning left nothing but it's a secret text, show decrypted raw
-                              cleanText.isEmpty ? decryptedText : cleanText,
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 15,
-                                height: 1.5,
-                              ),
+                          // Display title instead of message body for private messages
+                          Text(
+                            msgTitle.isNotEmpty ? msgTitle : "Private Message",
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                          // In case it's a secret message but body is null/technical JSON
-                          if (cleanText.isEmpty ||
-                              cleanText.toLowerCase() == "null")
-                            const Text(
-                              "(Locked Message Content)",
-                              style: TextStyle(
-                                color: Colors.orangeAccent,
-                                fontSize: 13,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-
+                          ),
                           const SizedBox(height: 8),
                           // 1. User List (Who can see this secret)
                           if (msg['secret_users'] != null)

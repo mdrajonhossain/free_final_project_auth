@@ -486,6 +486,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   // Centralized normalization for private message flags and keys
   Map<String, dynamic> _normalizeMessage(Map<String, dynamic> msg) {
+    // Ensure msg_id is consistently present
+    if (msg['msg_id'] == null && msg['id'] != null) {
+      msg['msg_id'] = msg['id'].toString();
+    }
+
     // Check all possible keys for secret flag from different API/XMPP versions
     final dynamic isSecretVal =
         msg['is_secret'] ?? msg['isSecret'] ?? msg['secret'];
