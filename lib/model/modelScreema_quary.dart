@@ -231,7 +231,7 @@ query Messages(\$conversationId: String!, \$page: Int!) {
             # updatedmsgid
             # old_created_time
             # has_delivered
-            # has_reply
+            has_reply
             # has_reply_attach
             # call_running
             # call_server_switch

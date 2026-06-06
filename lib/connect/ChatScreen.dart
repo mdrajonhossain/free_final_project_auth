@@ -1198,6 +1198,50 @@ class _MessageBubble extends StatelessWidget {
                             company_id: company_id,
                             isDark: isDark,
                           ),
+                          if (!isSecret &&
+                              (int.tryParse(
+                                        msg['has_reply']?.toString() ?? '0',
+                                      ) ??
+                                      0) >
+                                  0)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8, bottom: 2),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isMe
+                                      ? Colors.black.withOpacity(0.1)
+                                      : Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.forum_outlined,
+                                      size: 16,
+                                      color: textColor.withOpacity(0.7),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        "Threaded chat (${msg['has_reply']}) • Last reply ${FormatUtils.formatTime(msg['last_reply_time']?.toString())} from ${msg['last_reply_name'] ?? 'Someone'}",
+                                        style: TextStyle(
+                                          color: textColor.withOpacity(0.9),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                         const SizedBox(height: 8),
                         Row(
