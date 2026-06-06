@@ -974,7 +974,158 @@ class _MessageBubble extends StatelessWidget {
                                 icon: Icons.remove_red_eye_outlined,
                                 label: "Quick view",
                                 color: Colors.blueAccent,
-                                onTap: () {},
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      backgroundColor: isDark
+                                          ? const Color(0xff1B2335)
+                                          : Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      title: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.lock_outline,
+                                            color: Colors.orangeAccent,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            "Private Preview",
+                                            style: TextStyle(
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      content: SingleChildScrollView(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  radius: 16,
+                                                  backgroundImage:
+                                                      userImage.isNotEmpty
+                                                      ? NetworkImage(userImage)
+                                                      : null,
+                                                  child: userImage.isEmpty
+                                                      ? const Icon(
+                                                          Icons.person,
+                                                          size: 16,
+                                                        )
+                                                      : null,
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Text(
+                                                  (msg['sendername'] ?? "User")
+                                                      .toString(),
+                                                  style: TextStyle(
+                                                    color: isDark
+                                                        ? Colors.white70
+                                                        : Colors.black54,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const Divider(height: 24),
+                                            // Display list of all users who can see this secret
+                                            if (msg['secret_users'] != null ||
+                                                msg['participants'] !=
+                                                    null) ...[
+                                              const Text(
+                                                "Shared with:",
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              SizedBox(
+                                                height: 35,
+                                                child: ListView.separated(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  itemCount:
+                                                      (msg['secret_users']
+                                                          is List)
+                                                      ? (msg['secret_users']
+                                                                as List)
+                                                            .length
+                                                      : (msg['participants']
+                                                                is List
+                                                            ? (msg['participants']
+                                                                      as List)
+                                                                  .length
+                                                            : 0),
+                                                  separatorBuilder: (_, __) =>
+                                                      const SizedBox(width: 8),
+                                                  itemBuilder: (context, i) {
+                                                    return Tooltip(
+                                                      message:
+                                                          "User ID: ${(msg['secret_users'] ?? msg['participants'])[i]}",
+                                                      child: CircleAvatar(
+                                                        radius: 16,
+                                                        backgroundColor: Colors
+                                                            .orangeAccent
+                                                            .withOpacity(0.2),
+                                                        child: const Icon(
+                                                          Icons.person,
+                                                          size: 18,
+                                                          color: Colors
+                                                              .orangeAccent,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(height: 16),
+                                            ],
+                                            if (cleanText.isNotEmpty &&
+                                                cleanText.toLowerCase() !=
+                                                    "null")
+                                              Text(
+                                                cleanText,
+                                                style: TextStyle(
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : Colors.black87,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                            const SizedBox(height: 16),
+                                            _AttachmentList(
+                                              attachments:
+                                                  msg['all_attachment'],
+                                              messageId: messageId,
+                                              msg: msg,
+                                              company_id: company_id,
+                                              isDark: isDark,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text("Close"),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                               _buildSecretAction(
                                 icon: Icons.reply_all_rounded,
