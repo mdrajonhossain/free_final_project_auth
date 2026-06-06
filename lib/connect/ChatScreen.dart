@@ -41,6 +41,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String convImg = "";
   bool _isEditing = false;
   String? _editingMsgId;
+  Map<String, dynamic>? _replyingTo;
   List<MentionUser> _mentionableUsers = [];
 
   @override
@@ -221,6 +222,11 @@ class _ChatScreenState extends State<ChatScreen> {
         chatBloc: _chatBloc,
         onScroll: _scrollToBottom,
       );
+      if (_replyingTo != null) {
+        setState(() {
+          _replyingTo = null;
+        });
+      }
     }
   }
 
@@ -373,6 +379,74 @@ participants: $participants
                           ? _buildEmptyMessages()
                           : _buildMessageList(state, appTheme),
                     ),
+                    if (_replyingTo != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.reply,
+                              color: Colors.indigoAccent,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Replying to ${_replyingTo!['sendername'] ?? 'User'}",
+                                    style: const TextStyle(
+                                      color: Colors.indigoAccent,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    () {
+                                      String text = "";
+                                      try {
+                                        text = CryptoUtils.decryptMessage(
+                                          _replyingTo!['msg_body'] ?? '',
+                                        );
+                                      } catch (e) {
+                                        text = (_replyingTo!['msg_body'] ?? '')
+                                            .toString();
+                                      }
+                                      return FormatUtils.stripHtml(text);
+                                    }(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.black54,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: isDark ? Colors.white70 : Colors.black54,
+                                size: 18,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () =>
+                                  setState(() => _replyingTo = null),
+                            ),
+                          ],
+                        ),
+                      ),
                     if (_isEditing)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -556,6 +630,14 @@ participants: $participants
             setState(() {
               _isEditing = true;
               _editingMsgId = msg['msg_id'] ?? msg['id'];
+              _replyingTo = null;
+            });
+          },
+          onReply: (m) {
+            setState(() {
+              _replyingTo = m;
+              _isEditing = false;
+              _editingMsgId = null;
             });
           },
         );
@@ -573,6 +655,7 @@ class _MessageBubble extends StatelessWidget {
   final String company_id;
   final AppThemeModel appTheme;
   final VoidCallback? onEdit;
+  final Function(dynamic)? onReply;
 
   const _MessageBubble({
     super.key,
@@ -584,6 +667,7 @@ class _MessageBubble extends StatelessWidget {
     required this.company_id,
     required this.appTheme,
     this.onEdit,
+    this.onReply,
   });
 
   @override
@@ -682,6 +766,22 @@ class _MessageBubble extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Message copied!")),
                         );
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(
+                        Icons.reply,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                      title: Text(
+                        "Reply",
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        onReply?.call(msg);
                       },
                     ),
                     // Forward functionality
