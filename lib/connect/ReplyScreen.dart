@@ -40,8 +40,10 @@ class _ReplyScreenState extends State<ReplyScreen> {
   @override
   void initState() {
     super.initState();
-    // widget.msg থেকে সরাসরি ডাটা নিয়ে নিচ্ছি যাতে শুরুতে লোডিং না দেখায়
-    _parentMsg = widget.msg;
+    // Safely cast widget.msg to Map<String, dynamic> to avoid type errors
+    if (widget.msg != null && widget.msg is Map) {
+      _parentMsg = Map<String, dynamic>.from(widget.msg);
+    }
     _fetchData();
   }
 

@@ -69,7 +69,9 @@ class _MyAppState extends State<MyApp> {
                 final args = ModalRoute.of(context)?.settings.arguments as Map?;
                 return ReplyScreen(
                   messageid: args?['messageid'] ?? "",
-                  msg: args?['msg'] ?? {},
+                  msg: args?['msg'] != null && args!['msg'] is Map
+                      ? Map<String, dynamic>.from(args['msg'])
+                      : <String, dynamic>{},
                   companyId: args?['company_id'],
                   participants: args?['participants'],
                 );
