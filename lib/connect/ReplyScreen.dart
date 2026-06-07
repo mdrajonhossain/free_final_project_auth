@@ -132,6 +132,7 @@ class _ReplyScreenState extends State<ReplyScreen> {
             [],
         replyForMsgId: widget.messageid,
         isReplyMsg: "yes",
+        isSecret: false,
       );
 
       setState(() {
@@ -314,6 +315,7 @@ class _ReplyScreenState extends State<ReplyScreen> {
                 group:
                     (_parentMsg?['participants'] as List?)?.length != null &&
                     (_parentMsg!['participants'] as List).length > 2,
+                showLockIcon: false,
                 userEmail: _parentMsg?['senderemail']?.toString(),
                 mentionableUsers: _mentionableUsers,
               ),

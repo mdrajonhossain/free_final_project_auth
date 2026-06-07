@@ -20,6 +20,7 @@ class ChatInput extends StatefulWidget {
   final ChatBloc chatBloc;
   final Function(List<Map<String, dynamic>>) onAttachmentsPicked;
   final bool showAttachmentIcon;
+  final bool showLockIcon;
   final bool group;
   final List<MentionUser> mentionableUsers;
 
@@ -37,6 +38,7 @@ class ChatInput extends StatefulWidget {
     this.userEmail,
     this.mentionableUsers = const [],
     this.showAttachmentIcon = true,
+    this.showLockIcon = true,
   });
 
   @override
@@ -96,7 +98,7 @@ class _ChatInputState extends State<ChatInput> {
                         child: Row(
                           children: [
                             // LOCK ICON
-                            widget.group
+                            (widget.group && widget.showLockIcon)
                                 ? Row(
                                     children: [
                                       const SizedBox(width: 14),
