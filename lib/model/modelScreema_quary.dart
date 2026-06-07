@@ -128,93 +128,174 @@ query Me {
 """;
 
 const String messageQuery = """
-query Message(\$msg_id: String!) {
-    message(msg_id: \$msg_id) {
-        msg {
-            conversation_id
-            msg_id
-            sender
-            senderemail
-            senderimg
-            fnln
-            sendername
-            msg_body
-            unread_reply
-            call_duration
-            call_msg
-            call_type
-            call_status
-            call_sender_ip
-            call_sender_device
-            call_receiver_ip
-            call_receiver_device
-            call_server_addr
-            msg_type
-            reply_for_msgid
-            last_reply_name
-            is_reply_msg
-            root_msg_id
-            activity_id
-            url_favicon
-            url_base_title
-            url_title
-            url_body
-            url_image
-            has_timer
-            edit_status
-            last_update_user
-            conference_id
-            forward_by
-            msg_text
-            img_url
-            edit_history
-            root_conv_id
-            user_tag_string
-            company_id
-            task_id
-            referenceId
-            reference_type
-            file_group
-            cost_id
-            sender_is_active
-            task_start_date
-            task_due_date
-            updatedmsgid
-            old_created_time
-            has_delivered
-            has_reply
-            has_reply_attach
-            call_running
-            call_server_switch
-            is_secret
-            participants
-            call_participants
-            has_flagged
-            msg_status
-            attch_imgfile
-            attch_audiofile
-            attch_videofile
-            attch_otherfile
-            edit_seen
-            has_delete
-            has_hide
-            has_tag_text
-            tag_list
-            issue_accept_user
-            secret_user
-            mention_user
-            has_star
-            assign_to
-            task_observers
-            created_at
-            last_reply_time
-            last_update_time
-            forward_at
-            conv_title
-            conv_img
-            short_id
+query message(\$msg_id: String!) {
+  message(msg_id: \$msg_id) {
+    msg {
+      conversation_id
+      company_id
+      participants
+      msg_id
+      msg_body
+      edit_history
+      msg_type
+      is_secret
+      cost_id
+      file_group
+      task_id
+      img_url
+      has_tag_text
+      task_data {
+        _id
+        project_id
+        project_title
+        project_img
+        conversation_id
+        conversation_name
+        conversation_img
+        key_words
+        msg_id
+        task_title
+        start_date
+        end_date
+        due_time
+        progress
+        status
+        notes
+        description
+        description_by
+        description_at
+        assign_to
+        assign_at
+        observers
+        forecasted_cost
+        actual_cost
+        cost_variance
+        forecasted_hours
+        actual_hours
+        hours_variance
+        repeat_task
+        repeat_until
+        priority
+        is_archive
+        review
+        created_by
+        created_at
+        last_updated_at
+        company_id
+        participants
+        view_status
+        view_cost
+        view_hour
+        view_description
+        view_note
+        view_checklist
+        view_update
+        review_status
+        flag
+        has_delete
+        owned_by
+        owned_status
+        owned_at
+        __typename
+      }
+      all_attachment {
+        id
+        conversation_id
+        conversation_title
+        user_id
+        msg_id
+        bucket
+        file_type
+        key
+        location
+        originalname
+        file_size
+        has_tag
+        root_conv_id
+        url_short_id
+        file_category
+        main_msg_id
+        company_id
+        referenceId
+        reference_type
+        uploaded_by
+        is_delete
+        is_secret
+        created_at
+        has_delete
+        tag_list
+        mention_user
+        secret_user
+        participants
+        star
+        tag_list_with_user {
+          tag_id
+          created_by
+          __typename
         }
+        tag_list_details {
+          tag_id
+          tagged_by
+          title
+          company_id
+          type
+          shared_tag
+          visibility
+          tag_type
+          tag_color
+          team_list
+          created_at
+          update_at
+          __typename
+        }
+        __typename
+      }
+      fnln
+      is_reply_msg
+      sender_is_active
+      created_at
+      forward_by
+      has_emoji {
+        grinning
+        joy
+        open_mouth
+        disappointed_relieved
+        rage
+        thumbsup
+        heart
+        folded_hands
+        check_mark
+        __typename
+      }
+      has_reply_attach
+      has_reply
+      has_delete
+      last_reply_name
+      last_reply_time
+      has_flagged
+      senderimg
+      sendername
+      secret_user
+      reply_for_msgid
+      participants
+      sender
+      senderemail
+      url_base_title
+      url_title
+      url_body
+      link_data {
+        url_id
+        url
+        title
+        msg_id
+        conversation_id
+        user_id
+        __typename
+      }
+      __typename
     }
+    __typename
+  }
 }
 """;
 
@@ -310,7 +391,7 @@ query Messages(\$conversationId: String!, \$page: Int!) {
             # edit_history
             # root_conv_id
             # user_tag_string
-            # company_id
+            company_id
             # task_id
             # referenceId
             # reference_type
@@ -327,7 +408,7 @@ query Messages(\$conversationId: String!, \$page: Int!) {
             # call_running
             # call_server_switch
             is_secret
-            # participants
+            participants
             # call_participants
             # has_flagged
             # msg_status
@@ -791,6 +872,175 @@ query Get_notifications(\$read_status: String!, \$page: Int) {
       total
       __typename
     }
+  }
+}
+""";
+
+const String replyMessagesQuery = """
+query reply_messages(\$msg_id: String!, \$page: Int!) {
+  reply_messages(msg_id: \$msg_id, page: \$page) {
+    msgs {
+      conversation_id
+      msg_id
+      msg_body
+      edit_history
+      msg_type
+      is_secret
+      cost_id
+      file_group
+      task_id
+      img_url
+      has_tag_text
+      task_data {
+        _id
+        project_id
+        project_title
+        project_img
+        conversation_id
+        conversation_name
+        conversation_img
+        key_words
+        msg_id
+        task_title
+        start_date
+        end_date
+        due_time
+        progress
+        status
+        notes
+        description
+        description_by
+        description_at
+        assign_to
+        assign_at
+        observers
+        forecasted_cost
+        actual_cost
+        cost_variance
+        forecasted_hours
+        actual_hours
+        hours_variance
+        repeat_task
+        repeat_until
+        priority
+        is_archive
+        review
+        created_by
+        created_at
+        last_updated_at
+        company_id
+        participants
+        view_status
+        view_cost
+        view_hour
+        view_description
+        view_note
+        view_checklist
+        view_update
+        review_status
+        flag
+        has_delete
+        owned_by
+        owned_status
+        owned_at        
+      }
+      all_attachment {
+        id
+        conversation_id
+        conversation_title
+        user_id
+        msg_id
+        bucket
+        file_type
+        key
+        location
+        originalname
+        file_size
+        has_tag
+        root_conv_id
+        url_short_id
+        file_category
+        main_msg_id
+        company_id
+        referenceId
+        reference_type
+        uploaded_by
+        is_delete
+        is_secret
+        created_at
+        has_delete
+        tag_list
+        mention_user
+        secret_user
+        participants
+        star
+        tag_list_with_user {
+          tag_id
+          created_by          
+        }
+        tag_list_details {
+          tag_id
+          tagged_by
+          title
+          company_id
+          type
+          shared_tag
+          visibility
+          tag_type
+          tag_color
+          team_list
+          created_at
+          update_at         
+        }        
+      }
+      fnln
+      is_reply_msg
+      sender_is_active
+      created_at
+      forward_by
+      has_emoji {
+        grinning
+        joy
+        open_mouth
+        disappointed_relieved
+        rage
+        thumbsup
+        heart
+        folded_hands
+        check_mark
+        __typename
+      }
+      has_reply_attach
+      has_reply
+      has_delete
+      last_reply_name
+      last_reply_time
+      has_flagged
+      senderimg
+      sendername
+      secret_user
+      reply_for_msgid
+      participants
+      sender
+      senderemail
+      url_base_title
+      url_title
+      url_body
+      link_data {
+        url_id
+        url
+        title
+        msg_id
+        conversation_id
+        user_id
+        __typename
+      }      
+    }
+    pagination {
+      page
+      totalPages
+      total     
+    }    
   }
 }
 """;

@@ -20,6 +20,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatMessageEdited>(_onMessageEdited);
     on<ChatMessageDeleted>(_onMessageDeleted);
     on<ChatMessageTagsUpdated>(_onMessageTagsUpdated); // Add this handler
+    on<ChatParentMessageMetadataUpdated>(_onParentMessageMetadataUpdated);
     on<ChatFileStarred>(_onFileStarred);
   }
 
@@ -244,6 +245,31 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     } catch (e) {
       event.onError?.call(e);
       emit(state.copyWith(error: e.toString()));
+    }
+  }
+
+  void _onParentMessageMetadataUpdated(
+    ChatParentMessageMetadataUpdated event,
+    Emitter<ChatState> emit,
+  ) {
+    final List updatedMessages = List.from(state.messages);
+    final int index = updatedMessages.indexWhere(
+      (m) => (m['msg_id'] ?? m['id']).toString() == event.msgId,
+    );
+
+    if (index != -1) {
+      final Map<String, dynamic> msg = Map<String, dynamic>.from(
+        updatedMessages[index],
+      );
+      final int currentCount =
+          int.tryParse(msg['has_reply']?.toString() ?? '0') ?? 0;
+
+      msg['has_reply'] = currentCount + 1;
+      msg['last_reply_name'] = event.lastReplyName;
+      msg['last_reply_time'] = event.lastReplyTime;
+
+      updatedMessages[index] = msg;
+      emit(state.copyWith(messages: updatedMessages));
     }
   }
 
@@ -500,4 +526,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         isSecretVal?.toString() == '1';
     return msg;
   }
+}
+
+class ChatParentMessageMetadataUpdated extends ChatEvent {
+  final String msgId;
+  final String lastReplyName;
+  final String lastReplyTime;
+
+  ChatParentMessageMetadataUpdated({
+    required this.msgId,
+    required this.lastReplyName,
+    required this.lastReplyTime,
+  });
 }

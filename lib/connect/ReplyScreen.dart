@@ -13,8 +13,16 @@ import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 class ReplyScreen extends StatefulWidget {
   final String messageid;
   final dynamic msg;
+  final String? companyId;
+  final dynamic participants;
 
-  const ReplyScreen({super.key, required this.messageid, required this.msg});
+  const ReplyScreen({
+    super.key,
+    required this.messageid,
+    required this.msg,
+    this.companyId,
+    this.participants,
+  });
 
   @override
   State<ReplyScreen> createState() => _ReplyScreenState();
@@ -22,6 +30,7 @@ class ReplyScreen extends StatefulWidget {
 
 class _ReplyScreenState extends State<ReplyScreen> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final ApiServer _apiServer = ApiServer();
   bool _isLoading = true;
   Map<String, dynamic>? _parentMsg;
@@ -31,40 +40,69 @@ class _ReplyScreenState extends State<ReplyScreen> {
   @override
   void initState() {
     super.initState();
+    // widget.msg থেকে সরাসরি ডাটা নিয়ে নিচ্ছি যাতে শুরুতে লোডিং না দেখায়
+    _parentMsg = widget.msg;
     _fetchData();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _fetchData() async {
     setState(() => _isLoading = true);
     try {
-      // Fetch specific message details using the message_id query
-      final msgData = await _apiServer.fetchSingleMessage(widget.messageid);
+      // প্যারেন্ট মেসেজের তথ্য যদি ইনকমপ্লিট থাকে (যেমন conversation_id বা participants না থাকা),
+      // তবে সেটি API এর মাধ্যমে ফেচ করে নেয়া।
+      if (_parentMsg == null ||
+          _parentMsg!['conversation_id'] == null ||
+          _parentMsg!['company_id'] == null ||
+          _parentMsg!['participants'] == null) {
+        final fullMsg = await _apiServer.fetchSingleMessage(widget.messageid);
+        if (mounted) {
+          setState(() {
+            _parentMsg = fullMsg;
+          });
+        }
+      }
 
-      // Load conversation messages to filter for threaded replies
-      final convId = msgData['conversation_id'];
-      final chatData = await _apiServer.fetchMessages(convId);
-      final List allMsgs = chatData['msgs'] ?? [];
+      // নির্দিষ্ট মেসেজের থ্রেডেড রিপ্লাইগুলো ফেচ করা
+      final replyData = await _apiServer.fetchReplyMessages(widget.messageid);
+      final List msgs = replyData['msgs'] ?? [];
 
-      setState(() {
-        _parentMsg = msgData;
-        _replies = allMsgs
-            .where((m) => m['reply_for_msgid']?.toString() == widget.messageid)
-            .toList();
-        _isLoading = false;
-      });
-      _fetchMentionableUsers();
+      if (mounted) {
+        setState(() {
+          _replies = msgs;
+          _scrollToBottom();
+        });
+      }
     } catch (e) {
       debugPrint("Error fetching replies: $e");
-      setState(() {
-        _parentMsg = widget.msg;
-        _isLoading = false;
-      });
-      _fetchMentionableUsers();
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _fetchMentionableUsers();
+      }
     }
   }
 
   Future<void> _fetchMentionableUsers() async {
-    if (_parentMsg == null) return;
+    if (_parentMsg == null || _parentMsg!['company_id'] == null) return;
     final companyId = _parentMsg!['company_id']?.toString() ?? "";
     if (companyId.isEmpty) return;
 
@@ -72,7 +110,8 @@ class _ReplyScreenState extends State<ReplyScreen> {
       final List<Map<String, dynamic>> users = await _apiServer.fetchAllUsers(
         companyId,
       );
-      final String myId = (await _apiServer.fetchMe())['id'].toString();
+      final String myId = context.read<ChatBloc>().state.myId;
+
       final List pList = _parentMsg!['participants'] is List
           ? _parentMsg!['participants']
           : [];
@@ -116,28 +155,89 @@ class _ReplyScreenState extends State<ReplyScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty || _parentMsg == null) return;
 
+    final chatState = context.read<ChatBloc>().state;
+    final String myId = chatState.myId;
+
+    // Ensure we have the necessary conversation metadata
+    final String cid = widget.companyId ?? _parentMsg?['company_id'] ?? "";
+
+    List<String> partList = [];
+    if (widget.participants != null) {
+      if (widget.participants is List) {
+        partList = List<String>.from(
+          widget.participants.map((e) => e.toString()),
+        );
+      } else {
+        partList = [widget.participants.toString()];
+      }
+    } else if (_parentMsg?['participants'] != null) {
+      partList = List<String>.from(
+        (_parentMsg!['participants'] as List).map((e) => e.toString()),
+      );
+    }
+
+    if (cid.isEmpty || partList.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error: Missing conversation metadata.")),
+      );
+      return;
+    }
+
     final encryptedText = CryptoUtils.encryptMessage(text);
-    final String myId = (await _apiServer.fetchMe())['id'].toString();
 
     try {
       final response = await _apiServer.sendMessage(
         msgBody: encryptedText,
-        conversationId: _parentMsg!['conversation_id'],
-        companyId: _parentMsg!['company_id'] ?? "",
+        conversationId: _parentMsg?['conversation_id']?.toString() ?? "",
+        companyId: cid,
         senderId: myId,
-        participants:
-            (_parentMsg!['participants'] as List?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [],
+        participants: partList,
+        replyms: "yes",
         replyForMsgId: widget.messageid,
         isReplyMsg: "yes",
         isSecret: false,
       );
 
       setState(() {
-        _replies.add(response);
+        // Enrich the response with local user info for immediate UI update
+        final newReply = {
+          ...response,
+          'sender': myId,
+          'sendername':
+              "${chatState.userData?['firstname'] ?? ''} ${chatState.userData?['lastname'] ?? ''}"
+                  .trim(),
+          'senderimg': chatState.userData?['img'],
+          'created_at': DateTime.now().toIso8601String(),
+        };
+        _replies.add(newReply);
+
+        // Update parent message metadata locally for instant UI update in the header
+        if (_parentMsg != null) {
+          final int currentCount =
+              int.tryParse(_parentMsg!['has_reply']?.toString() ?? '0') ?? 0;
+          _parentMsg = {
+            ..._parentMsg!,
+            'has_reply': currentCount + 1,
+            'last_reply_name':
+                "${chatState.userData?['firstname'] ?? ''} ${chatState.userData?['lastname'] ?? ''}"
+                    .trim(),
+            'last_reply_time': DateTime.now().toIso8601String(),
+          };
+        }
+
+        // Trigger Bloc update for ChatScreen to reflect the new reply count/info in the message list
+        context.read<ChatBloc>().add(
+          ChatParentMessageMetadataUpdated(
+            msgId: widget.messageid,
+            lastReplyName:
+                "${chatState.userData?['firstname'] ?? ''} ${chatState.userData?['lastname'] ?? ''}"
+                    .trim(),
+            lastReplyTime: DateTime.now().toIso8601String(),
+          ),
+        );
+
         _controller.clear();
+        _scrollToBottom();
       });
     } catch (e) {
       ScaffoldMessenger.of(
@@ -207,31 +307,51 @@ class _ReplyScreenState extends State<ReplyScreen> {
                 decoration: BoxDecoration(
                   color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white12
+                        : Colors.black.withOpacity(0.05),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 4,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: appTheme.accentColor,
-                        borderRadius: BorderRadius.circular(50),
-                      ),
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white12,
+                      backgroundImage: parentImg.isNotEmpty
+                          ? NetworkImage(parentImg)
+                          : null,
+                      child: parentImg.isEmpty
+                          ? const Icon(Icons.person, color: Colors.white)
+                          : null,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            parentName,
-                            style: TextStyle(
-                              color: appTheme.accentColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                parentName,
+                                style: TextStyle(
+                                  color: appTheme.accentColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Text(
+                                FormatUtils.formatTime(
+                                  _parentMsg?['created_at']?.toString(),
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 5),
                           Text(
@@ -241,6 +361,47 @@ class _ReplyScreenState extends State<ReplyScreen> {
                               fontSize: 14,
                             ),
                           ),
+                          if ((int.tryParse(
+                                    _parentMsg?['has_reply']?.toString() ?? '0',
+                                  ) ??
+                                  0) >
+                              0)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: appTheme.accentColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.forum_outlined,
+                                      size: 14,
+                                      color: appTheme.accentColor,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        "Threaded chat (${_parentMsg?['has_reply'] ?? 0}) • Last reply ${FormatUtils.formatTime(_parentMsg?['last_reply_time']?.toString())} from ${_parentMsg?['last_reply_name'] ?? 'Someone'}",
+                                        style: TextStyle(
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.black87,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -261,9 +422,18 @@ class _ReplyScreenState extends State<ReplyScreen> {
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
+                        controller: _scrollController,
                         itemCount: _replies.length,
                         itemBuilder: (context, index) {
                           final reply = _replies[index];
+                          final String myId = context
+                              .read<ChatBloc>()
+                              .state
+                              .myId;
+                          final bool isMe = reply['sender']?.toString() == myId;
+                          final String senderImg =
+                              reply['senderimg']?.toString() ?? "";
+
                           String replyBody = "";
                           try {
                             replyBody = CryptoUtils.decryptMessage(
@@ -274,28 +444,119 @@ class _ReplyScreenState extends State<ReplyScreen> {
                           }
                           replyBody = FormatUtils.stripHtml(replyBody);
 
-                          return Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.all(14),
-                              constraints: const BoxConstraints(maxWidth: 280),
-                              decoration: BoxDecoration(
-                                color: appTheme.accentColor,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(18),
-                                  topRight: const Radius.circular(6),
-                                  bottomLeft: const Radius.circular(18),
-                                  bottomRight: const Radius.circular(18),
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              mainAxisAlignment: isMe
+                                  ? MainAxisAlignment.end
+                                  : MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (!isMe)
+                                  CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor: Colors.white12,
+                                    backgroundImage: senderImg.isNotEmpty
+                                        ? NetworkImage(senderImg)
+                                        : null,
+                                    child: senderImg.isEmpty
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 14,
+                                            color: Colors.white,
+                                          )
+                                        : null,
+                                  ),
+                                if (!isMe) const SizedBox(width: 8),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: isMe
+                                        ? CrossAxisAlignment.end
+                                        : CrossAxisAlignment.start,
+                                    children: [
+                                      if (!isMe)
+                                        Text(
+                                          (reply['sendername'] ?? 'User')
+                                              .toString(),
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 4),
+                                        padding: const EdgeInsets.all(12),
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 260,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isMe
+                                              ? appTheme.msgSenderBubble
+                                              : appTheme.msgReceiverBubble,
+                                          borderRadius: BorderRadius.only(
+                                            topLeft: Radius.circular(
+                                              isMe ? 18 : 4,
+                                            ),
+                                            topRight: Radius.circular(
+                                              isMe ? 4 : 18,
+                                            ),
+                                            bottomLeft: const Radius.circular(
+                                              18,
+                                            ),
+                                            bottomRight: const Radius.circular(
+                                              18,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              replyBody,
+                                              style: TextStyle(
+                                                color: isMe
+                                                    ? appTheme.msgSenderText
+                                                    : appTheme.msgReceiverText,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              FormatUtils.formatTime(
+                                                reply['created_at']?.toString(),
+                                              ),
+                                              style: TextStyle(
+                                                color: isMe
+                                                    ? Colors.white70
+                                                    : Colors.grey,
+                                                fontSize: 9,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                replyBody,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
+                                if (isMe) const SizedBox(width: 8),
+                                if (isMe)
+                                  CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor: appTheme.accentColor
+                                        .withOpacity(0.3),
+                                    backgroundImage: senderImg.isNotEmpty
+                                        ? NetworkImage(senderImg)
+                                        : null,
+                                    child: senderImg.isEmpty
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 14,
+                                            color: Colors.white,
+                                          )
+                                        : null,
+                                  ),
+                              ],
                             ),
                           );
                         },

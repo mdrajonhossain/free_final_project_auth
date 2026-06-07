@@ -66,12 +66,12 @@ class _MyAppState extends State<MyApp> {
                   AllFlaggedMessage(isDark: true, onThemeChange: (val) {}),
               '/switchAccount': (context) => const SwitchAccount(),
               '/replyScreen': (context) {
-                final args =
-                    ModalRoute.of(context)?.settings.arguments
-                        as Map<String, dynamic>?;
+                final args = ModalRoute.of(context)?.settings.arguments as Map?;
                 return ReplyScreen(
                   messageid: args?['messageid'] ?? "",
                   msg: args?['msg'] ?? {},
+                  companyId: args?['company_id'],
+                  participants: args?['participants'],
                 );
               },
               '/allnotification': (context) =>

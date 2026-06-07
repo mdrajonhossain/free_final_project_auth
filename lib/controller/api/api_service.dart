@@ -425,6 +425,7 @@ class ApiServer {
     required String companyId,
     required String senderId,
     required List<String> participants,
+    String? replyms,
     String msgType = "text",
     bool flagged = false,
     String? replyForMsgId,
@@ -436,6 +437,7 @@ class ApiServer {
     List<String>? secretUsers,
     String? msgTitle,
   }) async {
+    if (replyms != null) isReplyMsg = replyms;
     try {
       final variables = {
         "input": {
@@ -1061,6 +1063,25 @@ class ApiServer {
     } catch (e) {
       debugPrint("Archive Error: $e");
       return {"status": false, "message": e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchReplyMessages(
+    String msgId, {
+    int page = 1,
+  }) async {
+    try {
+      final data = await ApiServer.call(
+        replyMessagesQuery,
+        variables: {"msg_id": msgId, "page": page},
+      );
+      final dynamic replies = data['reply_messages'];
+      if (replies != null && replies is Map) {
+        return Map<String, dynamic>.from(replies);
+      }
+      throw const GqlException("Reply messages data not found");
+    } catch (e) {
+      throw GqlException("Network error: Please check your connection.");
     }
   }
 }

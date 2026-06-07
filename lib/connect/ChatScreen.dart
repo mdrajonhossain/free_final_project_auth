@@ -52,8 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args =
-          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args = ModalRoute.of(context)?.settings.arguments as Map?;
       if (args != null) {
         setState(() {
           conversationId = args['conversation_id']?.toString() ?? "";
@@ -618,6 +617,7 @@ participants: $participants
           isMe: isMe,
           index: index,
           conversationId: conversationId,
+          participants: participants,
           company_id: company_id,
           appTheme: appTheme,
           onEdit: () {
@@ -653,6 +653,7 @@ class _MessageBubble extends StatelessWidget {
   final bool isMe;
   final int index;
   final String conversationId;
+  final dynamic participants;
   final String company_id;
   final AppThemeModel appTheme;
   final VoidCallback? onEdit;
@@ -665,6 +666,7 @@ class _MessageBubble extends StatelessWidget {
     required this.isMe,
     required this.index,
     required this.conversationId,
+    required this.participants,
     required this.company_id,
     required this.appTheme,
     this.onEdit,
@@ -788,6 +790,8 @@ class _MessageBubble extends StatelessWidget {
                             builder: (context) => ReplyScreen(
                               messageid: msg['msg_id'] ?? msg['id'] ?? 'msg',
                               msg: msg,
+                              companyId: company_id,
+                              participants: participants,
                             ),
                           ),
                         );
@@ -1320,7 +1324,12 @@ class _MessageBubble extends StatelessWidget {
                                   Navigator.pushNamed(
                                     context,
                                     '/replyScreen',
-                                    arguments: {'messageid': msgId, 'msg': msg},
+                                    arguments: {
+                                      'messageid': msgId,
+                                      'msg': msg,
+                                      'company_id': company_id,
+                                      'participants': participants,
+                                    },
                                   );
                                 },
                                 child: Container(
