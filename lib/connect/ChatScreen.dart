@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/PopUpFile/ForwardMessageScreen.dart';
 import 'package:freeli/connect/PopUpFile/UserProfilePopup.dart';
+import 'package:freeli/connect/ReplyScreen.dart';
 import 'package:freeli/theme/themeList.dart';
 import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:freeli/connect/PopUpFile/PublicTag.dart';
@@ -781,7 +782,15 @@ class _MessageBubble extends StatelessWidget {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        onReply?.call(msg);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ReplyScreen(
+                              messageid: msg['msg_id'] ?? msg['id'] ?? 'msg',
+                              msg: msg,
+                            ),
+                          ),
+                        );
                       },
                     ),
                     // Forward functionality

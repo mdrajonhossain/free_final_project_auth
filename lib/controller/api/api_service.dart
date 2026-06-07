@@ -247,6 +247,22 @@ class ApiServer {
     }
   }
 
+  Future<Map<String, dynamic>> fetchSingleMessage(String msgId) async {
+    try {
+      final data = await ApiServer.call(
+        messageQuery,
+        variables: {"msg_id": msgId},
+      );
+      final dynamic messageData = data['message'];
+      if (messageData != null && messageData['msg'] is Map) {
+        return Map<String, dynamic>.from(messageData['msg']);
+      }
+      throw const GqlException("Message not found");
+    } catch (e) {
+      throw GqlException("Error fetching message: ${e.toString()}");
+    }
+  }
+
   Future<Map<String, dynamic>> fetchMessages(
     String conversationId, {
     int page = 1,
@@ -411,6 +427,7 @@ class ApiServer {
     required List<String> participants,
     String msgType = "text",
     bool flagged = false,
+    String? replyForMsgId,
     String isReplyMsg = "no",
     Map<String, dynamic>? attachFiles,
     List<String>? tags,
@@ -432,7 +449,7 @@ class ApiServer {
           "flagged": flagged,
           "referenceId": "",
           "reference_type": "",
-          "reply_for_msgid": "",
+          "reply_for_msgid": replyForMsgId ?? "",
           "is_secret": isSecret,
           if (secretUsers != null) "secret_user": secretUsers,
           if (msgTitle != null) "msg_title": msgTitle,

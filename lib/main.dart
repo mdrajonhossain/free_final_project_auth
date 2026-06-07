@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/AllFlagged/AllFlaggedMessage.dart';
 import 'package:freeli/connect/All_Notification/All_Notification.dart';
 import 'package:freeli/connect/ChangePassword/ChangePassword.dart';
+import 'package:freeli/connect/ReplyScreen.dart';
 import 'package:freeli/connect/archiveroom/archiveroom.dart';
 import 'package:freeli/connect/filehubs/filehubs.dart';
 import 'package:freeli/connect/filehubs_Room/RoomFilehubs.dart';
@@ -64,6 +65,15 @@ class _MyAppState extends State<MyApp> {
               '/allFlaggedMessage': (context) =>
                   AllFlaggedMessage(isDark: true, onThemeChange: (val) {}),
               '/switchAccount': (context) => const SwitchAccount(),
+              '/replyScreen': (context) {
+                final args =
+                    ModalRoute.of(context)?.settings.arguments
+                        as Map<String, dynamic>?;
+                return ReplyScreen(
+                  messageid: args?['messageid'] ?? "",
+                  msg: args?['msg'] ?? {},
+                );
+              },
               '/allnotification': (context) =>
                   AllNotificationPage(isDark: true, onThemeChange: (val) {}),
             },
