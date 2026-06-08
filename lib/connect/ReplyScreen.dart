@@ -7,6 +7,9 @@ import 'package:freeli/connect/PopUpFile/UserProfilePopup.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/connect/PopUpFile/PublicTag.dart';
+import 'package:freeli/connect/file_utils.dart';
+import 'package:freeli/connect/FullImageViewer.dart';
 import 'package:freeli/connect/ChatSkeleton.dart';
 import 'package:freeli/connect/ChatInput.dart';
 import 'package:freeli/connect/mention_input.dart';
@@ -38,6 +41,7 @@ class _ReplyScreenState extends State<ReplyScreen> {
   Map<String, dynamic>? _parentMsg;
   List<dynamic> _replies = [];
   List<MentionUser> _mentionableUsers = [];
+  List<Map<String, dynamic>> _selectedFiles = [];
 
   @override
   void initState() {
@@ -200,6 +204,62 @@ class _ReplyScreenState extends State<ReplyScreen> {
 
     final encryptedText = CryptoUtils.encryptMessage(text);
 
+    Map<String, dynamic>? attachFiles;
+    List<Map<String, dynamic>>? allAttachment;
+
+    if (_selectedFiles.isNotEmpty) {
+      List<String> imgFiles = [];
+      List<String> audioFiles = [];
+      List<String> videoFiles = [];
+      List<String> otherFiles = [];
+      List<Map<String, dynamic>> sanitizedAllFiles = [];
+
+      for (var file in _selectedFiles) {
+        final String bucket = file['bucket'] ?? '';
+        final String key = file['key'] ?? '';
+        final String path = (bucket.isNotEmpty && key.isNotEmpty)
+            ? "$bucket/$key"
+            : "";
+        String mimeType = file['mimetype'] ?? file['contentType'] ?? '';
+        int fileSize = int.tryParse(file['size']?.toString() ?? '0') ?? 0;
+
+        if (mimeType.startsWith('image/')) {
+          imgFiles.add(path);
+        } else if (mimeType.startsWith('audio/')) {
+          audioFiles.add(path);
+        } else if (mimeType.startsWith('video/')) {
+          videoFiles.add(path);
+        } else {
+          otherFiles.add(path);
+        }
+
+        sanitizedAllFiles.add({
+          "originalname": file['originalname'] ?? "",
+          "mimetype": mimeType,
+          "voriginalName":
+              file['voriginalName'] ?? file['voriginal_name'] ?? "",
+          "size": fileSize,
+          "bucket": bucket,
+          "key": key,
+          "acl": file['acl'] ?? "public-read",
+          "referenceId": "",
+          "reference_type": "",
+        });
+      }
+
+      attachFiles = {
+        "imgfile": imgFiles,
+        "audiofile": audioFiles,
+        "videofile": videoFiles,
+        "otherfile": otherFiles,
+        "allfiles": sanitizedAllFiles,
+      };
+
+      allAttachment = sanitizedAllFiles
+          .map((_) => {"tag_list": [], "has_tag": "N"})
+          .toList();
+    }
+
     try {
       final response = await _apiServer.sendMessage(
         msgBody: encryptedText,
@@ -211,6 +271,8 @@ class _ReplyScreenState extends State<ReplyScreen> {
         replyForMsgId: widget.messageid,
         isReplyMsg: "yes",
         isSecret: false,
+        attachFiles: attachFiles,
+        allAttachment: allAttachment,
       );
 
       setState(() {
@@ -252,6 +314,7 @@ class _ReplyScreenState extends State<ReplyScreen> {
         );
 
         _controller.clear();
+        _selectedFiles = [];
         _scrollToBottom();
       });
     } catch (e) {
@@ -373,6 +436,16 @@ class _ReplyScreenState extends State<ReplyScreen> {
                             parentBody,
                             isDark ? Colors.white : Colors.black87,
                             14,
+                          ),
+                          _AttachmentList(
+                            // Calling the widget constructor
+                            attachments: _parentMsg?['all_attachment'],
+                            messageId: "parent-${widget.messageid}",
+                            msg: _parentMsg,
+                            company_id:
+                                widget.companyId ??
+                                (_parentMsg?['company_id']?.toString() ?? ""),
+                            isDark: isDark,
                           ),
                           if ((int.tryParse(
                                     _parentMsg?['has_reply']?.toString() ?? '0',
@@ -532,6 +605,19 @@ class _ReplyScreenState extends State<ReplyScreen> {
                                                   : appTheme.msgReceiverText,
                                               13,
                                             ),
+                                            _AttachmentList(
+                                              // Calling the widget constructor
+                                              attachments:
+                                                  reply['all_attachment'],
+                                              messageId: "reply-$index",
+                                              msg: reply,
+                                              company_id:
+                                                  widget.companyId ??
+                                                  (_parentMsg?['company_id']
+                                                          ?.toString() ??
+                                                      ""),
+                                              isDark: isDark,
+                                            ),
                                             const SizedBox(height: 4),
                                             Text(
                                               FormatUtils.formatTime(
@@ -574,12 +660,50 @@ class _ReplyScreenState extends State<ReplyScreen> {
                       ),
               ),
 
+              if (_selectedFiles.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.05),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.attach_file,
+                        color: Colors.blueAccent,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "${_selectedFiles.length} file(s) selected",
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () => setState(() => _selectedFiles = []),
+                      ),
+                    ],
+                  ),
+                ),
+
               /// Reply Input
               ChatInput(
                 controller: _controller,
                 onSend: _sendReply,
                 companyId: _parentMsg?['company_id']?.toString() ?? "",
-                onAttachmentsPicked: (results) {},
+                onAttachmentsPicked: (results) {
+                  setState(() {
+                    _selectedFiles = results;
+                  });
+                },
                 conversationId:
                     _parentMsg?['conversation_id']?.toString() ?? "",
                 participants: _parentMsg?['participants'] ?? [],
@@ -590,6 +714,55 @@ class _ReplyScreenState extends State<ReplyScreen> {
                 showLockIcon: false,
                 userEmail: _parentMsg?['senderemail']?.toString(),
                 mentionableUsers: _mentionableUsers,
+                onMessageSentFromPopup: (newReply) {
+                  final chatState = context.read<ChatBloc>().state;
+                  final String myId = chatState.myId;
+                  setState(() {
+                    // Enrich and add to local replies list
+                    final enrichedReply = {
+                      ...newReply,
+                      'sender': myId,
+                      'sendername':
+                          "${chatState.userData?['firstname'] ?? ''} ${chatState.userData?['lastname'] ?? ''}"
+                              .trim(),
+                      'senderimg': chatState.userData?['img'],
+                      'created_at': DateTime.now().toIso8601String(),
+                    };
+                    _replies.add(enrichedReply);
+
+                    // Update local parent message metadata
+                    if (_parentMsg != null) {
+                      final int currentCount =
+                          int.tryParse(
+                            _parentMsg!['has_reply']?.toString() ?? '0',
+                          ) ??
+                          0;
+                      _parentMsg = {
+                        ..._parentMsg!,
+                        'has_reply': currentCount + 1,
+                        'last_reply_name':
+                            "${chatState.userData?['firstname'] ?? ''} ${chatState.userData?['lastname'] ?? ''}"
+                                .trim(),
+                        'last_reply_time': DateTime.now().toIso8601String(),
+                      };
+                    }
+
+                    // Notify the main ChatBloc about the metadata change
+                    context.read<ChatBloc>().add(
+                      ChatParentMessageMetadataUpdated(
+                        msgId: widget.messageid,
+                        lastReplyName:
+                            "${chatState.userData?['firstname'] ?? ''} ${chatState.userData?['lastname'] ?? ''}"
+                                .trim(),
+                        lastReplyTime: DateTime.now().toIso8601String(),
+                      ),
+                    );
+
+                    _scrollToBottom();
+                  });
+                },
+                isReplyMsg: "yes",
+                replyForMsgId: widget.messageid,
               ),
             ],
           ),
@@ -670,6 +843,313 @@ class _ReplyScreenState extends State<ReplyScreen> {
       TextSpan(
         style: TextStyle(color: textColor, fontSize: fontSize),
         children: spans,
+      ),
+    );
+  }
+}
+
+class _AttachmentList extends StatelessWidget {
+  final dynamic attachments;
+  final String messageId;
+  final dynamic msg;
+  final String company_id;
+  final bool isDark;
+
+  const _AttachmentList({
+    required this.attachments,
+    required this.messageId,
+    required this.msg,
+    required this.company_id,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (attachments == null || attachments is! List || attachments.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        ...attachments.asMap().entries.map((entry) {
+          final int index = entry.key;
+          final dynamic file = entry.value;
+          final String originalName = file['originalname'] ?? "File";
+          final String location = file['location'] ?? "";
+
+          if (location.isEmpty || !location.contains('.')) {
+            return const SizedBox.shrink();
+          }
+
+          final String extension = location
+              .split('?')
+              .first
+              .split('.')
+              .last
+              .toLowerCase();
+
+          final bool isImage = [
+            'jpg',
+            'jpeg',
+            'png',
+            'gif',
+            'webp',
+          ].contains(extension);
+          final String fullUrl = location.startsWith('http')
+              ? location
+              : "https://wfss001.freeli.io/$location";
+
+          if (isImage) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Column(
+                  children: [
+                    tagPopUpListUpdate(context, file, company_id, isDark),
+                    const SizedBox(height: 8),
+                    _buildIndexStar(context, file),
+                  ],
+                ),
+                Flexible(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FullImageViewer(imageUrl: fullUrl),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      constraints: const BoxConstraints(
+                        maxHeight: 200,
+                        maxWidth: 220,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Hero(
+                          tag: "hero-$messageId-attachment-$index",
+                          child: Image.network(
+                            fullUrl,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                height: 150,
+                                width: 200,
+                                color: Colors.white.withOpacity(0.05),
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  height: 100,
+                                  width: 150,
+                                  color: Colors.white.withOpacity(0.05),
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.white24,
+                                  ),
+                                ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            final IconData icon = FileUtils.getFileIcon(location);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  tagPopUpListUpdate(context, file, company_id, isDark),
+                  _buildIndexStar(context, file),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.05),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, color: Colors.white70, size: 20),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              originalName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget tagPopUpListUpdate(
+    BuildContext context,
+    dynamic file,
+    String companyId,
+    bool isDark,
+  ) {
+    final String convId = msg['conversation_id']?.toString() ?? "";
+    final String mId = (msg['msg_id'] ?? msg['id'])?.toString() ?? "";
+    final String fId = file['id']?.toString() ?? "";
+    final dynamic tagList = file['tag_list'];
+    final String isReply = msg['is_reply_msg']?.toString() ?? "no";
+    final dynamic participantsData = msg['participants'];
+
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.white,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          builder: (ctx) => PublicTag(
+            tagList: {
+              'company_id': companyId,
+              'tagList': tagList,
+              'conversation_id': convId,
+              'file_id': fId,
+              'is_reply': isReply,
+              'msg_id': mId,
+              'participants': participantsData is List
+                  ? participantsData
+                  : [participantsData],
+            },
+            isDark: isDark,
+          ),
+        );
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white12),
+            ),
+            child: const Icon(
+              Icons.local_offer_rounded,
+              size: 18,
+              color: Colors.white70,
+            ),
+          ),
+          if (tagList is List && tagList.isNotEmpty)
+            Positioned(
+              top: -2,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 245, 245, 247),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                child: Center(
+                  child: Text(
+                    tagList.length.toString(),
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 6, 3, 53),
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIndexStar(BuildContext context, dynamic file) {
+    final String fId = file['id']?.toString() ?? "";
+    final dynamic starList = file['star'];
+    final myId = context.read<ChatBloc>().state.myId;
+    final bool isStarred =
+        starList is List && starList.any((id) => id.toString() == myId);
+
+    return GestureDetector(
+      onTap: () async {
+        try {
+          final result = await ApiServer().toggleFileStar(fileId: fId);
+          final String mId = (msg['msg_id'] ?? msg['id'])?.toString() ?? "";
+          if (result.isNotEmpty && context.mounted) {
+            context.read<ChatBloc>().add(
+              ChatFileStarred(
+                msgId: mId,
+                fileId: fId,
+                star: result['star'] ?? [],
+              ),
+            );
+          }
+        } catch (e) {
+          debugPrint("Error toggling file star: $e");
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Icon(
+          isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
+          size: 18,
+          color: isStarred ? Colors.amber : Colors.white70,
+        ),
       ),
     );
   }

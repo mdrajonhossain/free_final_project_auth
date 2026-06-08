@@ -18,6 +18,9 @@ class ChatService {
     bool isSecret = false,
     List<String>? secretUsers,
     String? msgTitle,
+    String isReplyMsg = "no",
+    String? replyForMsgId,
+    String? replyms,
   }) async {
     final text = controller.text.trim();
     final bool hasFiles =
@@ -50,6 +53,9 @@ class ChatService {
         isSecret: isSecret,
         secretUsers: secretUsers,
         msgTitle: msgTitle,
+        isReplyMsg: isReplyMsg,
+        replyForMsgId: replyForMsgId,
+        replyms: replyms,
       ),
     );
 

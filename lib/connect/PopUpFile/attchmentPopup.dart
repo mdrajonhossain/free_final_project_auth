@@ -7,15 +7,17 @@ import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 
 class AttachmentPopup {
-  static Future<List<Map<String, dynamic>>?> show(
+  static Future<dynamic> show(
     BuildContext context, {
     String? userEmail,
     String? companyId,
     required String conversationId,
     required dynamic participants,
     required ChatBloc chatBloc,
+    String isReplyMsg = "no",
+    String? replyForMsgId,
   }) {
-    return showModalBottomSheet<List<Map<String, dynamic>>>(
+    return showModalBottomSheet<dynamic>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -25,6 +27,8 @@ class AttachmentPopup {
         conversationId: conversationId,
         participants: participants,
         chatBloc: chatBloc,
+        isReplyMsg: isReplyMsg,
+        replyForMsgId: replyForMsgId,
       ),
     );
   }
@@ -36,6 +40,8 @@ class AttachmentSheet extends StatefulWidget {
   final String conversationId;
   final dynamic participants;
   final ChatBloc chatBloc;
+  final String isReplyMsg;
+  final String? replyForMsgId;
   const AttachmentSheet({
     super.key,
     this.userEmail,
@@ -43,6 +49,8 @@ class AttachmentSheet extends StatefulWidget {
     required this.conversationId,
     required this.participants,
     required this.chatBloc,
+    this.isReplyMsg = "no",
+    this.replyForMsgId,
   });
 
   @override
@@ -77,7 +85,7 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     List<String> imgFiles = [];
     List<String> audioFiles = [];
     List<String> videoFiles = [];
@@ -148,20 +156,33 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
       "allfiles": sanitizedAllFiles,
     };
 
-    ChatService.sendMessage(
-      context: context,
-      controller: _messageController,
+    final List<String> partList = widget.participants is List
+        ? List<String>.from(widget.participants.map((e) => e.toString()))
+        : [widget.participants.toString()];
+
+    // Dynamically determine reply status based on parent ID or passed flag
+    final String replyStatus =
+        (widget.replyForMsgId != null || widget.isReplyMsg == "yes")
+        ? "yes"
+        : "no";
+
+    // Using ApiServer directly because ChatService.sendMessage is missing
+    // the named parameters 'isReplyMsg' and 'replyForMsgId'.
+    final response = await ApiServer().sendMessage(
+      msgBody: _messageController.text,
       conversationId: widget.conversationId,
       companyId: widget.companyId ?? "",
-      participants: widget.participants,
-      chatBloc: widget.chatBloc,
-      onScroll: () {},
+      senderId: widget.chatBloc.state.myId,
+      participants: partList,
       attachFiles: attachFiles,
       tags: selectedTags.toList(),
       allAttachment: allAttachmentInput,
+      replyms: replyStatus,
+      isReplyMsg: replyStatus,
+      replyForMsgId: widget.replyForMsgId,
     );
 
-    if (mounted) Navigator.pop(context, sanitizedAllFiles);
+    if (mounted) Navigator.pop(context, response);
   }
 
   Future<void> _loadTags() async {
@@ -488,6 +509,11 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                 participants: widget.participants,
                 chatBloc: widget.chatBloc,
                 showAttachmentIcon: false, // Disable only the attachment icon
+                isReplyMsg:
+                    (widget.replyForMsgId != null || widget.isReplyMsg == "yes")
+                    ? "yes"
+                    : "no",
+                replyForMsgId: widget.replyForMsgId,
                 onAttachmentsPicked: (results) {
                   setState(() {
                     uploaded_files.addAll(results);

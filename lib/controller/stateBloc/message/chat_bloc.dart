@@ -123,6 +123,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       "is_secret": event.isSecret,
       "msg_title": event.msgTitle,
       "all_attachment": event.attachFiles?['allfiles'] ?? [],
+      "is_reply_msg": event.isReplyMsg,
+      "reply_for_msg_id": event.replyForMsgId,
+      "replyms": event.replyms,
     };
 
     // 1. Optimistic Update: Add message to list immediately
@@ -149,6 +152,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         isSecret: event.isSecret,
         secretUsers: event.secretUsers,
         msgTitle: event.msgTitle,
+        isReplyMsg: event.isReplyMsg,
+        replyForMsgId: event.replyForMsgId,
+        replyms: event.replyms,
       );
 
       if (response == null) throw Exception("Empty response from server");

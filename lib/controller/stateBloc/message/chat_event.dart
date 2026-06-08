@@ -26,6 +26,11 @@ class ChatMessageSent extends ChatEvent {
   final List<String>? secretUsers;
   final String? msgTitle;
 
+  // Added reply metadata fields
+  final String isReplyMsg;
+  final String? replyForMsgId;
+  final String? replyms;
+
   ChatMessageSent({
     required this.text,
     required this.conversationId,
@@ -38,6 +43,9 @@ class ChatMessageSent extends ChatEvent {
     this.isSecret = false,
     this.secretUsers,
     this.msgTitle,
+    this.isReplyMsg = "no",
+    this.replyForMsgId,
+    this.replyms,
   });
 }
 

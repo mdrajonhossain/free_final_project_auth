@@ -22,6 +22,9 @@ class ChatInput extends StatefulWidget {
   final bool showAttachmentIcon;
   final bool showLockIcon;
   final bool group;
+  final Function(Map<String, dynamic>)? onMessageSentFromPopup;
+  final String isReplyMsg;
+  final String? replyForMsgId;
   final List<MentionUser> mentionableUsers;
 
   const ChatInput({
@@ -35,6 +38,9 @@ class ChatInput extends StatefulWidget {
     required this.participants,
     required this.chatBloc,
     this.group = false,
+    this.onMessageSentFromPopup,
+    this.isReplyMsg = "no",
+    this.replyForMsgId,
     this.userEmail,
     this.mentionableUsers = const [],
     this.showAttachmentIcon = true,
@@ -339,10 +345,23 @@ class _ChatInputState extends State<ChatInput> {
                                     conversationId: widget.conversationId,
                                     participants: widget.participants,
                                     chatBloc: widget.chatBloc,
+                                    isReplyMsg: widget.isReplyMsg,
+                                    replyForMsgId: widget.replyForMsgId,
                                   );
 
-                                  if (results != null && results.isNotEmpty) {
-                                    widget.onAttachmentsPicked(results);
+                                  if (results != null) {
+                                    if (results is Map &&
+                                        results.containsKey('msg_id')) {
+                                      widget.onMessageSentFromPopup?.call(
+                                        Map<String, dynamic>.from(results),
+                                      );
+                                    } else if (results is List) {
+                                      widget.onAttachmentsPicked(
+                                        List<Map<String, dynamic>>.from(
+                                          results,
+                                        ),
+                                      );
+                                    }
                                   }
                                 },
                                 icon: Icon(

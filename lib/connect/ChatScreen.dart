@@ -44,6 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isEditing = false;
   String? _editingMsgId;
   Map<String, dynamic>? _replyingTo;
+  List<Map<String, dynamic>> _selectedFiles = [];
   List<MentionUser> _mentionableUsers = [];
 
   @override
@@ -225,6 +226,68 @@ class _ChatScreenState extends State<ChatScreen> {
         });
       }
     } else {
+      // Determine if this is a reply (e.g., from swiping a message)
+      final String? replyId = _replyingTo != null
+          ? (_replyingTo!['msg_id'] ?? _replyingTo!['id'])?.toString()
+          : null;
+      final String isReplyFlag = replyId != null ? "yes" : "no";
+
+      Map<String, dynamic>? attachFiles;
+      List<Map<String, dynamic>>? allAttachment;
+
+      if (_selectedFiles.isNotEmpty) {
+        List<String> imgFiles = [];
+        List<String> audioFiles = [];
+        List<String> videoFiles = [];
+        List<String> otherFiles = [];
+        List<Map<String, dynamic>> sanitizedAllFiles = [];
+
+        for (var file in _selectedFiles) {
+          final String bucket = file['bucket'] ?? '';
+          final String key = file['key'] ?? '';
+          final String path = (bucket.isNotEmpty && key.isNotEmpty)
+              ? "$bucket/$key"
+              : "";
+          String mimeType = file['mimetype'] ?? file['contentType'] ?? '';
+          int fileSize = int.tryParse(file['size']?.toString() ?? '0') ?? 0;
+
+          if (mimeType.startsWith('image/')) {
+            imgFiles.add(path);
+          } else if (mimeType.startsWith('audio/')) {
+            audioFiles.add(path);
+          } else if (mimeType.startsWith('video/')) {
+            videoFiles.add(path);
+          } else {
+            otherFiles.add(path);
+          }
+
+          sanitizedAllFiles.add({
+            "originalname": file['originalname'] ?? "",
+            "mimetype": mimeType,
+            "voriginalName":
+                file['voriginalName'] ?? file['voriginal_name'] ?? "",
+            "size": fileSize,
+            "bucket": bucket,
+            "key": key,
+            "acl": file['acl'] ?? "public-read",
+            "referenceId": "",
+            "reference_type": "",
+          });
+        }
+
+        attachFiles = {
+          "imgfile": imgFiles,
+          "audiofile": audioFiles,
+          "videofile": videoFiles,
+          "otherfile": otherFiles,
+          "allfiles": sanitizedAllFiles,
+        };
+
+        allAttachment = sanitizedAllFiles
+            .map((_) => {"tag_list": [], "has_tag": "N"})
+            .toList();
+      }
+
       ChatService.sendMessage(
         context: context,
         controller: _messageController,
@@ -233,12 +296,18 @@ class _ChatScreenState extends State<ChatScreen> {
         participants: participants,
         chatBloc: _chatBloc,
         onScroll: _scrollToBottom,
+        attachFiles: attachFiles,
+        allAttachment: allAttachment,
+        isReplyMsg: isReplyFlag,
+        replyForMsgId: replyId,
+        replyms: isReplyFlag,
       );
       if (_replyingTo != null) {
         setState(() {
           _replyingTo = null;
         });
       }
+      setState(() => _selectedFiles = []);
     }
   }
 
@@ -506,6 +575,48 @@ participants: $participants
                           ],
                         ),
                       ),
+                    if (_selectedFiles.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.attach_file,
+                              color: Colors.blueAccent,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "${_selectedFiles.length} file(s) selected",
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Colors.black87,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: isDark ? Colors.white70 : Colors.black54,
+                                size: 18,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () =>
+                                  setState(() => _selectedFiles = []),
+                            ),
+                          ],
+                        ),
+                      ),
                     ChatInput(
                       controller: _messageController,
                       onSend: _sendMessage,
@@ -519,11 +630,13 @@ participants: $participants
                       conversationId: conversationId,
                       participants: participants,
                       chatBloc: _chatBloc,
-                      onAttachmentsPicked: (results) {
-                        // Handle picked attachments here
-                        debugPrint("Picked ${results.length} attachments");
-                        // You can add logic to send them or show a preview
-                      },
+                      isReplyMsg: _replyingTo != null ? "yes" : "no",
+                      replyForMsgId: _replyingTo != null
+                          ? (_replyingTo!['msg_id'] ?? _replyingTo!['id'])
+                                ?.toString()
+                          : null,
+                      onAttachmentsPicked: (results) =>
+                          setState(() => _selectedFiles = results),
                     ),
                   ],
                 ),
@@ -1311,7 +1424,11 @@ class _MessageBubble extends StatelessWidget {
                               !cleanText.contains('"originalname"') &&
                               !cleanText.contains('[object Object]') &&
                               cleanText.toLowerCase() != "null")
-                            _buildMessageTextWithMentions(context, cleanText, textColor),
+                            _buildMessageTextWithMentions(
+                              context,
+                              cleanText,
+                              textColor,
+                            ),
                           _AttachmentList(
                             attachments: msg['all_attachment'],
                             messageId: messageId,
@@ -1507,21 +1624,38 @@ class _MessageBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildMessageTextWithMentions(BuildContext context, String text, Color textColor) {
+  Widget _buildMessageTextWithMentions(
+    BuildContext context,
+    String text,
+    Color textColor,
+  ) {
     if (mentionableUsers.isEmpty || !text.contains('@')) {
-      return Text(text, style: TextStyle(color: textColor, fontSize: 15, height: 1.5));
+      return Text(
+        text,
+        style: TextStyle(color: textColor, fontSize: 15, height: 1.5),
+      );
     }
 
     List<InlineSpan> spans = [];
-    
+
     // Individual users only (Everyone doesn't have a profile)
-    final interactiveUsers = mentionableUsers.where((u) => u.firstName != 'Everyone').toList();
-    if (interactiveUsers.isEmpty) return Text(text, style: TextStyle(color: textColor, fontSize: 15, height: 1.5));
+    final interactiveUsers = mentionableUsers
+        .where((u) => u.firstName != 'Everyone')
+        .toList();
+    if (interactiveUsers.isEmpty)
+      return Text(
+        text,
+        style: TextStyle(color: textColor, fontSize: 15, height: 1.5),
+      );
 
     // Sort by length descending to match longest full names first
-    interactiveUsers.sort((a, b) => b.fullName.length.compareTo(a.fullName.length));
+    interactiveUsers.sort(
+      (a, b) => b.fullName.length.compareTo(a.fullName.length),
+    );
 
-    String pattern = interactiveUsers.map((u) => RegExp.escape('@${u.fullName}')).join('|');
+    String pattern = interactiveUsers
+        .map((u) => RegExp.escape('@${u.fullName}'))
+        .join('|');
     RegExp regex = RegExp(pattern);
 
     int start = 0;
@@ -1531,7 +1665,9 @@ class _MessageBubble extends StatelessWidget {
       }
 
       final matchText = match.group(0)!;
-      final user = interactiveUsers.firstWhere((u) => "@${u.fullName}" == matchText);
+      final user = interactiveUsers.firstWhere(
+        (u) => "@${u.fullName}" == matchText,
+      );
 
       spans.add(
         TextSpan(
