@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/ChatInput.dart';
 import 'package:freeli/controller/api/api_files_upload.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 import 'package:freeli/controller/api/api_service.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:freeli/theme/themeList.dart';
 
 class PrivateMessagePopUp {
   static void show(
@@ -45,179 +48,211 @@ class PrivateMessagePopUp {
       backgroundColor: Colors.transparent,
       useSafeArea: true,
       builder: (context) {
-        return Container(
-          height: screenHeight * 0.9,
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E293B),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            child: Scaffold(
-              backgroundColor: Colors.transparent,
-              body: StatefulBuilder(
-                builder: (context, setState) {
-                  // Fetch public tags when the dialog opens or moves to Step 3
-                  if (isLoadingTags && currentStep == 3) {
-                    ApiServer().fetch_Public_Tags(companyId).then((val) {
-                      if (context.mounted) {
-                        setState(() {
-                          publicTags = val;
-                          isLoadingTags = false;
+        return BlocBuilder<ThemeCubit, AppThemeModel>(
+          builder: (context, appTheme) {
+            final bool isDark =
+                appTheme.backgroundColor.computeLuminance() < 0.5;
+            final Color contentColor = isDark ? Colors.white : Colors.black;
+
+            return Container(
+              height: screenHeight * 0.9,
+              decoration: BoxDecoration(
+                color: appTheme.backgroundColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+                child: Scaffold(
+                  backgroundColor: Colors.transparent,
+                  body: StatefulBuilder(
+                    builder: (context, setState) {
+                      // Fetch public tags when the dialog opens or moves to Step 3
+                      if (isLoadingTags && currentStep == 3) {
+                        ApiServer().fetch_Public_Tags(companyId).then((val) {
+                          if (context.mounted) {
+                            setState(() {
+                              publicTags = val;
+                              isLoadingTags = false;
+                            });
+                          }
                         });
                       }
-                    });
-                  }
 
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildProgressIndicator(currentStep),
-                              const SizedBox(height: 20),
-                              if (currentStep == 1)
-                                _buildStep1(
-                                  context,
-                                  setState,
-                                  users,
-                                  titleController,
-                                  searchController,
-                                  selectedUserIds,
-                                  searchQuery,
-                                  screenWidth,
-                                ),
-                              if (currentStep == 2)
-                                _buildStep2(
-                                  context,
-                                  setState,
-                                  pickedFiles,
-                                  isUploading,
-                                  uploadProgress,
-                                  userEmail,
-                                  uploadedFilesMetadata,
-                                  (metadata) {
-                                    uploadedFilesMetadata.addAll(metadata);
-                                  },
-                                ),
-                              if (currentStep == 3)
-                                _buildStep3(
-                                  context,
-                                  setState,
-                                  tags,
-                                  tagController,
-                                  publicTags,
-                                  isLoadingTags,
-                                ),
-                              const SizedBox(height: 24),
-                              if (currentStep < 3)
-                                StatefulBuilder(
-                                  builder: (context, _) {
-                                    // Calculate if the next button should be active
-                                    bool isNextActive = false;
-                                    if (currentStep == 1) {
-                                      isNextActive = selectedUserIds.isNotEmpty;
-                                    } else if (currentStep == 2) {
-                                      isNextActive =
-                                          pickedFiles.isNotEmpty &&
-                                          !isUploading;
-                                    }
-
-                                    return _buildActionButtons(
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildProgressIndicator(
+                                    currentStep,
+                                    appTheme,
+                                    contentColor,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  if (currentStep == 1)
+                                    _buildStep1(
                                       context,
                                       setState,
-                                      currentStep,
-                                      isNextActive,
-                                      () {
+                                      users,
+                                      titleController,
+                                      searchController,
+                                      selectedUserIds,
+                                      searchQuery,
+                                      screenWidth,
+                                      appTheme,
+                                      isDark,
+                                      contentColor,
+                                    ),
+                                  if (currentStep == 2)
+                                    _buildStep2(
+                                      context,
+                                      setState,
+                                      pickedFiles,
+                                      isUploading,
+                                      uploadProgress,
+                                      userEmail,
+                                      uploadedFilesMetadata,
+                                      (metadata) {
+                                        uploadedFilesMetadata.addAll(metadata);
+                                      },
+                                      appTheme,
+                                      isDark,
+                                      contentColor,
+                                    ),
+                                  if (currentStep == 3)
+                                    _buildStep3(
+                                      context,
+                                      setState,
+                                      tags,
+                                      tagController,
+                                      publicTags,
+                                      isLoadingTags,
+                                      appTheme,
+                                      isDark,
+                                      contentColor,
+                                    ),
+                                  const SizedBox(height: 24),
+                                  if (currentStep < 3)
+                                    StatefulBuilder(
+                                      builder: (context, _) {
+                                        // Calculate if the next button should be active
+                                        bool isNextActive = false;
                                         if (currentStep == 1) {
-                                          setState(() => currentStep = 2);
+                                          isNextActive =
+                                              selectedUserIds.isNotEmpty;
                                         } else if (currentStep == 2) {
-                                          setState(() => currentStep = 3);
+                                          isNextActive =
+                                              pickedFiles.isNotEmpty &&
+                                              !isUploading;
                                         }
+
+                                        return _buildActionButtons(
+                                          context,
+                                          setState,
+                                          currentStep,
+                                          isNextActive,
+                                          () {
+                                            if (currentStep == 1) {
+                                              setState(() => currentStep = 2);
+                                            } else if (currentStep == 2) {
+                                              setState(() => currentStep = 3);
+                                            }
+                                          },
+                                          () {
+                                            if (currentStep > 1) {
+                                              setState(() => currentStep--);
+                                            } else {
+                                              Navigator.pop(context);
+                                            }
+                                          },
+                                          appTheme,
+                                          contentColor,
+                                        );
                                       },
-                                      () {
-                                        if (currentStep > 1) {
-                                          setState(() => currentStep--);
-                                        } else {
-                                          Navigator.pop(context);
-                                        }
-                                      },
-                                    );
-                                  },
-                                ),
-                            ],
+                                    ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.only(bottom: 5),
-                        child: ChatInput(
-                          controller: messageController,
-                          companyId: companyId,
-                          chatBloc: chatBloc,
-                          userEmail: userEmail,
-                          conversationId: "",
-                          participants: selectedUserIds,
-                          onAttachmentsPicked: (_) {},
-                          onSend: () {
-                            if (isUploading) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Please wait for files to finish uploading",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor: Colors.orangeAccent,
-                                ),
-                              );
-                              return;
-                            }
-                            if (selectedUserIds.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "At least one recipient is required",
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            if (messageController.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Please enter a message to send",
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            Navigator.pop(context);
-                            onCreate?.call(
-                              titleController.text.trim(),
-                              selectedUserIds,
-                              uploadedFilesMetadata,
-                              tags,
-                              messageController.text.trim(),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                          Container(
+                            padding: const EdgeInsets.only(bottom: 5),
+                            child: ChatInput(
+                              controller: messageController,
+                              companyId: companyId,
+                              chatBloc: chatBloc,
+                              userEmail: userEmail,
+                              conversationId: "",
+                              participants: selectedUserIds,
+                              onAttachmentsPicked: (_) {},
+                              onSend: () {
+                                if (isUploading) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Please wait for files to finish uploading",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      backgroundColor: Colors.orangeAccent,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (selectedUserIds.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "At least one recipient is required",
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (messageController.text.trim().isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Please enter a message to send",
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                Navigator.pop(context);
+                                onCreate?.call(
+                                  titleController.text.trim(),
+                                  selectedUserIds,
+                                  uploadedFilesMetadata,
+                                  tags,
+                                  messageController.text.trim(),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  static Widget _buildProgressIndicator(int step) {
+  static Widget _buildProgressIndicator(
+    int step,
+    AppThemeModel appTheme,
+    Color contentColor,
+  ) {
     return Row(
       children: List.generate(3, (index) {
         bool isCompleted = step > index + 1;
@@ -228,8 +263,8 @@ class PrivateMessagePopUp {
             margin: EdgeInsets.only(right: index == 2 ? 0 : 8),
             decoration: BoxDecoration(
               color: isActive || isCompleted
-                  ? Colors.indigoAccent
-                  : Colors.white10,
+                  ? appTheme.accentColor
+                  : contentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -247,6 +282,9 @@ class PrivateMessagePopUp {
     List<String> selectedUserIds,
     String searchQuery,
     double screenWidth,
+    AppThemeModel appTheme,
+    bool isDark,
+    Color contentColor,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,24 +295,25 @@ class PrivateMessagePopUp {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.indigo.withOpacity(.15),
+                color: appTheme.accentColor.withOpacity(.15),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
+                // Use appTheme.accentColor
                 Icons.people_outline_rounded,
-                color: Colors.indigoAccent,
+                color: appTheme.accentColor,
                 size: 22,
               ),
             ),
             const SizedBox(width: 14),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "Step 1: Recipients",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: contentColor, // Use contentColor
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
@@ -282,7 +321,10 @@ class PrivateMessagePopUp {
                   SizedBox(height: 2),
                   Text(
                     "Who should be in this room?",
-                    style: TextStyle(color: Colors.white60, fontSize: 12),
+                    style: TextStyle(
+                      color: contentColor.withOpacity(0.6),
+                      fontSize: 12,
+                    ), // Use contentColor
                   ),
                 ],
               ),
@@ -297,17 +339,17 @@ class PrivateMessagePopUp {
           controller: searchController,
           onChanged: (value) =>
               setState(() => searchQuery = value.toLowerCase()),
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: TextStyle(color: contentColor, fontSize: 14),
           decoration: InputDecoration(
             hintText: "Search participants...",
-            hintStyle: const TextStyle(color: Colors.white38),
-            prefixIcon: const Icon(
+            hintStyle: TextStyle(color: contentColor.withOpacity(0.38)),
+            prefixIcon: Icon(
               Icons.search_rounded,
-              color: Colors.white38,
+              color: contentColor.withOpacity(0.38),
               size: 20,
             ),
             filled: true,
-            fillColor: const Color(0xFF334155).withOpacity(0.5),
+            fillColor: contentColor.withOpacity(0.05),
             contentPadding: EdgeInsets.zero,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -322,10 +364,10 @@ class PrivateMessagePopUp {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               "Participants",
               style: TextStyle(
-                color: Colors.white,
+                color: contentColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -333,8 +375,8 @@ class PrivateMessagePopUp {
             if (selectedUserIds.isNotEmpty)
               Text(
                 "${selectedUserIds.length} Selected",
-                style: const TextStyle(
-                  color: Colors.indigoAccent,
+                style: TextStyle(
+                  color: appTheme.accentColor,
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
@@ -350,7 +392,7 @@ class PrivateMessagePopUp {
           constraints: BoxConstraints(maxHeight: screenWidth > 600 ? 300 : 180),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF334155),
+            color: contentColor.withOpacity(0.05), // Use contentColor
             borderRadius: BorderRadius.circular(16),
           ),
           child: Scrollbar(
@@ -380,6 +422,9 @@ class PrivateMessagePopUp {
                           name: user['name'] ?? '',
                           image: user['image'] ?? '',
                           isSelected: isSelected,
+                          appTheme: appTheme,
+                          isDark: isDark,
+                          contentColor: contentColor,
                         ),
                       );
                     })
@@ -392,10 +437,10 @@ class PrivateMessagePopUp {
         const SizedBox(height: 20),
 
         /// ROOM TITLE
-        const Text(
+        Text(
           "Add a title for private message",
           style: TextStyle(
-            color: Colors.white,
+            color: contentColor, // Use contentColor
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -405,12 +450,12 @@ class PrivateMessagePopUp {
 
         TextField(
           controller: titleController,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: contentColor),
           decoration: InputDecoration(
             hintText: "Enter private room title...",
-            hintStyle: const TextStyle(color: Colors.white38),
+            hintStyle: TextStyle(color: contentColor.withOpacity(0.38)),
             filled: true,
-            fillColor: const Color(0xFF334155),
+            fillColor: contentColor.withOpacity(0.05),
             contentPadding: const EdgeInsets.all(16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -418,7 +463,7 @@ class PrivateMessagePopUp {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Colors.indigoAccent),
+              borderSide: BorderSide(color: appTheme.accentColor),
             ),
           ),
         ),
@@ -435,22 +480,25 @@ class PrivateMessagePopUp {
     String? userEmail,
     List<Map<String, dynamic>> uploadedFilesMetadata,
     Function(List<Map<String, dynamic>>) onUploadComplete,
+    AppThemeModel appTheme,
+    bool isDark,
+    Color contentColor,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "Step 2: Attachments",
           style: TextStyle(
-            color: Colors.white,
+            color: contentColor,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           "Optional: Upload files to this room",
-          style: TextStyle(color: Colors.white60, fontSize: 12),
+          style: TextStyle(color: contentColor.withOpacity(0.6), fontSize: 12),
         ),
         const SizedBox(height: 20),
         InkWell(
@@ -515,30 +563,30 @@ class PrivateMessagePopUp {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 30),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: contentColor.withOpacity(0.05),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white10,
+                color: contentColor.withOpacity(0.1),
                 style: BorderStyle.solid,
               ),
             ),
             child: Column(
               children: [
                 if (isUploading)
-                  const CircularProgressIndicator(
-                    color: Colors.indigoAccent,
+                  CircularProgressIndicator(
+                    color: appTheme.accentColor,
                     strokeWidth: 2,
                   )
                 else
-                  const Icon(
+                  Icon(
                     Icons.cloud_upload_outlined,
-                    color: Colors.indigoAccent,
+                    color: appTheme.accentColor,
                     size: 40,
                   ),
                 SizedBox(height: 12),
-                const Text(
+                Text(
                   "Tap to select files",
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: contentColor.withOpacity(0.7)),
                 ),
               ],
             ),
@@ -546,10 +594,10 @@ class PrivateMessagePopUp {
         ),
         if (pickedFiles.isNotEmpty) ...[
           const SizedBox(height: 20),
-          const Text(
+          Text(
             "Selected Files",
             style: TextStyle(
-              color: Colors.white,
+              color: contentColor,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -568,9 +616,10 @@ class PrivateMessagePopUp {
                   child:
                       uploadProgress.containsKey(pickedFiles[index].name) &&
                           (uploadProgress[pickedFiles[index].name] ?? 0) < 1.0
-                      ? const CircularProgressIndicator(
+                      ? CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.indigoAccent,
+                          color:
+                              appTheme.accentColor, // Use appTheme.accentColor
                         )
                       : Icon(
                           Icons.insert_drive_file_outlined,
@@ -578,7 +627,9 @@ class PrivateMessagePopUp {
                               (uploadProgress[pickedFiles[index].name] ?? 0) >=
                                   1.0
                               ? Colors.greenAccent
-                              : Colors.white38,
+                              : contentColor.withOpacity(
+                                  0.38,
+                                ), // Use contentColor
                           size: 18,
                         ),
                 ),
@@ -587,8 +638,9 @@ class PrivateMessagePopUp {
                   children: [
                     Text(
                       pickedFiles[index].name,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        // Use contentColor
+                        color: contentColor.withOpacity(0.7),
                         fontSize: 13,
                       ),
                     ),
@@ -598,8 +650,10 @@ class PrivateMessagePopUp {
                         padding: const EdgeInsets.only(top: 4),
                         child: LinearProgressIndicator(
                           value: uploadProgress[pickedFiles[index].name],
-                          backgroundColor: Colors.white10,
-                          color: Colors.indigoAccent,
+                          backgroundColor: contentColor.withOpacity(
+                            0.1,
+                          ), // Use contentColor
+                          color: appTheme.accentColor,
                           minHeight: 2,
                         ),
                       ),
@@ -641,29 +695,32 @@ class PrivateMessagePopUp {
     TextEditingController tagController,
     List<Map<String, dynamic>> publicTags,
     bool isLoading,
+    AppThemeModel appTheme,
+    bool isDark,
+    Color contentColor,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "Step 3: Tags",
           style: TextStyle(
-            color: Colors.white,
+            color: contentColor,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           "Add tags to categorize this private conversation",
-          style: TextStyle(color: Colors.white60, fontSize: 12),
+          style: TextStyle(color: contentColor.withOpacity(0.6), fontSize: 12),
         ),
         const SizedBox(height: 20),
 
         /// TAG INPUT
         TextField(
           controller: tagController,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: contentColor),
           onSubmitted: (value) {
             if (value.trim().isNotEmpty) {
               setState(() {
@@ -674,18 +731,18 @@ class PrivateMessagePopUp {
           },
           decoration: InputDecoration(
             hintText: "Type tag and press enter...",
-            hintStyle: const TextStyle(color: Colors.white38),
+            hintStyle: TextStyle(color: contentColor.withOpacity(0.38)),
             filled: true,
-            fillColor: const Color(0xFF334155),
-            prefixIcon: const Icon(
+            fillColor: contentColor.withOpacity(0.05),
+            prefixIcon: Icon(
               Icons.tag_rounded,
-              color: Colors.indigoAccent,
+              color: appTheme.accentColor,
               size: 20,
             ),
             suffixIcon: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.add_circle_outline_rounded,
-                color: Colors.indigoAccent,
+                color: appTheme.accentColor,
               ),
               onPressed: () {
                 if (tagController.text.trim().isNotEmpty) {
@@ -707,18 +764,15 @@ class PrivateMessagePopUp {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Colors.indigoAccent,
-                width: 1,
-              ),
+              borderSide: BorderSide(color: appTheme.accentColor, width: 1),
             ),
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
+        Text(
           "Available Tags",
           style: TextStyle(
-            color: Colors.white70,
+            color: contentColor.withOpacity(0.7),
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
@@ -729,7 +783,7 @@ class PrivateMessagePopUp {
           constraints: const BoxConstraints(maxHeight: 180),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF334155),
+            color: contentColor.withOpacity(0.05),
             borderRadius: BorderRadius.circular(16),
           ),
           child: isLoading
@@ -741,9 +795,13 @@ class PrivateMessagePopUp {
                   ),
                 )
               : publicTags.isEmpty
-              ? const Text(
+              ? Text(
+                  // Use contentColor
                   "No tags available",
-                  style: TextStyle(color: Colors.white24, fontSize: 12),
+                  style: TextStyle(
+                    color: contentColor.withOpacity(0.24),
+                    fontSize: 12,
+                  ), // Use contentColor
                   textAlign: TextAlign.center,
                 )
               : Scrollbar(
@@ -765,6 +823,9 @@ class PrivateMessagePopUp {
                           child: _tagListItem(
                             title: title,
                             isSelected: isSelected,
+                            appTheme: appTheme,
+                            isDark: isDark,
+                            contentColor: contentColor,
                           ),
                         );
                       }).toList(),
@@ -775,10 +836,10 @@ class PrivateMessagePopUp {
 
         if (tags.isNotEmpty) ...[
           const SizedBox(height: 24),
-          const Text(
+          Text(
             "Selected Tags",
             style: TextStyle(
-              color: Colors.white70,
+              color: contentColor.withOpacity(0.7),
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -794,24 +855,24 @@ class PrivateMessagePopUp {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.indigoAccent.withOpacity(0.15),
+                  color: appTheme.accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.indigoAccent.withOpacity(0.3),
+                    color: appTheme.accentColor.withOpacity(0.3),
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.tag_rounded,
                       size: 14,
-                      color: Colors.indigoAccent,
+                      color: appTheme.accentColor,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       tag,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      style: TextStyle(color: contentColor, fontSize: 13),
                     ),
                     const SizedBox(width: 8),
                     GestureDetector(
@@ -819,13 +880,13 @@ class PrivateMessagePopUp {
                       child: Container(
                         padding: const EdgeInsets.all(1),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: contentColor.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.close_rounded,
                           size: 14,
-                          color: Colors.white70,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -846,6 +907,8 @@ class PrivateMessagePopUp {
     bool isActive,
     VoidCallback onNext,
     VoidCallback onBack,
+    AppThemeModel appTheme,
+    Color contentColor,
   ) {
     return Row(
       children: [
@@ -854,7 +917,9 @@ class PrivateMessagePopUp {
             onPressed: onBack,
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              foregroundColor: Colors.white60,
+              foregroundColor: contentColor.withOpacity(
+                0.6,
+              ), // Use contentColor
             ),
             child: Text(step == 1 ? "Cancel" : "Back"),
           ),
@@ -866,10 +931,12 @@ class PrivateMessagePopUp {
             onPressed: isActive ? onNext : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: isActive
-                  ? const Color(0xFF6366F1)
-                  : Colors.white.withOpacity(0.05),
-              disabledBackgroundColor: Colors.white.withOpacity(0.05),
-              foregroundColor: isActive ? Colors.white : Colors.white24,
+                  ? appTheme.accentColor
+                  : contentColor.withOpacity(0.05),
+              disabledBackgroundColor: contentColor.withOpacity(0.05),
+              foregroundColor: isActive
+                  ? Colors.white
+                  : contentColor.withOpacity(0.24),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -889,22 +956,31 @@ class PrivateMessagePopUp {
     required String name,
     required String image,
     required bool isSelected,
+    required AppThemeModel appTheme,
+    required bool isDark,
+    required Color contentColor,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.indigo.withOpacity(0.2) : Colors.transparent,
+        color: isSelected
+            ? appTheme.accentColor.withOpacity(0.2)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: Colors.white10,
+            backgroundColor: contentColor.withOpacity(0.1),
             backgroundImage: image.isNotEmpty ? NetworkImage(image) : null,
             child: image.isEmpty
-                ? const Icon(Icons.person, size: 18, color: Colors.white70)
+                ? Icon(
+                    Icons.person,
+                    size: 18,
+                    color: contentColor.withOpacity(0.7),
+                  )
                 : null,
           ),
           const SizedBox(width: 12),
@@ -912,16 +988,18 @@ class PrivateMessagePopUp {
             child: Text(
               name,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white70,
+                color: isSelected
+                    ? contentColor
+                    : contentColor.withOpacity(0.7),
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
           if (isSelected)
-            const Icon(
+            Icon(
               Icons.check_circle_rounded,
-              color: Colors.indigoAccent,
+              color: appTheme.accentColor,
               size: 20,
             ),
         ],
@@ -932,12 +1010,17 @@ class PrivateMessagePopUp {
   static Widget _tagListItem({
     required String title,
     required bool isSelected,
+    required AppThemeModel appTheme,
+    required bool isDark,
+    required Color contentColor,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.indigo.withOpacity(0.2) : Colors.transparent,
+        color: isSelected
+            ? appTheme.accentColor.withOpacity(0.2)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -946,14 +1029,14 @@ class PrivateMessagePopUp {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: isSelected
-                  ? Colors.indigoAccent
-                  : Colors.white.withOpacity(0.1),
+                  ? appTheme.accentColor
+                  : contentColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.tag_rounded,
               size: 14,
-              color: isSelected ? Colors.white : Colors.white70,
+              color: isSelected ? Colors.white : contentColor.withOpacity(0.7),
             ),
           ),
           const SizedBox(width: 12),
@@ -961,16 +1044,18 @@ class PrivateMessagePopUp {
             child: Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white70,
+                color: isSelected
+                    ? contentColor
+                    : contentColor.withOpacity(0.7),
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ),
           if (isSelected)
-            const Icon(
+            Icon(
               Icons.check_circle_rounded,
-              color: Colors.indigoAccent,
+              color: appTheme.accentColor,
               size: 20,
             ),
         ],
