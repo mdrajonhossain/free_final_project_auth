@@ -110,7 +110,7 @@ class UserProfilePopup {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _buildAction(
-                            Icons.chat_bubble_rounded,
+                            Icons.message_outlined,
                             "Chat",
                             appTheme,
                             contentColor,
