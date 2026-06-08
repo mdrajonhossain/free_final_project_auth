@@ -269,6 +269,9 @@ class _ChatScreenState extends State<ChatScreen> {
             "size": fileSize,
             "bucket": bucket,
             "key": key,
+            "location": (bucket.isNotEmpty && key.isNotEmpty)
+                ? "$bucket/$key"
+                : "",
             "acl": file['acl'] ?? "public-read",
             "referenceId": "",
             "reference_type": "",
@@ -637,6 +640,37 @@ participants: $participants
                           : null,
                       onAttachmentsPicked: (results) =>
                           setState(() => _selectedFiles = results),
+                      onMessageSentFromPopup: (newMessage) {
+                        // AttachmentPopup থেকে মেসেজ পাঠানো হলে, সেই মেসেজটি এখানে আসবে।
+                        // এটি সরাসরি ChatBloc-এ যোগ করে UI আপডেট করা হবে।
+                        final chatState = context.read<ChatBloc>().state;
+                        final String myId = chatState.myId;
+
+                        // Enrich the message with local user info for immediate UI update
+                        final enrichedMessage = {
+                          ...newMessage,
+                          'sender': myId,
+                          'sendername':
+                              "${chatState.userData?['firstname'] ?? ''} ${chatState.userData?['lastname'] ?? ''}"
+                                  .trim(),
+                          'senderimg': chatState.userData?['img'],
+                          'created_at': DateTime.now().toIso8601String(),
+                        };
+
+                        // ChatBloc-এ নতুন মেসেজ যোগ করুন
+                        context.read<ChatBloc>().add(
+                          ChatXmppMessageReceived(enrichedMessage),
+                        );
+
+                        // যদি কোনো রিপ্লাই মোড চালু থাকে, তাহলে সেটি বন্ধ করুন
+                        if (_replyingTo != null) {
+                          setState(() => _replyingTo = null);
+                        }
+                        // ফাইল সিলেকশন স্টেট পরিষ্কার করুন
+                        setState(() => _selectedFiles = []);
+                        // মেসেজ পাঠানোর পর স্ক্রল নিচে নিয়ে যান
+                        _scrollToBottom();
+                      },
                     ),
                   ],
                 ),

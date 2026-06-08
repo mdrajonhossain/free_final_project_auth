@@ -445,8 +445,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         return;
       }
 
-      // 5. New Message Logic (ignore self-messages handled by optimistic updates)
-      if (msgMap['sender'] == state.myId) return;
+      // 5. New Message Logic
+      // Only ignore self-messages if they are likely already handled by optimistic updates
+      // (i.e., they are 'text' type and don't have attachments, or we have a pending temp message)
+      if (msgMap['sender'] == state.myId &&
+          state.messages.any((m) => m['msg_id'].toString().startsWith('temp_')))
+        return;
 
       final updatedMessages = [msgMap, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));

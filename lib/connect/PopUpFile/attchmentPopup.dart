@@ -1,10 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/ChatInput.dart';
 import 'package:freeli/connect/chat_service.dart';
 import 'package:freeli/controller/api/api_files_upload.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
+import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:freeli/theme/themeList.dart';
 
 class AttachmentPopup {
   static Future<dynamic> show(
@@ -185,13 +188,18 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
     if (mounted) Navigator.pop(context, response);
   }
 
-  Future<void> _loadTags() async {
+  Future<void> _loadTags({
+    Color? fallbackColor,
+    AppThemeModel? appTheme,
+  }) async {
     if (widget.companyId == null || widget.companyId!.isEmpty) {
       debugPrint("Tag Load Aborted: companyId is missing");
       return;
     }
 
-    setState(() => isLoadingTags = true);
+    final Color fallback = fallbackColor ?? const Color(0xff7C5CFF);
+
+    if (mounted) setState(() => isLoadingTags = true);
     try {
       final tags = await ApiServer().fetch_Public_Tags(widget.companyId);
       setState(() {
@@ -200,20 +208,20 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
       });
     } catch (e) {
       debugPrint("Error in _loadTags: $e");
-      setState(() => isLoadingTags = false);
+      if (mounted) setState(() => isLoadingTags = false);
     }
   }
 
-  Color _parseColor(String? hexColor) {
-    if (hexColor == null || hexColor.isEmpty) return const Color(0xff7C5CFF);
+  Color _parseColor(String? hexColor, Color fallback) {
+    if (hexColor == null || hexColor.isEmpty) return fallback;
     try {
       return Color(int.parse(hexColor.replaceAll('#', '0xff')));
     } catch (e) {
-      return const Color(0xff7C5CFF);
+      return fallback;
     }
   }
 
-  Future<void> pickFiles() async {
+  Future<void> pickFiles(AppThemeModel appTheme) async {
     final FilePicker picker = FilePicker.platform;
     FilePickerResult? result = await picker.pickFiles(
       allowMultiple: true,
@@ -356,52 +364,58 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
     }
   }
 
-  Widget _buildUploadBox() {
+  Widget _buildUploadBox(AppThemeModel appTheme, bool isDark) {
     return GestureDetector(
-      onTap: isUploading ? null : pickFiles,
+      onTap: isUploading ? null : () => pickFiles(appTheme),
       child: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
         height: 140,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(.02),
+          color: (isDark ? Colors.white : Colors.black).withOpacity(.03),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withOpacity(.08), width: 1.5),
+          border: Border.all(
+            color: (isDark ? Colors.white : Colors.black).withOpacity(.08),
+            width: 1.5,
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (isUploading)
-              const CircularProgressIndicator(
-                color: Color(0xff7C5CFF),
+              CircularProgressIndicator(
+                color: appTheme.accentColor,
                 strokeWidth: 2,
               )
             else ...[
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xff7C5CFF).withOpacity(.1),
+                  color: appTheme.accentColor.withOpacity(.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.add_to_photos_rounded,
-                  color: Color(0xff7C5CFF),
+                  color: appTheme.accentColor,
                   size: 28,
                 ),
               ),
-              const SizedBox(height: 14),
-              const Text(
+              const SizedBox(height: 12),
+              Text(
                 "Click to upload files",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: isDark ? Colors.white : Colors.black87,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 "Support PDF, DOC, PNG, JPG, MP4...",
-                style: TextStyle(color: Colors.white38, fontSize: 12),
+                style: TextStyle(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(.4),
+                  fontSize: 12,
+                ),
               ),
             ],
           ],
@@ -412,125 +426,141 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // Use padding to push the entire content up when the keyboard opens
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
-      ),
-      decoration: const BoxDecoration(
-        color: Color.fromARGB(255, 67, 91, 153),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
-      child: SafeArea(
-        top: false,
-        bottom: false, // We handle bottom padding manually with viewInsets
-        child: Column(
-          children: [
-            /// HEADER
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(.03),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
-                border: Border(
-                  bottom: BorderSide(color: Colors.white.withOpacity(.06)),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 45,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(20),
+    return BlocBuilder<ThemeCubit, AppThemeModel>(
+      builder: (context, appTheme) {
+        final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+        final Color contentColor = isDark ? Colors.white : Colors.black;
+
+        return Container(
+          // Use padding to push the entire content up when the keyboard opens
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.88,
+          ),
+          decoration: BoxDecoration(
+            color: appTheme.backgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          child: SafeArea(
+            top: false,
+            bottom: false, // We handle bottom padding manually with viewInsets
+            child: Column(
+              children: [
+                /// HEADER
+                Container(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                  decoration: BoxDecoration(
+                    color: contentColor.withOpacity(.03),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(30),
+                    ),
+                    border: Border(
+                      bottom: BorderSide(color: contentColor.withOpacity(.06)),
                     ),
                   ),
-
-                  const SizedBox(height: 22),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
                     children: [
-                      Text(
-                        showingTags ? "Select Tags" : "Upload file(s)",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
+                      Container(
+                        width: 45,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: contentColor.withOpacity(.24),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                      if (showingTags)
-                        TextButton(
-                          onPressed: () => setState(() => showingTags = false),
-                          child: const Text(
-                            "Back",
+
+                      const SizedBox(height: 22),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            showingTags ? "Select Tags" : "Upload file(s)",
                             style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
+                              color: contentColor,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        )
-                      else if (uploaded_files.isNotEmpty)
-                        TextButton(
-                          onPressed: () => setState(() => showingTags = true),
-                          child: const Text(
-                            "Continue",
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 241, 241, 241),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                          if (showingTags)
+                            TextButton(
+                              onPressed: () =>
+                                  setState(() => showingTags = false),
+                              child: Text(
+                                "Back",
+                                style: TextStyle(
+                                  color: contentColor.withOpacity(.7),
+                                  fontSize: 16,
+                                ),
+                              ),
+                            )
+                          else if (uploaded_files.isNotEmpty)
+                            TextButton(
+                              onPressed: () =>
+                                  setState(() => showingTags = true),
+                              child: Text(
+                                "Continue",
+                                style: TextStyle(
+                                  color: appTheme.accentColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            /// FILE LIST
-            Expanded(
-              child: showingTags ? _buildTagSelection() : _buildFileSelection(),
-            ),
+                /// FILE LIST
+                Expanded(
+                  child: showingTags
+                      ? _buildTagSelection(appTheme, isDark)
+                      : _buildFileSelection(appTheme, isDark),
+                ),
 
-            if (uploaded_files.isNotEmpty && showingTags)
-              ChatInput(
-                controller: _messageController,
-                onSend: _sendMessage,
-                companyId: widget.companyId ?? "",
-                userEmail: widget.userEmail,
-                conversationId: widget.conversationId,
-                participants: widget.participants,
-                chatBloc: widget.chatBloc,
-                showAttachmentIcon: false, // Disable only the attachment icon
-                isReplyMsg:
-                    (widget.replyForMsgId != null || widget.isReplyMsg == "yes")
-                    ? "yes"
-                    : "no",
-                replyForMsgId: widget.replyForMsgId,
-                onAttachmentsPicked: (results) {
-                  setState(() {
-                    uploaded_files.addAll(results);
-                  });
-                },
-              ),
-          ],
-        ),
-      ),
+                if (uploaded_files.isNotEmpty && showingTags)
+                  ChatInput(
+                    controller: _messageController,
+                    onSend: _sendMessage,
+                    companyId: widget.companyId ?? "",
+                    userEmail: widget.userEmail,
+                    conversationId: widget.conversationId,
+                    participants: widget.participants,
+                    chatBloc: widget.chatBloc,
+                    showAttachmentIcon:
+                        false, // Disable only the attachment icon
+                    isReplyMsg:
+                        (widget.replyForMsgId != null ||
+                            widget.isReplyMsg == "yes")
+                        ? "yes"
+                        : "no",
+                    replyForMsgId: widget.replyForMsgId,
+                    onAttachmentsPicked: (results) {
+                      setState(() {
+                        uploaded_files.addAll(results);
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildFileSelection() {
+  Widget _buildFileSelection(AppThemeModel appTheme, bool isDark) {
+    final Color contentColor = isDark
+        ? Colors.white
+        : Colors.black; // Define contentColor here
     return Column(
       children: [
         const SizedBox(height: 10),
-        _buildUploadBox(),
+        _buildUploadBox(appTheme, isDark), // Pass appTheme and isDark
         Expanded(
           child: uploaded_files.isEmpty
               ? Center(
@@ -541,38 +571,44 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                         height: 95,
                         width: 95,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(.04),
+                          color: contentColor.withOpacity(.04),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.cloud_upload_rounded,
-                          color: Colors.white38,
+                          color: contentColor.withOpacity(.4),
                           size: 42,
                         ),
                       ),
 
                       const SizedBox(height: 20),
 
-                      const Text(
+                      Text(
                         "No files selected",
                         style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 18,
+                          color: contentColor.withOpacity(.7),
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
 
                       const SizedBox(height: 6),
 
-                      const Text(
+                      Text(
                         "Tap the upload box to add files",
-                        style: TextStyle(color: Colors.white38, fontSize: 13),
+                        style: TextStyle(
+                          color: contentColor.withOpacity(.3),
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
                 )
               : ListView.separated(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   itemCount: uploaded_files.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 14),
                   itemBuilder: (context, index) {
@@ -587,10 +623,10 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(.04),
+                        color: contentColor.withOpacity(.04),
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
-                          color: Colors.white.withOpacity(.05),
+                          color: contentColor.withOpacity(.05),
                         ),
                       ),
                       child: Row(
@@ -622,7 +658,8 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: Colors
+                                        .white, // File names usually look better in white over dark overlays
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -639,16 +676,16 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                                     child: LinearProgressIndicator(
                                       value: uploadProgress[fileName],
                                       backgroundColor: Colors.white10,
-                                      color: const Color(0xff7C5CFF),
+                                      color: appTheme.accentColor,
                                       minHeight: 2,
                                     ),
                                   ),
 
                                 Text(
                                   formatBytes(size),
-                                  style: const TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 12,
+                                  style: TextStyle(
+                                    color: contentColor.withOpacity(.6),
+                                    fontSize: 11,
                                   ),
                                 ),
                               ],
@@ -657,17 +694,17 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
 
                           /// REMOVE
                           PopupMenuButton(
-                            color: const Color(0xff1B2335),
-                            icon: const Icon(
+                            color: appTheme.cardColor,
+                            icon: Icon(
                               Icons.more_vert_rounded,
-                              color: Colors.white54,
+                              color: contentColor.withOpacity(.5),
                             ),
                             itemBuilder: (context) => [
-                              const PopupMenuItem(
+                              PopupMenuItem(
                                 value: "remove",
                                 child: Text(
                                   "Remove",
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(color: contentColor),
                                 ),
                               ),
                             ],
@@ -689,10 +726,11 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
     );
   }
 
-  Widget _buildTagSelection() {
+  Widget _buildTagSelection(AppThemeModel appTheme, bool isDark) {
+    final Color contentColor = isDark ? Colors.white : Colors.black;
     if (isLoadingTags) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xff7C5CFF)),
+      return Center(
+        child: CircularProgressIndicator(color: appTheme.accentColor),
       );
     }
 
@@ -704,36 +742,45 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
           child: TextField(
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: contentColor),
             onChanged: (v) => setState(() => tagSearchQuery = v),
-            decoration: InputDecoration(
-              hintText: "Search tags...",
-              hintStyle: const TextStyle(color: Colors.white38),
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: Colors.white38,
-              ),
-              filled: true,
-              fillColor: Colors.white.withOpacity(0.04),
-              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(
-                  color: Color(0xff7C5CFF),
-                  width: 1.5,
+            decoration:
+                InputDecoration(
+                  hintText: "Search tags...",
+                  hintStyle: TextStyle(color: contentColor.withOpacity(.4)),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: contentColor.withOpacity(.4),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.04),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(
+                      color: Color(0xff7C5CFF), // Replaced by accentColor below
+                      width: 1.5,
+                    ),
+                  ),
+                ).copyWith(
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide(
+                      color: appTheme.accentColor,
+                      width: 1.5,
+                    ),
+                  ),
                 ),
-              ),
-            ),
           ),
         ),
         Expanded(
@@ -752,19 +799,22 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                     final tagName = tag['title']?.toString() ?? "Unknown";
                     final tagId = tag['tag_id']?.toString() ?? "";
                     final isSelected = selectedTags.contains(tagId);
-                    final tagColor = _parseColor(tag['tag_color']?.toString());
+                    final tagColor = _parseColor(
+                      tag['tag_color']?.toString(),
+                      appTheme.accentColor,
+                    );
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xff7C5CFF).withOpacity(.08)
-                            : Colors.white.withOpacity(.02),
+                            ? appTheme.accentColor.withOpacity(.08)
+                            : contentColor.withOpacity(.02),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xff7C5CFF).withOpacity(.3)
-                              : Colors.white.withOpacity(.04),
+                              ? appTheme.accentColor.withOpacity(.3)
+                              : contentColor.withOpacity(.04),
                         ),
                       ),
                       child: CheckboxListTile(
@@ -778,13 +828,13 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
                         ),
                         title: Text(
                           tagName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: contentColor,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         value: isSelected,
-                        activeColor: const Color(0xff7C5CFF),
+                        activeColor: appTheme.accentColor,
                         checkColor: Colors.white,
                         onChanged: (val) {
                           setState(() {
