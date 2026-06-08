@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/gestures.dart';
 import 'package:freeli/connect/crypto_utils.dart';
 import 'package:freeli/connect/format_utils.dart';
+import 'package:freeli/connect/PopUpFile/UserProfilePopup.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:freeli/theme/themeList.dart';
@@ -137,6 +139,7 @@ class _ReplyScreenState extends State<ReplyScreen> {
                               .toString(),
                           lastName: (u['lastname'] ?? '').toString(),
                           imageUrl: (u['img'] ?? u['image'])?.toString(),
+                          email: u['email']?.toString(),
                         ),
                       ))
                   .toList();
@@ -152,6 +155,7 @@ class _ReplyScreenState extends State<ReplyScreen> {
                 firstName: 'Everyone',
                 lastName: '',
                 imageUrl: null,
+                email: null,
               ),
             );
           }
@@ -365,12 +369,10 @@ class _ReplyScreenState extends State<ReplyScreen> {
                             ],
                           ),
                           const SizedBox(height: 5),
-                          Text(
+                          _buildMessageTextWithMentions(
                             parentBody,
-                            style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black87,
-                              fontSize: 14,
-                            ),
+                            isDark ? Colors.white : Colors.black87,
+                            14,
                           ),
                           if ((int.tryParse(
                                     _parentMsg?['has_reply']?.toString() ?? '0',
@@ -523,14 +525,12 @@ class _ReplyScreenState extends State<ReplyScreen> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
+                                            _buildMessageTextWithMentions(
                                               replyBody,
-                                              style: TextStyle(
-                                                color: isMe
-                                                    ? appTheme.msgSenderText
-                                                    : appTheme.msgReceiverText,
-                                                fontSize: 13,
-                                              ),
+                                              isMe
+                                                  ? appTheme.msgSenderText
+                                                  : appTheme.msgReceiverText,
+                                              13,
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
@@ -595,6 +595,82 @@ class _ReplyScreenState extends State<ReplyScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMessageTextWithMentions(
+    String text,
+    Color textColor,
+    double fontSize,
+  ) {
+    if (_mentionableUsers.isEmpty || !text.contains('@')) {
+      return Text(
+        text,
+        style: TextStyle(color: textColor, fontSize: fontSize),
+      );
+    }
+
+    List<InlineSpan> spans = [];
+
+    final interactiveUsers = _mentionableUsers
+        .where((u) => u.firstName != 'Everyone')
+        .toList();
+    if (interactiveUsers.isEmpty)
+      return Text(
+        text,
+        style: TextStyle(color: textColor, fontSize: fontSize),
+      );
+
+    interactiveUsers.sort(
+      (a, b) => b.fullName.length.compareTo(a.fullName.length),
+    );
+
+    String pattern = interactiveUsers
+        .map((u) => RegExp.escape('@${u.fullName}'))
+        .join('|');
+    RegExp regex = RegExp(pattern);
+
+    int start = 0;
+    regex.allMatches(text).forEach((match) {
+      if (match.start > start) {
+        spans.add(TextSpan(text: text.substring(start, match.start)));
+      }
+
+      final matchText = match.group(0)!;
+      final user = interactiveUsers.firstWhere(
+        (u) => "@${u.fullName}" == matchText,
+      );
+
+      spans.add(
+        TextSpan(
+          text: matchText,
+          style: const TextStyle(
+            color: Colors.blueAccent,
+            fontWeight: FontWeight.bold,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () {
+              UserProfilePopup.show(
+                context,
+                name: user.fullName,
+                email: user.email ?? "user@freeli.io",
+                imageUrl: user.imageUrl ?? "",
+              );
+            },
+        ),
+      );
+      start = match.end;
+    });
+
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start)));
+    }
+
+    return Text.rich(
+      TextSpan(
+        style: TextStyle(color: textColor, fontSize: fontSize),
+        children: spans,
+      ),
     );
   }
 }

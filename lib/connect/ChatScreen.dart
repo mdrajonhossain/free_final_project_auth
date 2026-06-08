@@ -6,6 +6,7 @@ import 'package:freeli/connect/ReplyScreen.dart';
 import 'package:freeli/theme/themeList.dart';
 import 'package:freeli/theme/ThemeCubit.dart';
 import 'package:freeli/connect/PopUpFile/PublicTag.dart';
+import 'package:flutter/gestures.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import '../controller/stateBloc/message/chat_bloc.dart';
@@ -124,6 +125,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               .toString(),
                           lastName: (u['lastname'] ?? '').toString(),
                           imageUrl: (u['img'] ?? u['image'])?.toString(),
+                          email: u['email']?.toString(),
                         ),
                       ))
                   .toList();
@@ -138,6 +140,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 firstName: 'Everyone',
                 lastName: '',
                 imageUrl: null,
+                email: null,
               ),
             );
           }
@@ -629,6 +632,7 @@ participants: $participants
           participants: participants,
           company_id: company_id,
           appTheme: appTheme,
+          mentionableUsers: _mentionableUsers,
           onEdit: () {
             String decryptedText = "";
             try {
@@ -667,6 +671,7 @@ class _MessageBubble extends StatelessWidget {
   final AppThemeModel appTheme;
   final VoidCallback? onEdit;
   final Function(dynamic)? onReply;
+  final List<MentionUser> mentionableUsers;
 
   const _MessageBubble({
     super.key,
@@ -678,6 +683,7 @@ class _MessageBubble extends StatelessWidget {
     required this.participants,
     required this.company_id,
     required this.appTheme,
+    required this.mentionableUsers,
     this.onEdit,
     this.onReply,
   });
@@ -1305,14 +1311,7 @@ class _MessageBubble extends StatelessWidget {
                               !cleanText.contains('"originalname"') &&
                               !cleanText.contains('[object Object]') &&
                               cleanText.toLowerCase() != "null")
-                            Text(
-                              cleanText,
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 15,
-                                height: 1.5,
-                              ),
-                            ),
+                            _buildMessageTextWithMentions(context, cleanText, textColor),
                           _AttachmentList(
                             attachments: msg['all_attachment'],
                             messageId: messageId,
@@ -1504,6 +1503,65 @@ class _MessageBubble extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMessageTextWithMentions(BuildContext context, String text, Color textColor) {
+    if (mentionableUsers.isEmpty || !text.contains('@')) {
+      return Text(text, style: TextStyle(color: textColor, fontSize: 15, height: 1.5));
+    }
+
+    List<InlineSpan> spans = [];
+    
+    // Individual users only (Everyone doesn't have a profile)
+    final interactiveUsers = mentionableUsers.where((u) => u.firstName != 'Everyone').toList();
+    if (interactiveUsers.isEmpty) return Text(text, style: TextStyle(color: textColor, fontSize: 15, height: 1.5));
+
+    // Sort by length descending to match longest full names first
+    interactiveUsers.sort((a, b) => b.fullName.length.compareTo(a.fullName.length));
+
+    String pattern = interactiveUsers.map((u) => RegExp.escape('@${u.fullName}')).join('|');
+    RegExp regex = RegExp(pattern);
+
+    int start = 0;
+    regex.allMatches(text).forEach((match) {
+      if (match.start > start) {
+        spans.add(TextSpan(text: text.substring(start, match.start)));
+      }
+
+      final matchText = match.group(0)!;
+      final user = interactiveUsers.firstWhere((u) => "@${u.fullName}" == matchText);
+
+      spans.add(
+        TextSpan(
+          text: matchText,
+          style: const TextStyle(
+            color: Colors.blueAccent,
+            fontWeight: FontWeight.bold,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () {
+              UserProfilePopup.show(
+                context,
+                name: user.fullName,
+                email: user.email ?? "user@freeli.io",
+                imageUrl: user.imageUrl ?? "",
+              );
+            },
+        ),
+      );
+      start = match.end;
+    });
+
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start)));
+    }
+
+    return Text.rich(
+      TextSpan(
+        style: TextStyle(color: textColor, fontSize: 15, height: 1.5),
+        children: spans,
       ),
     );
   }

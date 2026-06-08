@@ -5,12 +5,14 @@ class MentionUser {
   final String firstName;
   final String lastName;
   final String? imageUrl;
+  final String? email;
 
   MentionUser({
     required this.id,
     required this.firstName,
     required this.lastName,
     this.imageUrl,
+    this.email,
   });
 
   String get fullName => "$firstName $lastName".trim();
