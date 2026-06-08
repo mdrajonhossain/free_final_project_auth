@@ -234,13 +234,16 @@ class _HomePageState extends State<HomePage> {
                       chatBlocFormattedMsg['created_at']?.toString() ??
                       DateTime.now().toIso8601String();
 
-                  // Increment unread count locally for instant UI update
-                  int currentUnread =
-                      int.tryParse(
-                        updatedRoom['unread_count']?.toString() ?? '0',
-                      ) ??
-                      0;
-                  updatedRoom['unread_count'] = (currentUnread + 1).toString();
+                  // Only increment unread count if the message is from someone else
+                  if (sender != userId) {
+                    int currentUnread =
+                        int.tryParse(
+                          updatedRoom['unread_count']?.toString() ?? '0',
+                        ) ??
+                        0;
+                    updatedRoom['unread_count'] = (currentUnread + 1)
+                        .toString();
+                  }
 
                   // Remove and insert at top to show most recent first
                   conversationRooms!.removeAt(index);
