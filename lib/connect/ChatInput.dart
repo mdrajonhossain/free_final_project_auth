@@ -111,11 +111,12 @@ class _ChatInputState extends State<ChatInput> {
                                             userEmail: widget.userEmail,
                                             users: widget.mentionableUsers
                                                 .where(
-                                                  (u) => u.name != 'Everyone',
+                                                  (u) =>
+                                                      u.firstName != 'Everyone',
                                                 )
                                                 .map(
                                                   (u) => {
-                                                    'name': u.name,
+                                                    'name': u.fullName,
                                                     'image': u.imageUrl ?? '',
                                                     'id': u.id,
                                                   },

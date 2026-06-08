@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 
 class MentionUser {
   final String id;
-  final String name;
+  final String firstName;
+  final String lastName;
   final String? imageUrl;
 
-  MentionUser({required this.id, required this.name, this.imageUrl});
+  MentionUser({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    this.imageUrl,
+  });
+
+  String get fullName => "$firstName $lastName".trim();
 }
 
 class MentionTextField extends StatefulWidget {
@@ -19,6 +27,7 @@ class MentionTextField extends StatefulWidget {
   final int? minLines;
   final int? maxLines;
   final VoidCallback? onTap;
+  final Function(List<String> tags)? onMentionIdsChanged;
 
   const MentionTextField({
     super.key,
@@ -32,6 +41,7 @@ class MentionTextField extends StatefulWidget {
     this.minLines,
     this.maxLines,
     this.onTap,
+    this.onMentionIdsChanged,
   });
 
   @override
@@ -43,6 +53,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
   OverlayEntry? _overlayEntry;
   List<MentionUser> _filteredUsers = [];
   int _mentionStartIndex = -1;
+  final Set<String> _selectedMentionIds = {};
 
   @override
   void initState() {
@@ -124,7 +135,11 @@ class _MentionTextFieldState extends State<MentionTextField> {
 
   void _filterUsers(String query) {
     final filtered = widget.users
-        .where((user) => user.name.toLowerCase().contains(query.toLowerCase()))
+        .where(
+          (user) =>
+              user.firstName.toLowerCase().contains(query.toLowerCase()) ||
+              user.lastName.toLowerCase().contains(query.toLowerCase()),
+        )
         .toList();
 
     setState(() {
@@ -189,7 +204,9 @@ class _MentionTextFieldState extends State<MentionTextField> {
                           : null,
                       child: user.imageUrl == null
                           ? Text(
-                              user.name[0].toUpperCase(),
+                              user.firstName.isNotEmpty
+                                  ? user.firstName[0].toUpperCase()
+                                  : "?",
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.white,
@@ -198,7 +215,7 @@ class _MentionTextFieldState extends State<MentionTextField> {
                           : null,
                     ),
                     title: Text(
-                      user.name,
+                      user.fullName,
                       style: const TextStyle(fontSize: 14, color: Colors.white),
                     ),
                     onTap: () => _addMention(user),
@@ -227,15 +244,20 @@ class _MentionTextFieldState extends State<MentionTextField> {
     final textBeforeMention = text.substring(0, _mentionStartIndex);
     final textAfterCursor = text.substring(cursorPosition);
 
-    final newText = "$textBeforeMention@${user.name} $textAfterCursor";
+    final newText = "$textBeforeMention@${user.fullName} $textAfterCursor";
 
     widget.controller.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(
         offset:
-            textBeforeMention.length + user.name.length + 2, // @ এবং স্পেস সহ
+            textBeforeMention.length +
+            user.fullName.length +
+            2, // @ এবং স্পেস সহ
       ),
     );
+
+    _selectedMentionIds.add(user.id);
+    widget.onMentionIdsChanged?.call(_selectedMentionIds.toList());
 
     _hideOverlay();
   }

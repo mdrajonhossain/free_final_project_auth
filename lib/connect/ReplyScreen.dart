@@ -123,19 +123,23 @@ class _ReplyScreenState extends State<ReplyScreen> {
 
       if (mounted) {
         setState(() {
-          _mentionableUsers = users
-              .where((u) {
-                final uid = (u['id'] ?? u['_id'] ?? u['uid']).toString();
-                return participantIds.contains(uid) && uid != myId;
-              })
-              .map(
-                (u) => MentionUser(
-                  id: (u['id'] ?? u['_id'] ?? u['uid']).toString(),
-                  name: (u['firstname'] ?? u['name'] ?? 'User').toString(),
-                  imageUrl: (u['img'] ?? u['image'])?.toString(),
-                ),
-              )
-              .toList();
+          _mentionableUsers =
+              (users
+                      .where((u) {
+                        final uid = (u['id'] ?? u['_id'] ?? u['uid'])
+                            .toString();
+                        return participantIds.contains(uid) && uid != myId;
+                      })
+                      .map<MentionUser>(
+                        (u) => MentionUser(
+                          id: (u['id'] ?? u['_id'] ?? u['uid']).toString(),
+                          firstName: (u['firstname'] ?? u['name'] ?? 'User')
+                              .toString(),
+                          lastName: (u['lastname'] ?? '').toString(),
+                          imageUrl: (u['img'] ?? u['image'])?.toString(),
+                        ),
+                      ))
+                  .toList();
 
           if (_mentionableUsers.isNotEmpty) {
             final String everyoneIds = _mentionableUsers
@@ -143,7 +147,12 @@ class _ReplyScreenState extends State<ReplyScreen> {
                 .join(',');
             _mentionableUsers.insert(
               0,
-              MentionUser(id: everyoneIds, name: 'Everyone', imageUrl: null),
+              MentionUser(
+                id: everyoneIds,
+                firstName: 'Everyone',
+                lastName: '',
+                imageUrl: null,
+              ),
             );
           }
         });

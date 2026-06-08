@@ -109,27 +109,36 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (mounted) {
         setState(() {
-          final List<MentionUser> mentionList = users
-              .where((u) {
-                final uid = (u['id'] ?? u['_id'] ?? u['uid']).toString();
-                // রুমের মেম্বার হতে হবে এবং নিজে হওয়া যাবে না
-                return participantIds.contains(uid) && uid != myId;
-              })
-              .map(
-                (u) => MentionUser(
-                  id: (u['id'] ?? u['_id'] ?? u['uid']).toString(),
-                  name: (u['firstname'] ?? u['name'] ?? 'User').toString(),
-                  imageUrl: (u['img'] ?? u['image'])?.toString(),
-                ),
-              )
-              .toList();
+          final List<MentionUser> mentionList =
+              (users
+                      .where((u) {
+                        final uid = (u['id'] ?? u['_id'] ?? u['uid'])
+                            .toString();
+                        // রুমের মেম্বার হতে হবে এবং নিজে হওয়া যাবে না
+                        return participantIds.contains(uid) && uid != myId;
+                      })
+                      .map<MentionUser>(
+                        (u) => MentionUser(
+                          id: (u['id'] ?? u['_id'] ?? u['uid']).toString(),
+                          firstName: (u['firstname'] ?? u['name'] ?? 'User')
+                              .toString(),
+                          lastName: (u['lastname'] ?? '').toString(),
+                          imageUrl: (u['img'] ?? u['image'])?.toString(),
+                        ),
+                      ))
+                  .toList();
 
           // React এর মতো 'Everyone' অপশন যোগ করা (যদি মেম্বার থাকে)
           if (mentionList.isNotEmpty) {
             final String everyoneIds = mentionList.map((e) => e.id).join(',');
             mentionList.insert(
               0,
-              MentionUser(id: everyoneIds, name: 'Everyone', imageUrl: null),
+              MentionUser(
+                id: everyoneIds,
+                firstName: 'Everyone',
+                lastName: '',
+                imageUrl: null,
+              ),
             );
           }
           _mentionableUsers = mentionList;
@@ -1829,18 +1838,14 @@ class _AttachmentList extends StatelessWidget {
               if (result.isNotEmpty && context.mounted) {
                 context.read<ChatBloc>().add(
                   ChatFileStarred(
-                    fileId: fId,
                     msgId: mId,
+                    fileId: fId,
                     star: result['star'] ?? [],
                   ),
                 );
               }
             } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(e.toString())));
-              }
+              debugPrint("Error toggling file star: $e");
             }
           },
           child: Container(
@@ -1853,17 +1858,8 @@ class _AttachmentList extends StatelessWidget {
             ),
             child: Icon(
               isStarred ? Icons.star_rounded : Icons.star_outline_rounded,
-              size: 20,
-              color: isStarred
-                  ? Colors.red
-                  : (msg['sender'].toString() ==
-                            context.read<ChatBloc>().state.myId
-                        ? Colors.white70
-                        : context
-                              .read<ThemeCubit>()
-                              .state
-                              .msgReceiverText
-                              .withOpacity(0.5)),
+              size: 18,
+              color: isStarred ? Colors.amber : Colors.white70,
             ),
           ),
         ),
