@@ -1395,7 +1395,51 @@ class _MessageBubble extends StatelessWidget {
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context),
-                                          child: const Text("Close"),
+                                          child: Text(
+                                            "Close",
+                                            style: TextStyle(
+                                              color: isDark
+                                                  ? Colors.white60
+                                                  : Colors.black54,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 8,
+                                          ),
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                              Navigator.pushNamed(
+                                                context,
+                                                '/replyScreen',
+                                                arguments: {
+                                                  'messageid': msgId,
+                                                  'msg': msg,
+                                                  'company_id': company_id,
+                                                  'participants': participants,
+                                                },
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  appTheme.accentColor,
+                                              foregroundColor: Colors.white,
+                                              elevation: 0,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 20,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                            ),
+                                            child: const Text("Reply"),
+                                          ),
                                         ),
                                       ],
                                     ),
