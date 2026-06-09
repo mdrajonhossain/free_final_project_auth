@@ -123,9 +123,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       "is_secret": event.isSecret,
       "msg_title": event.msgTitle,
       "all_attachment": event.attachFiles?['allfiles'] ?? [],
-      "is_reply_msg": event.isReplyMsg,
-      "reply_for_msg_id": event.replyForMsgId,
-      "replyms": event.replyms,
     };
 
     // 1. Optimistic Update: Add message to list immediately
@@ -152,9 +149,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         isSecret: event.isSecret,
         secretUsers: event.secretUsers,
         msgTitle: event.msgTitle,
-        isReplyMsg: event.isReplyMsg,
-        replyForMsgId: event.replyForMsgId,
-        replyms: event.replyms,
       );
 
       if (response == null) throw Exception("Empty response from server");
@@ -409,6 +403,24 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final String msgId = (msgMap['msg_id'] ?? msgMap['id'] ?? "").toString();
       if (msgId.isEmpty) return;
 
+      // ১. থ্রেডেড রিপ্লাই ফিল্টারিং: যদি মেসেজটি কোনো মেসেজের রিপ্লাই হয়, তবে মেইন লিস্টে যোগ করবেন না।
+      final String replyFor = (msgMap['reply_for_msgid'] ?? "").toString();
+      if (replyFor.isNotEmpty) {
+        // শুধুমাত্র প্যারেন্ট মেসেজের মেটাডাটা (Reply Count, Name, Time) আপডেট করুন
+        add(
+          ChatParentMessageMetadataUpdated(
+            msgId: replyFor,
+            lastReplyName:
+                (msgMap['sendername'] ?? msgMap['created_by_name'] ?? "Someone")
+                    .toString(),
+            lastReplyTime:
+                (msgMap['created_at'] ?? DateTime.now().toIso8601String())
+                    .toString(),
+          ),
+        );
+        return; // মেসেজটি মেইন লিস্টে যোগ করা থেকে বিরত থাকুন
+      }
+
       // 2. Metadata Normalization
       msgMap['sender'] = msgMap['sender'] ?? msgMap['created_by_id'];
       if (msgMap['created_by_name'] != null)
@@ -445,12 +457,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         return;
       }
 
-      // 5. New Message Logic
-      // Only ignore self-messages if they are likely already handled by optimistic updates
-      // (i.e., they are 'text' type and don't have attachments, or we have a pending temp message)
-      if (msgMap['sender'] == state.myId &&
-          state.messages.any((m) => m['msg_id'].toString().startsWith('temp_')))
-        return;
+      // 5. New Message Logic (ignore self-messages handled by optimistic updates)
+      if (msgMap['sender'] == state.myId) return;
 
       final updatedMessages = [msgMap, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));
