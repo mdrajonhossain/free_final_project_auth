@@ -122,13 +122,36 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       "created_at": DateTime.now().toIso8601String(),
       "is_secret": event.isSecret,
       "msg_title": event.msgTitle,
+      "reply_for_msgid": event.replyForMsgId,
       "all_attachment": event.attachFiles?['allfiles'] ?? [],
     };
 
-    // 1. Optimistic Update: Add message to list immediately
-    final updatedMessages = [optimisticMessage, ...state.messages];
-    // Clear previous error state so the UI doesn't show a stale failure notification
-    emit(state.copyWith(messages: updatedMessages, error: null));
+    // চেক করা হচ্ছে মেসেজটি থ্রেডেড রিপ্লাই কিনা
+    final bool isReply =
+        event.isReplyMsg == "yes" ||
+        (event.replyForMsgId != null && event.replyForMsgId!.isNotEmpty);
+
+    if (isReply && event.replyForMsgId != null) {
+      // যদি রিপ্লাই হয়, তবে প্যারেন্ট মেসেজের মেটাডাটা (কাউন্ট) সাথে সাথে আপডেট করুন
+      add(
+        ChatParentMessageMetadataUpdated(
+          msgId: event.replyForMsgId!,
+          lastReplyName:
+              "${state.userData?['firstname'] ?? 'Me'} ${state.userData?['lastname'] ?? ''}"
+                  .trim(),
+          lastReplyTime: DateTime.now().toIso8601String(),
+        ),
+      );
+    }
+
+    if (!isReply) {
+      // শুধুমাত্র সাধারণ মেসেজ হলে মেইন লিস্টে যোগ করুন
+      final updatedMessages = [optimisticMessage, ...state.messages];
+      emit(state.copyWith(messages: updatedMessages, error: null));
+    } else {
+      // রিপ্লাই মেসেজ মেইন লিস্টে যোগ হবে না, শুধু এরর স্টেট ক্লিয়ার হবে
+      emit(state.copyWith(error: null));
+    }
 
     try {
       // 2. Network Call
@@ -158,12 +181,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         Map<String, dynamic>.from(response),
       );
 
-      // 3. Update State: Replace optimistic message with real server response
-      final List finalMessages = state.messages
-          .map((m) => m['msg_id'] == tempId ? normalizedResponse : m)
-          .toList();
+      if (!isReply) {
+        // সার্ভার থেকে রেসপন্স আসার পর শুধু সাধারণ মেসেজগুলো আপডেট করুন
+        final List finalMessages = state.messages
+            .map((m) => m['msg_id'] == tempId ? normalizedResponse : m)
+            .toList();
 
-      emit(state.copyWith(messages: finalMessages, error: null));
+        emit(state.copyWith(messages: finalMessages, error: null));
+      }
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
@@ -404,7 +429,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       if (msgId.isEmpty) return;
 
       // ১. থ্রেডেড রিপ্লাই ফিল্টারিং: যদি মেসেজটি কোনো মেসেজের রিপ্লাই হয়, তবে মেইন লিস্টে যোগ করবেন না।
-      final String replyFor = (msgMap['reply_for_msgid'] ?? "").toString();
+      // অনেক সময় XMPP থেকে কি (Key) ভিন্ন আসতে পারে, তাই camelCase চেকও রাখা হলো।
+      final String replyFor =
+          (msgMap['reply_for_msgid'] ?? msgMap['replyForMsgId'] ?? "")
+              .toString();
+
       if (replyFor.isNotEmpty) {
         // শুধুমাত্র প্যারেন্ট মেসেজের মেটাডাটা (Reply Count, Name, Time) আপডেট করুন
         add(
