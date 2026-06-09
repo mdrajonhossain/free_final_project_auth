@@ -1406,7 +1406,18 @@ class _MessageBubble extends StatelessWidget {
                                 icon: Icons.reply_all_rounded,
                                 label: "View & reply",
                                 color: Colors.greenAccent,
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/replyScreen',
+                                    arguments: {
+                                      'messageid': msgId,
+                                      'msg': msg,
+                                      'company_id': company_id,
+                                      'participants': participants,
+                                    },
+                                  );
+                                },
                               ),
                               if (isMe) ...[
                                 _buildSecretAction(
