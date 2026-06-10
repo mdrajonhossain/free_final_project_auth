@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "993552128631",
+    "project_id": "workfreeliv2",
+    "storage_bucket": "workfreeliv2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993552128631:android:38a8f869ef7e82101a8472",
+        "android_client_info": {
+          "package_name": "com.freeli.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVkbMzM9bBe9Q2hMYx411d06NhubAu0CM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993552128631:android:2196622305a8f6d01a8472",
+        "android_client_info": {
+          "package_name": "com.workfreeli.connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVkbMzM9bBe9Q2hMYx411d06NhubAu0CM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993552128631:android:8fda28d1964aef6b1a8472",
+        "android_client_info": {
+          "package_name": "com.workfreeli.connectcall"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVkbMzM9bBe9Q2hMYx411d06NhubAu0CM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

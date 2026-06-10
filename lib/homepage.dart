@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/connect/filehubs/Filehubs.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:freeli/connect/roomFilter.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/api/xmpp_server.dart';
@@ -28,6 +29,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? userData;
   List<dynamic>? conversationRooms;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   bool isLoading = true;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -40,6 +42,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     getMeData();
+    _setupFirebaseMessaging(); // Call Firebase setup early
     archiveCounter();
   }
 
@@ -71,12 +74,120 @@ class _HomePageState extends State<HomePage> {
       });
       if (data['id'] != null) {
         getRooms(data['id']);
+        _initFirebaseMessaging();
         _initXmpp(data['id'].toString());
       }
     } catch (e) {
       setState(() => isLoading = false);
       print("Error fetching user data: $e");
     }
+  }
+
+  /// Sets up Firebase Messaging listeners for foreground and background messages.
+  void _setupFirebaseMessaging() {
+    // Request permission for notifications
+    _firebaseMessaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    // Handle messages when the app is in the foreground
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      debugPrint('Got a message whilst in the foreground!');
+      debugPrint('Message data: ${message.data}');
+
+      // Check if the message is a call notification
+      if (message.data['type'] == 'call' ||
+          message.data['xmpp_type'] == 'jitsi_ring_calling') {
+        _handleFirebaseCallMessage(message.data);
+      }
+    });
+
+    // Handle messages when the user taps on a notification to open the app
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      debugPrint('A new onMessageOpenedApp event was published!');
+      debugPrint('Message data: ${message.data}');
+
+      // Check if the message is a call notification
+      if (message.data['type'] == 'call' ||
+          message.data['xmpp_type'] == 'jitsi_ring_calling') {
+        _handleFirebaseCallMessage(message.data);
+      }
+    });
+
+    // Handle initial message when the app is launched from a terminated state
+    _firebaseMessaging.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        debugPrint('App launched from terminated state by a message!');
+        debugPrint('Initial Message data: ${message.data}');
+        if (message.data['type'] == 'call' ||
+            message.data['xmpp_type'] == 'jitsi_ring_calling') {
+          _handleFirebaseCallMessage(message.data);
+        }
+      }
+    });
+  }
+
+  /// Initializes Firebase token and associates it with the user.
+  /// This is called after user data is fetched.
+  void _initFirebaseMessaging() {
+    _firebaseMessaging.getToken().then((token) {
+      if (token != null) {
+        debugPrint("Firebase Messaging Token: $token");
+        // Register this token with your backend to enable targeted push notifications
+        ApiServer().registerFcmToken(
+          userId: userData?['id']?.toString() ?? "",
+          token: token,
+        );
+      }
+    });
+  }
+
+  /// Parses Firebase message data and calls the existing _handleIncomingCall.
+  void _handleFirebaseCallMessage(Map<String, dynamic> data) {
+    debugPrint("FCM: Raw incoming message data: $data");
+
+    // Normalize keys to handle both snake_case and camelCase from backend
+    final Map<String, dynamic> formattedMsg = {
+      'conversation_id':
+          data['conversation_id']?.toString() ??
+          data['conversationId']?.toString(),
+      'user_fullname':
+          data['caller_name'] ??
+          data['callerName'] ??
+          data['sendername'] ??
+          "Unknown Caller",
+      'sendername':
+          data['caller_name'] ??
+          data['callerName'] ??
+          data['sendername'] ??
+          "Unknown Caller",
+      'senderimg':
+          data['caller_image'] ??
+          data['callerImage'] ??
+          data['senderimg'] ??
+          "",
+      'msg_type':
+          data['msg_type'] ?? data['call_type'] ?? data['callType'] ?? 'audio',
+      'token': data['token'] ?? data['jitsi_token'] ?? data['jitsiToken'] ?? "",
+      'xmpp_type':
+          data['xmpp_type'] ??
+          data['xmppType'] ??
+          'jitsi_ring_calling', // Force ring type for Firebase calls
+      'type': data['type'] ?? data['msg_type'] ?? 'call',
+      'msg_body':
+          data['msg_body'] ??
+          data['msgBody'] ??
+          '{"call_id": "fcm_call"}', // Ensure ring signal passes check
+    };
+
+    debugPrint("FCM: Formatted message for _handleIncomingCall: $formattedMsg");
+    _handleIncomingCall(formattedMsg);
   }
 
   void _initXmpp(String userId) async {
@@ -320,10 +431,13 @@ class _HomePageState extends State<HomePage> {
   /// Handles incoming call signals by showing a popup dialog
   void _handleIncomingCall(Map<String, dynamic> msg) {
     // Only show popup for actual ringing signals, ignore candidates/SDP packets
+    debugPrint("Handling incoming call signal. Message: $msg");
+
     final bool isRingSignal =
         msg['xmpp_type'] == 'jitsi_ring_calling' ||
         msg['xmpp_type'] == 'jitsi_ring_send' ||
         (msg['type'] == 'call' &&
+            // Check for specific call identifier in msg_body
             msg['msg_body'].toString().contains('"call_id"')) ||
         msg['msg_body'].toString().contains('"participants_all"');
 
@@ -331,55 +445,75 @@ class _HomePageState extends State<HomePage> {
 
     final String convId = msg['conversation_id']?.toString() ?? "";
     // Prioritize user_fullname to ensure the caller's actual name is shown
+    // Added more robust fallback for caller name
     final String callerName =
         msg['user_fullname'] ??
         msg['sendername'] ??
         msg['sender_name'] ??
+        msg['caller_name'] ??
+        msg['callerName'] ??
         "Someone";
-    final String callerImage = msg['senderimg']?.toString() ?? "";
-    final String callType = msg['msg_type'] ?? "audio";
+    final String callerImage =
+        msg['senderimg']?.toString() ?? msg['caller_image']?.toString() ?? "";
+    final String callType = msg['msg_type']?.toString() ?? "audio";
     final String token = msg['token']?.toString() ?? "";
 
-    if (convId.isEmpty) return;
-
+    if (convId.isEmpty) {
+      debugPrint("FCM: Incoming call ignored, conversation_id is empty.");
+      return;
+    }
+    debugPrint(
+      "FCM: Showing IncomingCallPopup for $callerName (Type: $callType)",
+    );
     setState(() => _isCallPopupShowing = true);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => IncomingCallPopup(
-        callerName: callerName,
-        callerImage: callerImage,
-        isVideoCall: callType == 'video' || callType == 'accept',
-        onDecline: () {
-          Navigator.pop(context);
-          setState(() => _isCallPopupShowing = false);
-          ApiServer().rejectCall(
-            userId: userData?['id']?.toString() ?? "",
-            conversationId: convId,
-            token: token,
-          );
-        },
-        onAccept: () async {
-          Navigator.pop(context);
-          setState(() => _isCallPopupShowing = false);
+    // Use addPostFrameCallback to ensure the dialog opens safely
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
 
-          await JitsiCallService.joinCall(
-            context: context,
-            userId: userData?['id']?.toString() ?? "",
-            companyId: userData?['company_id']?.toString() ?? "",
-            conversationId: convId,
-            conversationType: callType,
-            participants: [],
-            roomTitle: callerName,
-            userName: userData?['firstname'],
-            userEmail: userData?['email'],
-            userAvatar: userData?['img']?.toString(),
-            isVideo: callType == 'video' || callType == 'accept',
-          );
-        },
-      ),
-    );
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => IncomingCallPopup(
+          callerName: callerName,
+          callerImage: callerImage,
+          isVideoCall: callType == 'video' || callType == 'accept',
+          onDecline: () {
+            debugPrint("FCM: Call declined.");
+            if (Navigator.of(context).canPop()) {
+              Navigator.pop(context);
+            }
+            setState(() => _isCallPopupShowing = false);
+            ApiServer().rejectCall(
+              userId: userData?['id']?.toString() ?? "",
+              conversationId: convId,
+              token: token,
+            );
+          },
+          onAccept: () async {
+            debugPrint("FCM: Call accepted. Joining Jitsi call...");
+            if (Navigator.of(context).canPop()) {
+              Navigator.pop(context);
+            }
+            setState(() => _isCallPopupShowing = false);
+
+            await JitsiCallService.joinCall(
+              context: context,
+              userId: userData?['id']?.toString() ?? "",
+              companyId: userData?['company_id']?.toString() ?? "",
+              conversationId: convId,
+              conversationType: callType,
+              participants: [],
+              roomTitle: callerName,
+              userName: userData?['firstname'],
+              userEmail: userData?['email'],
+              userAvatar: userData?['img']?.toString(),
+              isVideo: callType == 'video' || callType == 'accept',
+            );
+          },
+        ),
+      );
+    });
   }
 
   Future<void> _handleLogout() async {

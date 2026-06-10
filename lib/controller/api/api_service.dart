@@ -681,6 +681,31 @@ class ApiServer {
     }
   }
 
+  /// Registers the Firebase Cloud Messaging (FCM) token for a user on the backend.
+  Future<void> registerFcmToken({
+    required String userId,
+    required String token,
+  }) async {
+    try {
+      // Assuming your backend has a GraphQL mutation for this
+      await ApiServer.call(
+        r'''
+        mutation RegisterFcmToken($userId: String!, $token: String!) {
+          registerFcmToken(userId: $userId, token: $token) {
+            status
+            message
+          }
+        }
+        ''',
+        variables: {'userId': userId, 'token': token},
+      );
+      debugPrint("FCM token registered successfully for user $userId");
+    } catch (e) {
+      debugPrint("Failed to register FCM token for user $userId: $e");
+      // You might want to handle this error more gracefully, e.g., retry or log to crashlytics
+    }
+  }
+
   Future<Map<String, dynamic>> forwardMessage({
     required String originalConversationId,
     required String msgId,

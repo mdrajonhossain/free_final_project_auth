@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:freeli/connect/AllFlagged/AllFlaggedMessage.dart';
 import 'package:freeli/connect/All_Notification/All_Notification.dart';
 import 'package:freeli/connect/ChangePassword/ChangePassword.dart';
@@ -21,7 +24,34 @@ import 'controller/stateBloc/message/chat_bloc.dart';
 import 'connect/ChatScreen.dart';
 import 'controller/stateBloc/LoginBloc.dart';
 
-void main() {
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint("Handling a background message: ${message.messageId}");
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  // Set up Android Notification Channel for High Importance
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    final FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // Request permission (redundant but safe)
+    await messaging.requestPermission(alert: true, badge: true, sound: true);
+
+    // For Android 8.0+, we usually create the channel via local_notifications,
+    // but for pure FCM, ensuring the 'notification' block in the payload
+    // matches the channel ID in the manifest is the key.
+    await messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   runApp(const MyApp());
 }
 

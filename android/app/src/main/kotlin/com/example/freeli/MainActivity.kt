@@ -1,4 +1,4 @@
-package com.example.freeli
+package com.freeli.app
 
 import io.flutter.embedding.android.FlutterActivity
 
