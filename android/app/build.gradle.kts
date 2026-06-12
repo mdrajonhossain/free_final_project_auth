@@ -8,8 +8,8 @@ plugins {
 
 android {
     namespace = "com.freeli.app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36 // Recommended by plugins
+    ndkVersion = "28.2.13676358" // Highest NDK version required by plugins
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -27,7 +27,7 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26
         multiDexEnabled = true
-        targetSdk = flutter.targetSdkVersion
+    targetSdk = 36 // Align targetSdk with compileSdk
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

@@ -188,7 +188,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 backgroundColor: Colors.transparent,
                 flexibleSpace: Container(
                   decoration: BoxDecoration(
-                    gradient: AppColors.getPrimaryGradient(widget.isDark),
+                    gradient: LinearGradient(
+                      colors: [
+                        appTheme.backgroundColor,
+                        appTheme.accentColor.withOpacity(0.7),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                 ),
                 leading: IconButton(
@@ -463,6 +470,7 @@ participants: $participants
         return _MessageBubble(
           key: ValueKey(msg['id'] ?? index),
           msg: msg,
+          isDark: isDark, // Pass isDark to _MessageBubble
           appTheme: appTheme,
           isMe: isMe,
           index: index,
@@ -974,9 +982,13 @@ class _AttachmentList extends StatelessWidget {
                 // Tag Counter / Index Indicator
                 Column(
                   children: [
-                    _buildIndexTag(context, file['tag_list']),
+                    _buildIndexTag(
+                      context,
+                      file['tag_list'],
+                      isDark,
+                    ), // Pass isDark
                     const SizedBox(height: 8),
-                    _buildIndexStar(index),
+                    _buildIndexStar(index, isDark), // Pass isDark
                   ],
                 ),
                 Flexible(
@@ -1054,8 +1066,12 @@ class _AttachmentList extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildIndexStar(index),
-                  _buildIndexTag(context, file['tag_list']),
+                  _buildIndexStar(index, isDark), // Pass isDark
+                  _buildIndexTag(
+                    context,
+                    file['tag_list'],
+                    isDark,
+                  ), // Pass isDark
                   Flexible(
                     child: Container(
                       // Removed margin: const EdgeInsets.only(bottom: 6)
@@ -1100,7 +1116,8 @@ class _AttachmentList extends StatelessWidget {
     );
   }
 
-  Widget _buildIndexTag(BuildContext context, dynamic tagList) {
+  Widget _buildIndexTag(BuildContext context, dynamic tagList, bool isDark) {
+    // Add isDark
     return GestureDetector(
       onTap: () {
         showModalBottomSheet(
@@ -1116,6 +1133,7 @@ class _AttachmentList extends StatelessWidget {
               'conversation_id': msg['conversation_id'],
               'msg_id': msg['msg_id'] ?? msg['id'],
             },
+            isDark: isDark, // Pass isDark to PublicTag
           ),
         );
       },
@@ -1126,7 +1144,9 @@ class _AttachmentList extends StatelessWidget {
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.black.withOpacity(0.05), // Use isDark
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white12),
             ),
@@ -1165,7 +1185,8 @@ class _AttachmentList extends StatelessWidget {
     );
   }
 
-  Widget _buildIndexStar(int index) {
+  Widget _buildIndexStar(int index, bool isDark) {
+    // Add isDark
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -1173,7 +1194,10 @@ class _AttachmentList extends StatelessWidget {
           margin: const EdgeInsets.only(right: 8),
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: Color.fromARGB(179, 38, 28, 134),
+            // Use appTheme colors for consistency
+            color: isDark
+                ? const Color.fromARGB(179, 38, 28, 134)
+                : Colors.amber.withOpacity(0.1), // Use isDark
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white12),
           ),

@@ -139,6 +139,10 @@ class _AttachmentSheetState extends State<AttachmentSheet> {
         "acl": file['acl'] ?? "public-read",
         "referenceId": "",
         "reference_type": "",
+        // Add the location field here for optimistic update
+        "location": (bucket.isNotEmpty && key.isNotEmpty)
+            ? "https://wfss001.freeli.io/$bucket/$key"
+            : "",
       });
     }
 
