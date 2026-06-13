@@ -1109,4 +1109,130 @@ class ApiServer {
       throw GqlException("Network error: Please check your connection.");
     }
   }
+
+  /// Fetches the list of tasks for the current company/user.
+  Future<List<Map<String, dynamic>>> fetchTasks() async {
+    try {
+      final data = await ApiServer.call(
+        r'''query tasks($conversation_id: String, $view_type: String!, $page: Int!, $flag: [String!], $task_title: String, $limit: Int!, $read_all: String, $filter: [Any], $status: [String!], $project_ids: [String!]) {
+          tasks(
+            conversation_id: $conversation_id
+            view_type: $view_type
+            page: $page
+            flag: $flag
+            task_title: $task_title
+            limit: $limit
+            read_all: $read_all
+            filter: $filter
+            status: $status
+            project_ids: $project_ids
+          ) {
+            status
+            message
+            data {
+              _id
+              task_title
+              status
+              end_date
+              assign_to
+              priority
+            }
+          }
+        }''',
+        variables: {
+          "page": 1,
+          "limit": 50,
+          "filter": [],
+          "view_type": "kanban",
+          "project_ids": ["all"],
+          "status": [],
+          "flag": [],
+          "read_all": "no",
+          "conversation_id": "",
+        },
+      );
+
+      final List tasksList = data['tasks']?['data'] ?? [];
+      return tasksList.map((e) {
+        final map = Map<String, dynamic>.from(e);
+        return {
+          'id': map['_id'],
+          'title': map['task_title'],
+          'status': map['status'],
+          'due_date': map['end_date'],
+          'priority': map['priority'],
+          'assignee_ids': map['assign_to'],
+        };
+      }).toList();
+    } catch (e) {
+      throw GqlException("Failed to fetch tasks: ${e.toString()}");
+    }
+  }
+
+  /// Updates the status of a specific task (Kanban movement).
+  Future<bool> updateTaskStatus(String taskId, String newStatus) async {
+    try {
+      final data = await ApiServer.call(
+        r'''
+        mutation UpdateTaskStatus($id: ID!, $status: String!) {
+          updateTaskStatus(id: $id, status: $status) {
+            status
+          }
+        }
+      ''',
+        variables: {"id": taskId, "status": newStatus},
+      );
+      return data['updateTaskStatus']?['status'] == true;
+    } catch (e) {
+      debugPrint("Update Task Error: $e");
+      return false;
+    }
+  }
+
+  /// Creates a new task in the system.
+  Future<Map<String, dynamic>?> createTask(
+    String title,
+    String status,
+    String priority, {
+    String? dueDate,
+    String? assignTo,
+  }) async {
+    try {
+      final data = await ApiServer.call(
+        r'''
+        mutation CreateTask($title: String!, $status: String!, $priority: String!, $due_date: String, $assign_to: String) {
+          createTask(title: $title, status: $status, priority: $priority, due_date: $due_date, assign_to: $assign_to) {
+            id
+            title
+            status
+            due_date
+            assign_to
+          }
+        }
+      ''',
+        variables: {
+          "title": title,
+          "status": status,
+          "priority": priority,
+          "due_date": dueDate,
+          "assign_to": assignTo,
+        },
+      );
+
+      if (data['createTask'] != null) {
+        final map = Map<String, dynamic>.from(data['createTask']);
+        return {
+          'id': map['id'],
+          'title': map['title'],
+          'status': map['status'],
+          'due_date': map['due_date'],
+          'assignee_name': map['assign_to'],
+        };
+      }
+      return null;
+    } catch (e) {
+      debugPrint("Create Task Error: $e");
+      return null;
+    }
+  }
 }
