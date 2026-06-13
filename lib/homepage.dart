@@ -7,6 +7,7 @@ import 'package:freeli/controller/api/api_service.dart';
 import 'package:freeli/controller/api/xmpp_server.dart';
 import 'package:freeli/controller/stateBloc/message/chat_bloc.dart';
 import 'package:freeli/config/config.dart';
+import 'package:freeli/taskScreen.dart';
 import 'connect/ChatsTab.dart';
 import 'connect/CallsTab.dart';
 import 'connect/jitsi_call_service.dart';
@@ -584,7 +585,7 @@ class _HomePageState extends State<HomePage> {
         }
 
         return DefaultTabController(
-          length: 3,
+          length: 4,
           child: Scaffold(
             backgroundColor: appTheme.backgroundColor,
             endDrawer: AppDrawer(
@@ -668,6 +669,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const Tab(icon: Icon(Icons.call), text: "Calls"),
                   const Tab(icon: Icon(Icons.dashboard), text: "Filehubs"),
+                  const Tab(
+                    icon: Icon(Icons.assignment_turned_in),
+                    text: "Task",
+                  ),
                 ],
               ),
             ),
@@ -685,6 +690,7 @@ class _HomePageState extends State<HomePage> {
                   companyId: userData?['company_id']?.toString(),
                 ),
                 const Filehubs(),
+                const TaskScreen(),
               ],
             ),
           ),
