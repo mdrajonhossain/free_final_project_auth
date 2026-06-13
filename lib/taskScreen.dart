@@ -16,11 +16,42 @@ class _TaskScreenState extends State<TaskScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _allTasks = [];
   List<Map<String, dynamic>> _users = [];
+  final ScrollController _horizontalScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _fetchTasks();
+  }
+
+  @override
+  void dispose() {
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
+
+  void _handleAutoScroll(Offset globalPosition) {
+    if (!_horizontalScrollController.hasClients) return;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double edgeThreshold =
+        80.0; // স্ক্রিনের সীমানা থেকে কত দূরে স্ক্রল শুরু হবে
+    double scrollAmount = 12.0; // স্ক্রল স্পিড
+
+    if (globalPosition.dx > screenWidth - edgeThreshold) {
+      _horizontalScrollController.jumpTo(
+        (_horizontalScrollController.offset + scrollAmount).clamp(
+          0.0,
+          _horizontalScrollController.position.maxScrollExtent,
+        ),
+      );
+    } else if (globalPosition.dx < edgeThreshold) {
+      _horizontalScrollController.jumpTo(
+        (_horizontalScrollController.offset - scrollAmount).clamp(
+          0.0,
+          _horizontalScrollController.position.maxScrollExtent,
+        ),
+      );
+    }
   }
 
   Future<void> _fetchTasks() async {
@@ -540,6 +571,7 @@ class _TaskScreenState extends State<TaskScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 16, bottom: 85),
                     child: ListView.builder(
+                      controller: _horizontalScrollController,
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -570,7 +602,9 @@ class _TaskScreenState extends State<TaskScreen> {
           margin: const EdgeInsets.only(right: 16),
           decoration: BoxDecoration(
             color: isDark
-                ? appTheme.msgBackgroundColor.withOpacity(0.6)
+                ? (candidateData.isNotEmpty
+                      ? appTheme.accentColor.withOpacity(0.15)
+                      : appTheme.msgBackgroundColor.withOpacity(0.6))
                 : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(16),
             border: candidateData.isNotEmpty
@@ -619,11 +653,23 @@ class _TaskScreenState extends State<TaskScreen> {
                     final task = column['tasks'][index];
                     return LongPressDraggable<Map<String, dynamic>>(
                       data: task,
+                      onDragUpdate: (details) {
+                        _handleAutoScroll(details.globalPosition);
+                      },
                       feedback: Material(
+                        elevation: 12,
+                        borderRadius: BorderRadius.circular(12),
                         color: Colors.transparent,
-                        child: SizedBox(
-                          width: 256,
-                          child: _buildTaskCard(task, appTheme, isDark),
+                        child: Transform.rotate(
+                          angle: 0.04, // Professional slight tilt
+                          child: SizedBox(
+                            width:
+                                220, // Smaller width for better visibility during drag
+                            child: Opacity(
+                              opacity: 0.9,
+                              child: _buildTaskCard(task, appTheme, isDark),
+                            ),
+                          ),
                         ),
                       ),
                       childWhenDragging: Opacity(
