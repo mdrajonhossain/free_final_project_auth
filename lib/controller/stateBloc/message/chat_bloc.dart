@@ -112,6 +112,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final optimisticMessage = {
       "msg_id": tempId,
       "sender": state.myId,
+      "conversation_id": event.conversationId,
       "sendername":
           "${state.userData?['firstname'] ?? 'Me'} ${state.userData?['lastname'] ?? ''}"
               .trim(),
@@ -123,7 +124,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       "is_secret": event.isSecret,
       "msg_title": event.msgTitle,
       "reply_for_msgid": event.replyForMsgId,
-      "all_attachment": event.attachFiles?['allfiles'] ?? [],
+      "all_attachment":
+          (event.allAttachment != null && event.allAttachment!.isNotEmpty)
+          ? event.allAttachment
+          : (event.attachFiles?['allfiles'] ?? []),
+      "msg_type": event.msgType,
     };
 
     // চেক করা হচ্ছে মেসেজটি থ্রেডেড রিপ্লাই কিনা
@@ -414,7 +419,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           type == 'new_message' ||
           type == 'text' ||
           type == 'edit_msg' ||
-          type == 'update_msg';
+          type == 'update_msg' ||
+          type == 'media_attachment';
       if (!isChatMessage) return;
 
       final String? incomingConvId = msgMap['conversation_id']?.toString();
@@ -487,7 +493,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
 
       // 5. New Message Logic (ignore self-messages handled by optimistic updates)
-      if (msgMap['sender'] == state.myId) return;
+      // Allow self-messages if they are manually injected (e.g. from an upload popup)
+      final bool isManual = msgMap['is_manual_injection'] == true;
+      if (msgMap['sender'] == state.myId && !isManual) return;
 
       final updatedMessages = [msgMap, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));

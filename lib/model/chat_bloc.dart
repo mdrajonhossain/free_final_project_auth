@@ -119,7 +119,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       "created_at": DateTime.now().toIso8601String(),
       "is_secret": event.isSecret,
       "msg_title": event.msgTitle,
-      "all_attachment": event.attachFiles?['allfiles'] ?? [],
+      "conversation_id": event.conversationId,
+      "all_attachment":
+          (event.allAttachment != null && event.allAttachment!.isNotEmpty)
+          ? event.allAttachment
+          : (event.attachFiles?['allfiles'] ?? []),
+      "msg_type": event.msgType,
     };
 
     // 1. Optimistic Update: Add message to list immediately
@@ -310,7 +315,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           type == 'new_message' ||
           type == 'text' ||
           type == 'edit_msg' ||
-          type == 'update_msg';
+          type == 'update_msg' ||
+          type == 'media_attachment';
       if (!isChatMessage) return;
 
       final String? incomingConvId = msgMap['conversation_id']?.toString();
@@ -357,7 +363,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
 
       // 5. New Message Logic (ignore self-messages handled by optimistic updates)
-      if (msgMap['sender'] == state.myId) return;
+      // Allow self-messages if they are manually injected
+      final bool isManual = msgMap['is_manual_injection'] == true;
+      if (msgMap['sender'] == state.myId && !isManual) return;
 
       final updatedMessages = [msgMap, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));

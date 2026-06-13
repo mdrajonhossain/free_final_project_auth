@@ -13,6 +13,7 @@ class ChatService {
     required ChatBloc chatBloc,
     required VoidCallback onScroll,
     Map<String, dynamic>? attachFiles,
+    String? msgType,
     List<String>? tags,
     List<Map<String, dynamic>>? allAttachment,
     bool isSecret = false,
@@ -33,7 +34,8 @@ class ChatService {
 
     // Rule: Chat screen messages (no files) are "text" only.
     // Rule: Attachment option (has files) are "media_attachment".
-    final String finalMsgType = hasFiles ? "media_attachment" : "text";
+    final String finalMsgType =
+        msgType ?? (hasFiles ? "media_attachment" : "text");
     final List<String>? effectiveTags = hasFiles ? tags : null;
     final List<Map<String, dynamic>>? effectiveAllAttachment = hasFiles
         ? allAttachment

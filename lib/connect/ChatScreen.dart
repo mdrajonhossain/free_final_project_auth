@@ -287,7 +287,7 @@ class _ChatScreenState extends State<ChatScreen> {
         };
 
         allAttachment = sanitizedAllFiles
-            .map((_) => {"tag_list": [], "has_tag": "N"})
+            .map((file) => {...file, "tag_list": [], "has_tag": "N"})
             .toList();
       }
 
@@ -299,6 +299,7 @@ class _ChatScreenState extends State<ChatScreen> {
         participants: participants,
         chatBloc: _chatBloc,
         onScroll: _scrollToBottom,
+        msgType: _selectedFiles.isNotEmpty ? "media_attachment" : "text",
         attachFiles: attachFiles,
         allAttachment: allAttachment,
         isReplyMsg: isReplyFlag,
@@ -649,12 +650,19 @@ participants: $participants
                         // Enrich the message with local user info for immediate UI update
                         final enrichedMessage = {
                           ...newMessage,
+                          'msg_type': 'media_attachment',
+                          'conversation_id': conversationId,
+                          'all_attachment':
+                              newMessage['all_attachment'] ??
+                              newMessage['allfiles'] ??
+                              newMessage['attachments'],
                           'sender': myId,
                           'sendername':
                               "${chatState.userData?['firstname'] ?? ''} ${chatState.userData?['lastname'] ?? ''}"
                                   .trim(),
                           'senderimg': chatState.userData?['img'],
                           'created_at': DateTime.now().toIso8601String(),
+                          'is_manual_injection': true,
                         };
 
                         // ChatBloc-এ নতুন মেসেজ যোগ করুন
