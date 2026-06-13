@@ -262,11 +262,21 @@ class _TaskScreenState extends State<TaskScreen> {
       }
     });
 
-    final success = await ApiServer().updateTaskStatus(taskId, newStatus);
-    if (!success) {
+    try {
+      final result = await ApiServer().updateSingleTask(
+        taskId: taskId,
+        status: newStatus,
+      );
+
+      if (result == null) {
+        throw Exception("Server returned an empty response.");
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to update task status")),
+          SnackBar(
+            content: Text("Failed to update task status: ${e.toString()}"),
+          ),
         );
       }
       _fetchTasks(); // Rollback to server state

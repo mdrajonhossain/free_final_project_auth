@@ -1169,23 +1169,37 @@ class ApiServer {
     }
   }
 
-  /// Updates the status of a specific task (Kanban movement).
-  Future<bool> updateTaskStatus(String taskId, String newStatus) async {
+  /// Updates a task's properties (like status).
+  /// This uses the 'update_single_task' mutation which returns updated task details.
+  Future<Map<String, dynamic>?> updateSingleTask({
+    required String taskId,
+    required String status,
+  }) async {
     try {
-      final data = await ApiServer.call(
-        r'''
-        mutation UpdateTaskStatus($id: ID!, $status: String!) {
-          updateTaskStatus(id: $id, status: $status) {
+      final variables = {
+        "input": {"_id": taskId, "status": status},
+      };
+
+      final data = await ApiServer.call(r'''
+        mutation update_single_task($input: updateTaskInput!) {
+          update_single_task(input: $input) {
+            _id
             status
+            task_title
+            project_id
+            project_title
+            last_updated_at
           }
         }
-      ''',
-        variables: {"id": taskId, "status": newStatus},
-      );
-      return data['updateTaskStatus']?['status'] == true;
+        ''', variables: variables);
+
+      final result = data['update_single_task'];
+      if (result is List && result.isNotEmpty) {
+        return Map<String, dynamic>.from(result.first);
+      }
+      return null;
     } catch (e) {
-      debugPrint("Update Task Error: $e");
-      return false;
+      throw GqlException("Failed to update task: ${e.toString()}");
     }
   }
 

@@ -740,4 +740,32 @@ class ApiServer {
   }
 
   // ===================== End Filehubs Links ========================
+
+  /// Updates a single task using the update_single_task mutation.
+  Future<Map<String, dynamic>?> updateSingleTask({
+    required String taskId,
+    required String status,
+  }) async {
+    try {
+      final variables = {
+        "input": {"_id": taskId, "status": status},
+      };
+
+      final data = await ApiServer.call(r'''
+        mutation update_single_task($input: updateTaskInput!) {
+          update_single_task(input: $input) {
+            _id
+            status
+            task_title
+          }
+        }
+        ''', variables: variables);
+      final result = data['update_single_task'];
+      return (result is List && result.isNotEmpty)
+          ? Map<String, dynamic>.from(result.first)
+          : null;
+    } catch (e) {
+      throw GqlException("Failed to update task: ${e.toString()}");
+    }
+  }
 }
