@@ -1169,15 +1169,83 @@ class ApiServer {
     }
   }
 
+  /// Fetches full details for a single task.
+  Future<Map<String, dynamic>?> fetchSingleTask(String taskId) async {
+    try {
+      final data = await ApiServer.call(
+        r'''
+        query Task($_id: ID!) {
+          task(_id: $_id) {
+            status
+            message
+            data {
+              _id
+              project_title
+              conversation_name
+              task_title
+              start_date
+              end_date
+              due_time
+              progress
+              status
+              notes
+              description
+              priority
+              assign_to
+              observers
+              participants
+              created_at
+              discussion {
+                msg_id
+                sendername
+                msg_body
+                created_at
+                __typename
+              }
+              files {
+                id
+                originalname
+                location
+                file_type
+                __typename
+              }
+            }
+          }
+        }
+        ''',
+        variables: {"_id": taskId},
+      );
+
+      final taskWrapper = data['task'];
+      if (taskWrapper != null &&
+          taskWrapper['data'] is List &&
+          (taskWrapper['data'] as List).isNotEmpty) {
+        return Map<String, dynamic>.from(taskWrapper['data'][0]);
+      }
+      return null;
+    } catch (e) {
+      throw GqlException("Failed to fetch task details: ${e.toString()}");
+    }
+  }
+
   /// Updates a task's properties (like status).
   /// This uses the 'update_single_task' mutation which returns updated task details.
   Future<Map<String, dynamic>?> updateSingleTask({
     required String taskId,
-    required String status,
+    String? status,
+    String? description,
+    String? priority,
+    String? title,
   }) async {
     try {
       final variables = {
-        "input": {"_id": taskId, "status": status},
+        "input": {
+          "_id": taskId,
+          if (status != null) "status": status,
+          if (description != null) "description": description,
+          if (priority != null) "priority": priority,
+          if (title != null) "task_title": title,
+        },
       };
 
       final data = await ApiServer.call(r'''

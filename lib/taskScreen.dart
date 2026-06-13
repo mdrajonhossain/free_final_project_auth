@@ -283,6 +283,209 @@ class _TaskScreenState extends State<TaskScreen> {
     }
   }
 
+  Future<void> _showTaskDetailSheet(
+    String taskId,
+    AppThemeModel appTheme,
+  ) async {
+    setState(() => _isLoading = true);
+    final taskDetails = await ApiServer().fetchSingleTask(taskId);
+    setState(() => _isLoading = false);
+
+    if (taskDetails == null) return;
+
+    if (!mounted) return;
+
+    final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+    final TextEditingController descController = TextEditingController(
+      text: taskDetails['description'] ?? "",
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: appTheme.backgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          ),
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(24),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildPriorityBadge(taskDetails['priority']),
+                  IconButton(
+                    icon: Icon(Icons.close, color: appTheme.textColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                taskDetails['task_title'] ?? "No Title",
+                style: TextStyle(
+                  color: appTheme.textColor,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "In ${taskDetails['project_title'] ?? 'General'}",
+                style: TextStyle(color: appTheme.subTextColor),
+              ),
+              const Divider(height: 40),
+
+              Text(
+                "Description",
+                style: TextStyle(
+                  color: appTheme.textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: descController,
+                maxLines: 5,
+                style: TextStyle(color: appTheme.textColor),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: isDark
+                      ? Colors.white10
+                      : Colors.black.withOpacity(0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  await ApiServer().updateSingleTask(
+                    taskId: taskId,
+                    status: taskDetails['status']?.toString(),
+                    description: descController.text,
+                    priority: taskDetails['priority']?.toString(),
+                  );
+                  _fetchTasks(); // Refresh the list to show updated content
+                  if (context.mounted) Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: appTheme.accentColor,
+                ),
+                child: const Text(
+                  "Save Changes",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+              Text(
+                "Attachments",
+                style: TextStyle(
+                  color: appTheme.textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if ((taskDetails['files'] as List).isEmpty)
+                Text(
+                  "No files attached",
+                  style: TextStyle(color: appTheme.subTextColor, fontSize: 13),
+                ),
+              ...(taskDetails['files'] as List).map(
+                (file) => ListTile(
+                  leading: const Icon(
+                    Icons.insert_drive_file,
+                    color: Colors.blueAccent,
+                  ),
+                  title: Text(
+                    file['originalname'] ?? "File",
+                    style: TextStyle(color: appTheme.textColor, fontSize: 14),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+
+              const SizedBox(height: 32),
+              Text(
+                "Discussion",
+                style: TextStyle(
+                  color: appTheme.textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...(taskDetails['discussion'] as List).map((msg) {
+                String body = "";
+                try {
+                  // Re-using your existing decryption logic if necessary
+                  body = msg['msg_body'] ?? "";
+                } catch (_) {
+                  body = msg['msg_body'] ?? "";
+                }
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.05)
+                        : Colors.black.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            msg['sendername'] ?? "User",
+                            style: TextStyle(
+                              color: appTheme.accentColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            DateFormat(
+                              'MMM d, HH:mm',
+                            ).format(DateTime.parse(msg['created_at'])),
+                            style: TextStyle(
+                              color: appTheme.subTextColor,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        body,
+                        style: TextStyle(
+                          color: appTheme.textColor,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> _getColumnsData() {
     return [
       {
@@ -427,7 +630,13 @@ class _TaskScreenState extends State<TaskScreen> {
                         opacity: 0.4,
                         child: _buildTaskCard(task, appTheme, isDark),
                       ),
-                      child: _buildTaskCard(task, appTheme, isDark),
+                      child: GestureDetector(
+                        onTap: () => _showTaskDetailSheet(
+                          task['id'].toString(),
+                          appTheme,
+                        ),
+                        child: _buildTaskCard(task, appTheme, isDark),
+                      ),
                     );
                   },
                 ),
