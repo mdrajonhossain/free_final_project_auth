@@ -284,12 +284,36 @@ class _TaskScreenState extends State<TaskScreen> {
     );
   }
 
-  Future<void> _moveTask(String taskId, String newStatus) async {
+  Future<void> _moveTask(
+    String taskId,
+    String newStatus, {
+    int? newIndex,
+  }) async {
     // Optimistic UI Update
     setState(() {
-      final index = _allTasks.indexWhere((t) => t['id'] == taskId);
-      if (index != -1) {
-        _allTasks[index]['status'] = newStatus;
+      final taskIndex = _allTasks.indexWhere((t) => t['id'] == taskId);
+      if (taskIndex != -1) {
+        final task = _allTasks.removeAt(taskIndex);
+        task['status'] = newStatus;
+
+        if (newIndex == null) {
+          // Drop on empty space adds to the end
+          _allTasks.add(task);
+        } else {
+          // Insertion logic: find the nth occurrence of this status in the global list
+          int count = 0;
+          int insertAtGlobal = _allTasks.length;
+          for (int i = 0; i < _allTasks.length; i++) {
+            if (_allTasks[i]['status'] == newStatus) {
+              if (count == newIndex) {
+                insertAtGlobal = i;
+                break;
+              }
+              count++;
+            }
+          }
+          _allTasks.insert(insertAtGlobal, task);
+        }
       }
     });
 
@@ -571,7 +595,6 @@ class _TaskScreenState extends State<TaskScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 16, bottom: 85),
                     child: ListView.builder(
-                      controller: _horizontalScrollController,
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -594,7 +617,7 @@ class _TaskScreenState extends State<TaskScreen> {
     final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
 
     return DragTarget<Map<String, dynamic>>(
-      onWillAccept: (data) => data?['status'] != column['status'],
+      onWillAccept: (data) => true, // একই কলামে ড্রপ করার অনুমতি দেওয়া হলো
       onAccept: (task) => _moveTask(task['id'].toString(), column['status']),
       builder: (context, candidateData, rejectedData) {
         return Container(
@@ -651,38 +674,65 @@ class _TaskScreenState extends State<TaskScreen> {
                   itemCount: (column['tasks'] as List).length,
                   itemBuilder: (context, index) {
                     final task = column['tasks'][index];
-                    return LongPressDraggable<Map<String, dynamic>>(
-                      data: task,
-                      onDragUpdate: (details) {
-                        _handleAutoScroll(details.globalPosition);
-                      },
-                      feedback: Material(
-                        elevation: 12,
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.transparent,
-                        child: Transform.rotate(
-                          angle: 0.04, // Professional slight tilt
-                          child: SizedBox(
-                            width:
-                                220, // Smaller width for better visibility during drag
-                            child: Opacity(
-                              opacity: 0.9,
-                              child: _buildTaskCard(task, appTheme, isDark),
+                    return DragTarget<Map<String, dynamic>>(
+                      onWillAccept: (data) => data?['id'] != task['id'],
+                      onAccept: (draggedTask) => _moveTask(
+                        draggedTask['id'].toString(),
+                        column['status'],
+                        newIndex: index,
+                      ),
+                      builder: (context, itemCandidateData, _) {
+                        bool isHovered = itemCandidateData.isNotEmpty;
+                        return Column(
+                          children: [
+                            if (isHovered)
+                              Container(
+                                height: 4,
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: appTheme.accentColor,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            LongPressDraggable<Map<String, dynamic>>(
+                              data: task,
+                              onDragUpdate: (details) {
+                                _handleAutoScroll(details.globalPosition);
+                              },
+                              feedback: Material(
+                                elevation: 12,
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.transparent,
+                                child: Transform.rotate(
+                                  angle: 0.04,
+                                  child: SizedBox(
+                                    width: 220,
+                                    child: Opacity(
+                                      opacity: 0.9,
+                                      child: _buildTaskCard(
+                                        task,
+                                        appTheme,
+                                        isDark,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              childWhenDragging: Opacity(
+                                opacity: 0.2, // Ghost original item
+                                child: _buildTaskCard(task, appTheme, isDark),
+                              ),
+                              child: GestureDetector(
+                                onTap: () => _showTaskDetailSheet(
+                                  task['id'].toString(),
+                                  appTheme,
+                                ),
+                                child: _buildTaskCard(task, appTheme, isDark),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      childWhenDragging: Opacity(
-                        opacity: 0.4,
-                        child: _buildTaskCard(task, appTheme, isDark),
-                      ),
-                      child: GestureDetector(
-                        onTap: () => _showTaskDetailSheet(
-                          task['id'].toString(),
-                          appTheme,
-                        ),
-                        child: _buildTaskCard(task, appTheme, isDark),
-                      ),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
