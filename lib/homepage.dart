@@ -668,7 +668,10 @@ class _HomePageState extends State<HomePage> {
                     text: "Chats",
                   ),
                   const Tab(icon: Icon(Icons.call), text: "Calls"),
-                  const Tab(icon: Icon(Icons.dashboard), text: "Filehubs"),
+                  const Tab(
+                    icon: Icon(Icons.insert_drive_file),
+                    text: "Filehubs",
+                  ),
                   const Tab(
                     icon: Icon(Icons.assignment_turned_in),
                     text: "Task",
