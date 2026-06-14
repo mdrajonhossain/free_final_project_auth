@@ -517,10 +517,12 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
       final result = await ApiServer().updateSingleTask(
         taskId: widget.taskId,
         observers: observerIds,
-        saveType: "observers",
+        saveType: "observer",
       );
       if (result != null && mounted) {
-        setState(() => _taskData?['observers'] = observerIds);
+        setState(() {
+          _taskData?['observers'] = result['observers'] ?? observerIds;
+        });
         widget.onUpdate?.call();
       }
     } catch (e) {
@@ -1201,11 +1203,90 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildPersonRow(
-                          appTheme,
-                          "Observers",
-                          "${(data['observers'] as List? ?? []).length} observers",
-                          null,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Observers",
+                                style: TextStyle(
+                                  color: appTheme.subTextColor,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              SizedBox(
+                                height: 32,
+                                child: Builder(
+                                  builder: (context) {
+                                    final List observerIds =
+                                        data['observers'] as List? ?? [];
+                                    if (observerIds.isEmpty) {
+                                      return Text(
+                                        "No observers",
+                                        style: TextStyle(
+                                          color: appTheme.textColor,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      );
+                                    }
+                                    return ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      shrinkWrap: true,
+                                      itemCount: observerIds.length,
+                                      itemBuilder: (context, idx) {
+                                        final id = observerIds[idx].toString();
+                                        final user = _users.firstWhere(
+                                          (u) =>
+                                              (u['id'] ?? u['_id'])
+                                                  .toString() ==
+                                              id,
+                                          orElse: () => {},
+                                        );
+                                        if (user.isEmpty)
+                                          return const SizedBox();
+                                        final name =
+                                            "${user['firstname'] ?? ''} ${user['lastname'] ?? ''}"
+                                                .trim();
+                                        final img =
+                                            user['img'] ?? user['image'];
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                            right: 6,
+                                          ),
+                                          child: CircleAvatar(
+                                            radius: 14,
+                                            backgroundColor: appTheme
+                                                .accentColor
+                                                .withOpacity(0.1),
+                                            backgroundImage:
+                                                img != null && img.isNotEmpty
+                                                ? NetworkImage(img)
+                                                : null,
+                                            child: (img == null || img.isEmpty)
+                                                ? Text(
+                                                    name.isNotEmpty
+                                                        ? name[0].toUpperCase()
+                                                        : "?",
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          appTheme.accentColor,
+                                                    ),
+                                                  )
+                                                : null,
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         _buildMiniAction(
                           appTheme,
