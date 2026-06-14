@@ -248,6 +248,31 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
     }
   }
 
+  Future<void> _updateTaskStatus(String? newStatus) async {
+    if (newStatus == null || newStatus == _taskData?['status']) return;
+    try {
+      setState(() => _isLoading = true);
+      final result = await ApiServer().updateSingleTask(
+        taskId: widget.taskId,
+        status: newStatus,
+      );
+      if (result != null && mounted) {
+        setState(() {
+          _taskData?['status'] = result['status'];
+        });
+        widget.onUpdate?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error updating status: $e")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _deleteTask() async {
     final appTheme = widget.appTheme;
     final bool confirm =
@@ -535,10 +560,66 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     Row(
                       children: [
                         Expanded(
-                          child: _box(
-                            "Status",
-                            data['status'] ?? "Not Started",
-                            Icons.radio_button_unchecked,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? appTheme.msgReceiverBubble
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white10
+                                    : Colors.black.withOpacity(0.05),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Status",
+                                  style: TextStyle(
+                                    color: appTheme.subTextColor,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: data['status'] ?? "Not Started",
+                                    isExpanded: true,
+                                    isDense: true,
+                                    icon: Icon(
+                                      Icons.keyboard_arrow_down,
+                                      size: 16,
+                                      color: appTheme.accentColor,
+                                    ),
+                                    dropdownColor: appTheme.backgroundColor,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: appTheme.textColor,
+                                      fontSize: 13,
+                                    ),
+                                    items:
+                                        [
+                                          "Not Started",
+                                          "In Progress",
+                                          "On Hold",
+                                          "Completed",
+                                          "Canceled",
+                                        ].map((String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value),
+                                          );
+                                        }).toList(),
+                                    onChanged: _updateTaskStatus,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
