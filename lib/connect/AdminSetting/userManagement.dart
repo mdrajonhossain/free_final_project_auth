@@ -2,139 +2,204 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freeli/theme/themeList.dart';
 import 'package:freeli/theme/ThemeCubit.dart';
+import 'package:freeli/controller/api/api_service.dart'; // Assuming this is where ApiServer is
 
-class UserManagementPage extends StatelessWidget {
+class UserManagementPage extends StatefulWidget {
   const UserManagementPage({super.key});
+
+  @override
+  State<UserManagementPage> createState() => _UserManagementPageState();
+}
+
+class _UserManagementPageState extends State<UserManagementPage> {
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, AppThemeModel>(
       builder: (context, appTheme) {
-        return Scaffold(
-          backgroundColor: appTheme.backgroundColor,
-          appBar: AppBar(
-            title: Text(
-              "User Management",
-              style: TextStyle(color: appTheme.textColor),
-            ),
-            centerTitle: true,
+        return DefaultTabController(
+          length: 3,
+          child: Scaffold(
             backgroundColor: appTheme.backgroundColor,
-            elevation: 0,
-            iconTheme: IconThemeData(color: appTheme.textColor),
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {},
-            backgroundColor: appTheme.accentColor,
-            icon: Icon(Icons.person_add_alt_1, color: appTheme.textColor),
-            label: Text(
-              "Add User",
-              style: TextStyle(color: appTheme.textColor),
-            ),
-          ),
-          body: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: appTheme.cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: appTheme.subTextColor.withOpacity(0.1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.people_alt_outlined,
-                      size: 40,
-                      color: appTheme.accentColor,
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "125 Users",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: appTheme.textColor,
-                          ),
-                        ),
-                        Text(
-                          "Total registered users",
-                          style: TextStyle(color: appTheme.subTextColor),
-                        ),
-                      ],
-                    ),
-                  ],
+            appBar: AppBar(
+              title: Text(
+                "User Management",
+                style: TextStyle(
+                  color: appTheme.textColor,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: TextField(
-                  style: TextStyle(color: appTheme.textColor),
-                  decoration: InputDecoration(
-                    hintText: "Search users...",
-                    hintStyle: TextStyle(color: appTheme.subTextColor),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: appTheme.subTextColor,
+              centerTitle: true,
+              backgroundColor: appTheme.backgroundColor,
+              elevation: 0,
+              iconTheme: IconThemeData(color: appTheme.textColor),
+              bottom: TabBar(
+                labelColor: appTheme.accentColor,
+                unselectedLabelColor: appTheme.subTextColor,
+                indicatorColor: appTheme.accentColor,
+                indicatorWeight: 3,
+                tabs: const [
+                  Tab(text: "Users"),
+                  Tab(text: "Guests"),
+                  Tab(text: "Contact Users"),
+                ],
+              ),
+            ),
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () {},
+              backgroundColor: appTheme.accentColor,
+              icon: Icon(Icons.person_add_alt_1, color: Colors.white),
+              label: const Text(
+                "Add User",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            body: Column(
+              children: [
+                // Summary Header
+                Container(
+                  margin: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: appTheme.cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: appTheme.subTextColor.withOpacity(0.1),
                     ),
-                    filled: true,
-                    fillColor: appTheme.cardColor,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                        color: appTheme.subTextColor.withOpacity(0.3),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: appTheme.accentColor.withOpacity(0.1),
+                        radius: 25,
+                        child: Icon(
+                          Icons.people_alt_outlined,
+                          color: appTheme.accentColor,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Directory Overview",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: appTheme.textColor,
+                            ),
+                          ),
+                          Text(
+                            "Manage all system accounts",
+                            style: TextStyle(
+                              color: appTheme.subTextColor,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    controller: _searchController,
+                    style: TextStyle(color: appTheme.textColor),
+                    decoration: InputDecoration(
+                      hintText: "Search by name or email...",
+                      hintStyle: TextStyle(color: appTheme.subTextColor),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: appTheme.subTextColor,
+                      ),
+                      filled: true,
+                      fillColor: appTheme.cardColor,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(
+                          color: appTheme.subTextColor.withOpacity(0.3),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: appTheme.accentColor),
                       ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(color: appTheme.accentColor),
-                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    UserCard(
-                      appTheme: appTheme,
-                      name: "John Smith",
-                      email: "john@example.com",
-                      role: "Admin",
-                      isActive: true,
-                    ),
-                    UserCard(
-                      appTheme: appTheme,
-                      name: "Sarah Johnson",
-                      email: "sarah@example.com",
-                      role: "Manager",
-                      isActive: true,
-                    ),
-                    UserCard(
-                      appTheme: appTheme,
-                      name: "Michael Brown",
-                      email: "michael@example.com",
-                      role: "Staff",
-                      isActive: false,
-                    ),
-                    UserCard(
-                      appTheme: appTheme,
-                      name: "Emma Wilson",
-                      email: "emma@example.com",
-                      role: "Staff",
-                      isActive: true,
-                    ),
-                  ],
+                const SizedBox(height: 12),
+
+                // Tab Content
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildUserList(appTheme, "Users"),
+                      _buildUserList(appTheme, "Guests"),
+                      _buildUserList(appTheme, "Contact Users"),
+                    ],
+                  ),
                 ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildUserList(AppThemeModel appTheme, String category) {
+    // This is where you would call your API via FutureBuilder or Bloc
+    // Example: ApiServer().getUsers(type: category)
+    return FutureBuilder(
+      future: Future.delayed(
+        const Duration(milliseconds: 500),
+      ), // Simulating API
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(color: appTheme.accentColor),
+          );
+        }
+
+        return ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          children: [
+            if (category == "Users") ...[
+              UserCard(
+                appTheme: appTheme,
+                name: "John Smith",
+                email: "john@example.com",
+                role: "Admin",
+                isActive: true,
+              ),
+              UserCard(
+                appTheme: appTheme,
+                name: "Sarah Johnson",
+                email: "sarah@example.com",
+                role: "Manager",
+                isActive: true,
+              ),
+              UserCard(
+                appTheme: appTheme,
+                name: "Michael Brown",
+                email: "michael@example.com",
+                role: "Staff",
+                isActive: false,
+              ),
+              UserCard(
+                appTheme: appTheme,
+                name: "Emma Wilson",
+                email: "emma@example.com",
+                role: "Staff",
+                isActive: true,
               ),
             ],
-          ),
+          ],
         );
       },
     );
