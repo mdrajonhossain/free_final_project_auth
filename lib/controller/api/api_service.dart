@@ -1196,27 +1196,25 @@ class ApiServer {
               key_words
               participants
               created_at
+              created_by
               discussion {
                 msg_id
                 sendername
                 msg_body
-                created_at
-                __typename
+                created_at                
               }
               files {
                 id
                 originalname
                 location
-                file_type
-                __typename
+                file_type                
               }
               checklists {
                 _id
                 status
                 item_title
                 task_id
-                created_at
-                __typename
+                created_at                
               }
             }
           }

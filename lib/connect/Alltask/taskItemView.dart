@@ -21,6 +21,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
   bool _isLoading = true;
   Map<String, dynamic>? _taskData;
   List<dynamic> _allRooms = [];
+  List<Map<String, dynamic>> _users = [];
   String _myId = "";
   bool _isEditingTitle = false;
   final TextEditingController _titleController = TextEditingController();
@@ -39,19 +40,18 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
 
       // 1. Get current user to fetch rooms later
       final me = await ApiServer().fetchMe();
+      final companyId = me['company_id'] ?? "";
       _myId = (me['id'] ?? me['_id'] ?? "").toString();
 
       // 2. Fetch all rooms available to this user
       final roomsData = await ApiServer().fetchRooms(_myId);
-      if (mounted) {
-        setState(() {
-          _allRooms = roomsData['rooms'] ?? [];
-        });
-      }
+      final users = await ApiServer().fetchAllUsers(companyId);
 
       final response = await ApiServer().fetchSingleTask(widget.taskId);
       if (mounted) {
         setState(() {
+          _allRooms = roomsData['rooms'] ?? [];
+          _users = users;
           _taskData = response;
           _titleController.text = response?['task_title'] ?? "";
           _isLoading = false;
@@ -455,12 +455,31 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                             ),
                           ),
                     const SizedBox(height: 6),
-                    Text(
-                      "Created at ${data['created_at'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(data['created_at'])) : 'N/A'}",
-                      style: TextStyle(
-                        color: appTheme.subTextColor,
-                        fontSize: 12,
-                      ),
+                    Builder(
+                      builder: (context) {
+                        final creator = _users.firstWhere(
+                          (u) =>
+                              (u['id'] ?? u['_id']).toString() ==
+                              data['created_by'],
+                          orElse: () => {},
+                        );
+                        final String name =
+                            creator['firstname'] ??
+                            creator['name'] ??
+                            "Unknown";
+                        final String date = data['created_at'] != null
+                            ? DateFormat(
+                                'MMM d, yyyy',
+                              ).format(DateTime.parse(data['created_at']))
+                            : 'N/A';
+                        return Text(
+                          "Created by $name at $date",
+                          style: TextStyle(
+                            color: appTheme.subTextColor,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     _buildSectionHeader(appTheme, "Overview"),
