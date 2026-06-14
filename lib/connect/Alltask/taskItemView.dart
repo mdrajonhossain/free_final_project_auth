@@ -190,6 +190,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
         conversationName: room['title'],
         conversationImg: room['conv_img'] ?? room['img'] ?? "",
         participants: room['participants'] ?? [],
+        saveType: "conversation",
       );
 
       if (updatedTask != null && mounted) {
@@ -229,6 +230,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
       final updated = await ApiServer().updateSingleTask(
         taskId: widget.taskId,
         title: newTitle,
+        saveType: "task_title",
       );
       if (updated != null && mounted) {
         setState(() {
@@ -255,6 +257,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
       final result = await ApiServer().updateSingleTask(
         taskId: widget.taskId,
         status: newStatus,
+        saveType: "status",
       );
       if (result != null && mounted) {
         setState(() {
@@ -267,6 +270,32 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Error updating status: $e")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _updateTaskProgress(dynamic newProgress) async {
+    if (newProgress == null || newProgress == _taskData?['progress']) return;
+    try {
+      setState(() => _isLoading = true);
+      final result = await ApiServer().updateSingleTask(
+        taskId: widget.taskId,
+        progress: newProgress,
+        saveType: "progress",
+      );
+      if (result != null && mounted) {
+        setState(() {
+          _taskData?['progress'] = result['progress'];
+        });
+        widget.onUpdate?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error updating progress: $e")));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -624,10 +653,79 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _box(
-                            "Progress",
-                            "${data['progress'] ?? 0}%",
-                            Icons.trending_up,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? appTheme.msgReceiverBubble
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isDark
+                                    ? Colors.white10
+                                    : Colors.black.withOpacity(0.05),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Progress",
+                                  style: TextStyle(
+                                    color: appTheme.subTextColor,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                DropdownButtonHideUnderline(
+                                  child: DropdownButton<dynamic>(
+                                    value:
+                                        ([
+                                          0,
+                                          25,
+                                          50,
+                                          75,
+                                          96,
+                                          98,
+                                          100,
+                                        ].contains(data['progress']))
+                                        ? data['progress']
+                                        : 0,
+                                    isExpanded: true,
+                                    isDense: true,
+                                    icon: Icon(
+                                      Icons.keyboard_arrow_down,
+                                      size: 16,
+                                      color: appTheme.accentColor,
+                                    ),
+                                    dropdownColor: appTheme.backgroundColor,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: appTheme.textColor,
+                                      fontSize: 13,
+                                    ),
+                                    items:
+                                        {
+                                          0: "Not Defined",
+                                          25: "Stage 1",
+                                          50: "Stage 2",
+                                          75: "Stage 3",
+                                          96: "Final Stage",
+                                          98: "Penultimate Stage",
+                                          100: "Ultimate Stage",
+                                        }.entries.map((entry) {
+                                          return DropdownMenuItem<dynamic>(
+                                            value: entry.key,
+                                            child: Text(entry.value),
+                                          );
+                                        }).toList(),
+                                    onChanged: _updateTaskProgress,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
