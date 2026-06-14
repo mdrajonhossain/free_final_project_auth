@@ -18,6 +18,8 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
   late TabController _tabController;
   bool _isLoading = true;
   Map<String, dynamic>? _taskData;
+  List<dynamic> _allRooms = [];
+  String _myId = "";
   final TextEditingController _msgController = TextEditingController();
 
   @override
@@ -30,8 +32,19 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
   Future<void> _fetchTaskDetails() async {
     try {
       setState(() => _isLoading = true);
-      // Assuming ApiServer has a method to fetch a single task by ID
-      // based on the GraphQL structure provided.
+
+      // 1. Get current user to fetch rooms later
+      final me = await ApiServer().fetchMe();
+      _myId = (me['id'] ?? me['_id'] ?? "").toString();
+
+      // 2. Fetch all rooms available to this user
+      final roomsData = await ApiServer().fetchRooms(_myId);
+      if (mounted) {
+        setState(() {
+          _allRooms = roomsData['rooms'] ?? [];
+        });
+      }
+
       final response = await ApiServer().fetchSingleTask(widget.taskId);
       if (mounted) {
         setState(() {
@@ -41,6 +54,154 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showRoomSelectionSheet(AppThemeModel appTheme, bool isDark) {
+    String searchQuery = "";
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: appTheme.backgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setInternalState) {
+            final filteredRooms = _allRooms.where((room) {
+              final title = room['title']?.toString().toLowerCase() ?? "";
+              return title.contains(searchQuery.toLowerCase());
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  Text(
+                    "Move Task to Room",
+                    style: TextStyle(
+                      color: appTheme.textColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    style: TextStyle(color: appTheme.textColor),
+                    onChanged: (v) => setInternalState(() => searchQuery = v),
+                    decoration: InputDecoration(
+                      hintText: "Search Room...",
+                      hintStyle: TextStyle(color: appTheme.subTextColor),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: appTheme.subTextColor,
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.03),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: filteredRooms.isEmpty
+                        ? Center(
+                            child: Text(
+                              "No rooms found",
+                              style: TextStyle(color: appTheme.subTextColor),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filteredRooms.length,
+                            itemBuilder: (context, index) {
+                              final room = filteredRooms[index];
+                              final bool isSelected =
+                                  room['conversation_id'] ==
+                                  _taskData?['conversation_id'];
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  backgroundColor: appTheme.accentColor
+                                      .withOpacity(0.1),
+                                  child: Icon(
+                                    Icons.meeting_room,
+                                    color: appTheme.accentColor,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  room['title'] ?? "Untitled Room",
+                                  style: TextStyle(
+                                    color: appTheme.textColor,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                                trailing: isSelected
+                                    ? Icon(
+                                        Icons.check_circle,
+                                        color: appTheme.accentColor,
+                                      )
+                                    : null,
+                                onTap: () {
+                                  _updateTaskRoom(room);
+                                  Navigator.pop(context);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _updateTaskRoom(Map<String, dynamic> room) async {
+    try {
+      final updatedTask = await ApiServer().updateSingleTask(
+        taskId: widget.taskId,
+        conversationId: room['conversation_id'],
+        conversationName: room['title'],
+        conversationImg: room['conv_img'] ?? room['img'] ?? "",
+        participants: room['participants'] ?? [],
+      );
+
+      if (updatedTask != null && mounted) {
+        setState(() {
+          _taskData?['conversation_id'] = updatedTask['conversation_id'];
+          _taskData?['conversation_name'] = updatedTask['conversation_name'];
+          _taskData?['conversation_img'] = updatedTask['conversation_img'];
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Task moved successfully")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error moving task: ${e.toString()}")),
+        );
+      }
     }
   }
 
@@ -111,25 +272,37 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.meeting_room_outlined,
-                          size: 18,
-                          color: appTheme.accentColor,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            "Room: ${data['conversation_name'] ?? 'General'}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: appTheme.subTextColor,
-                              fontSize: 13,
+                    InkWell(
+                      onTap: () => _showRoomSelectionSheet(appTheme, isDark),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.meeting_room_outlined,
+                              size: 18,
+                              color: appTheme.accentColor,
                             ),
-                          ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                "Room: ${data['conversation_name'] ?? 'General'}",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: appTheme.subTextColor,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.edit_outlined,
+                              size: 14,
+                              color: appTheme.accentColor,
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(

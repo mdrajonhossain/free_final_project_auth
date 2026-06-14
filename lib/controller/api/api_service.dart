@@ -1193,6 +1193,7 @@ class ApiServer {
               priority
               assign_to
               observers
+              key_words
               participants
               created_at
               discussion {
@@ -1207,6 +1208,14 @@ class ApiServer {
                 originalname
                 location
                 file_type
+                __typename
+              }
+              checklists {
+                _id
+                status
+                item_title
+                task_id
+                created_at
                 __typename
               }
             }
@@ -1236,6 +1245,12 @@ class ApiServer {
     String? description,
     String? priority,
     String? title,
+    String? conversationId,
+    String? conversationName,
+    String? conversationImg,
+    List<dynamic>? participants,
+    List<dynamic>? assignTo,
+    List<dynamic>? observers,
   }) async {
     try {
       final variables = {
@@ -1245,6 +1260,12 @@ class ApiServer {
           if (description != null) "description": description,
           if (priority != null) "priority": priority,
           if (title != null) "task_title": title,
+          if (conversationId != null) "conversation_id": conversationId,
+          if (conversationName != null) "conversation_name": conversationName,
+          if (conversationImg != null) "conversation_img": conversationImg,
+          if (participants != null) "participants": participants,
+          if (assignTo != null) "assign_to": assignTo,
+          if (observers != null) "observers": observers,
         },
       };
 
@@ -1256,6 +1277,10 @@ class ApiServer {
             task_title
             project_id
             project_title
+            conversation_id
+            conversation_name
+            conversation_img
+            participants
             last_updated_at
           }
         }

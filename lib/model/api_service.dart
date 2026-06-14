@@ -744,11 +744,32 @@ class ApiServer {
   /// Updates a single task using the update_single_task mutation.
   Future<Map<String, dynamic>?> updateSingleTask({
     required String taskId,
-    required String status,
+    String? status,
+    String? description,
+    String? priority,
+    String? title,
+    String? conversationId,
+    String? conversationName,
+    String? conversationImg,
+    List<dynamic>? participants,
+    List<dynamic>? assignTo,
+    List<dynamic>? observers,
   }) async {
     try {
       final variables = {
-        "input": {"_id": taskId, "status": status},
+        "input": {
+          "_id": taskId,
+          if (status != null) "status": status,
+          if (description != null) "description": description,
+          if (priority != null) "priority": priority,
+          if (title != null) "task_title": title,
+          if (conversationId != null) "conversation_id": conversationId,
+          if (conversationName != null) "conversation_name": conversationName,
+          if (conversationImg != null) "conversation_img": conversationImg,
+          if (participants != null) "participants": participants,
+          if (assignTo != null) "assign_to": assignTo,
+          if (observers != null) "observers": observers,
+        },
       };
 
       final data = await ApiServer.call(r'''
@@ -757,6 +778,9 @@ class ApiServer {
             _id
             status
             task_title
+            conversation_id
+            conversation_name
+            conversation_img
           }
         }
         ''', variables: variables);
