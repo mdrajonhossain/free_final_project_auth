@@ -20,6 +20,8 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
   Map<String, dynamic>? _taskData;
   List<dynamic> _allRooms = [];
   String _myId = "";
+  bool _isEditingTitle = false;
+  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _msgController = TextEditingController();
 
   @override
@@ -49,6 +51,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
       if (mounted) {
         setState(() {
           _taskData = response;
+          _titleController.text = response?['task_title'] ?? "";
           _isLoading = false;
         });
       }
@@ -205,8 +208,39 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
     }
   }
 
+  Future<void> _updateTaskTitle() async {
+    final newTitle = _titleController.text.trim();
+    if (newTitle.isEmpty) {
+      setState(() {
+        _titleController.text = _taskData?['task_title'] ?? "";
+        _isEditingTitle = false;
+      });
+      return;
+    }
+
+    try {
+      final updated = await ApiServer().updateSingleTask(
+        taskId: widget.taskId,
+        title: newTitle,
+      );
+      if (updated != null && mounted) {
+        setState(() {
+          _taskData?['task_title'] = updated['task_title'];
+          _isEditingTitle = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error updating title: $e")));
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _titleController.dispose();
     _msgController.dispose();
     _tabController.dispose();
     super.dispose();
@@ -305,15 +339,40 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      data['task_title'] ?? "Untitled Task",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: appTheme.textColor,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
+                    _isEditingTitle
+                        ? TextField(
+                            controller: _titleController,
+                            autofocus: true,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: appTheme.textColor,
+                              letterSpacing: -0.5,
+                            ),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              suffixIcon: IconButton(
+                                icon: const Icon(
+                                  Icons.check,
+                                  color: Colors.green,
+                                ),
+                                onPressed: _updateTaskTitle,
+                              ),
+                            ),
+                            onSubmitted: (_) => _updateTaskTitle(),
+                          )
+                        : GestureDetector(
+                            onTap: () => setState(() => _isEditingTitle = true),
+                            child: Text(
+                              data['task_title'] ?? "Untitled Task",
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: appTheme.textColor,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
                     const SizedBox(height: 6),
                     Text(
                       "Created at ${data['created_at'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(data['created_at'])) : 'N/A'}",
