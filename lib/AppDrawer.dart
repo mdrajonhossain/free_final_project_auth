@@ -187,7 +187,10 @@ class AppDrawer extends StatelessWidget {
               _drawerItem(
                 Icons.admin_panel_settings_outlined,
                 "Admin settings",
-                () {},
+                () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/adminSetting');
+                },
                 theme: theme,
               ),
               _drawerItem(
