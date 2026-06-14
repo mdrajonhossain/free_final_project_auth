@@ -453,6 +453,43 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     ),
                   ),
                   const SizedBox(height: 12),
+                  if (filteredUsers.isNotEmpty)
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: appTheme.accentColor,
+                      checkColor: Colors.white,
+                      title: Text(
+                        "Select All",
+                        style: TextStyle(
+                          color: appTheme.textColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      value: filteredUsers.every(
+                        (user) => selectedObservers.contains(
+                          (user['id'] ?? user['_id']).toString(),
+                        ),
+                      ),
+                      onChanged: (val) {
+                        setInternalState(() {
+                          final ids = filteredUsers
+                              .map((u) => (u['id'] ?? u['_id']).toString())
+                              .toList();
+                          if (val == true) {
+                            for (var id in ids) {
+                              if (!selectedObservers.contains(id)) {
+                                selectedObservers.add(id);
+                              }
+                            }
+                          } else {
+                            selectedObservers.removeWhere(
+                              (id) => ids.contains(id),
+                            );
+                          }
+                        });
+                      },
+                    ),
                   Expanded(
                     child: ListView.builder(
                       itemCount: filteredUsers.length,
@@ -1291,7 +1328,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         _buildMiniAction(
                           appTheme,
                           (data['observers'] as List? ?? []).isNotEmpty
-                              ? "Edit"
+                              ? "Update"
                               : "Add",
                           onTap: () =>
                               _showObserversSelectionSheet(appTheme, isDark),
