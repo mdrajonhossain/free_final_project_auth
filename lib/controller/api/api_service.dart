@@ -1245,6 +1245,8 @@ class ApiServer {
     String? title,
     dynamic progress,
     String? saveType,
+    String? startDate,
+    String? endDate,
     String? conversationId,
     String? conversationName,
     String? conversationImg,
@@ -1261,6 +1263,8 @@ class ApiServer {
           if (priority != null) "priority": priority,
           if (title != null) "task_title": title,
           if (progress != null) "progress": progress,
+          if (startDate != null) "start_date": startDate,
+          if (endDate != null) "end_date": endDate,
           if (saveType != null) "save_type": saveType,
           if (conversationId != null) "conversation_id": conversationId,
           if (conversationName != null) "conversation_name": conversationName,
@@ -1275,6 +1279,8 @@ class ApiServer {
         mutation update_single_task($input: updateTaskInput!) {
           update_single_task(input: $input) {
             _id
+            start_date
+            end_date
             progress
             status
             task_title

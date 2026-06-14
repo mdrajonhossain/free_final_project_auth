@@ -302,6 +302,51 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
     }
   }
 
+  Future<void> _selectDate(bool isStartDate) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      // Use noon (12:00) to ensure UTC conversion stays on the same calendar day
+      final String formattedDate = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        12,
+      ).toUtc().toIso8601String();
+      try {
+        setState(() => _isLoading = true);
+        final result = await ApiServer().updateSingleTask(
+          taskId: widget.taskId,
+          startDate: isStartDate ? formattedDate : null,
+          endDate: isStartDate ? null : formattedDate,
+          saveType: isStartDate ? "startdate" : "duedate",
+        );
+        if (result != null && mounted) {
+          setState(() {
+            if (isStartDate) {
+              _taskData?['start_date'] = result['start_date'];
+            } else {
+              _taskData?['end_date'] = result['end_date'];
+            }
+          });
+          widget.onUpdate?.call();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Error updating date: $e")));
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
+
   Future<void> _deleteTask() async {
     final appTheme = widget.appTheme;
     final bool confirm =
@@ -522,9 +567,9 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                             creator['name'] ??
                             "Unknown";
                         final String date = data['created_at'] != null
-                            ? DateFormat(
-                                'MMM d, yyyy',
-                              ).format(DateTime.parse(data['created_at']))
+                            ? DateFormat('MMM d, yyyy').format(
+                                DateTime.parse(data['created_at']).toLocal(),
+                              )
                             : 'N/A';
                         return Text(
                           "Created by $name at $date",
@@ -734,24 +779,34 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     Row(
                       children: [
                         Expanded(
-                          child: _inputBox(
-                            data['start_date'] != null
-                                ? DateFormat(
-                                    'MMM d, y',
-                                  ).format(DateTime.parse(data['start_date']))
-                                : "Start date",
-                            Icons.calendar_today,
+                          child: InkWell(
+                            onTap: () => _selectDate(true),
+                            child: _inputBox(
+                              data['start_date'] != null
+                                  ? DateFormat('MMM d, y').format(
+                                      DateTime.parse(
+                                        data['start_date'],
+                                      ).toLocal(),
+                                    )
+                                  : "Start date",
+                              Icons.calendar_today,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: _inputBox(
-                            data['end_date'] != null
-                                ? DateFormat(
-                                    'MMM d, y',
-                                  ).format(DateTime.parse(data['end_date']))
-                                : "Due date",
-                            Icons.event,
+                          child: InkWell(
+                            onTap: () => _selectDate(false),
+                            child: _inputBox(
+                              data['end_date'] != null
+                                  ? DateFormat('MMM d, y').format(
+                                      DateTime.parse(
+                                        data['end_date'],
+                                      ).toLocal(),
+                                    )
+                                  : "Due date",
+                              Icons.event,
+                            ),
                           ),
                         ),
                       ],

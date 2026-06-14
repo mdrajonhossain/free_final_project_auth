@@ -749,6 +749,8 @@ class ApiServer {
     dynamic progress,
     String? saveType,
     String? priority,
+    String? startDate,
+    String? endDate,
     String? title,
     String? conversationId,
     String? conversationName,
@@ -765,6 +767,8 @@ class ApiServer {
           if (description != null) "description": description,
           if (progress != null) "progress": progress,
           if (saveType != null) "save_type": saveType,
+          if (startDate != null) "start_date": startDate,
+          if (endDate != null) "end_date": endDate,
           if (priority != null) "priority": priority,
           if (title != null) "task_title": title,
           if (conversationId != null) "conversation_id": conversationId,
@@ -781,6 +785,8 @@ class ApiServer {
           update_single_task(input: $input) {
             _id
             status
+            start_date
+            end_date
             progress
             task_title
             conversation_id
