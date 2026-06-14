@@ -11,15 +11,24 @@ class UserManagementPage extends StatefulWidget {
   State<UserManagementPage> createState() => _UserManagementPageState();
 }
 
-class _UserManagementPageState extends State<UserManagementPage> {
+class _UserManagementPageState extends State<UserManagementPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _allUsers = [];
   bool _isLoading = true;
   String? _companyId;
+  String _selectedStatus = "Active";
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
     _fetchInitialData();
   }
 
@@ -43,148 +52,157 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeCubit, AppThemeModel>(
       builder: (context, appTheme) {
-        return DefaultTabController(
-          length: 3,
-          child: Scaffold(
+        return Scaffold(
+          backgroundColor: appTheme.backgroundColor,
+          appBar: AppBar(
+            title: Text(
+              "User Management",
+              style: TextStyle(
+                color: appTheme.textColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            centerTitle: true,
             backgroundColor: appTheme.backgroundColor,
-            appBar: AppBar(
-              title: Text(
-                "User Management",
-                style: TextStyle(
-                  color: appTheme.textColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              centerTitle: true,
-              backgroundColor: appTheme.backgroundColor,
-              elevation: 0,
-              iconTheme: IconThemeData(color: appTheme.textColor),
-              bottom: TabBar(
-                labelColor: appTheme.accentColor,
-                unselectedLabelColor: appTheme.subTextColor,
-                indicatorColor: appTheme.accentColor,
-                indicatorWeight: 3,
-                tabs: const [
-                  Tab(text: "Users"),
-                  Tab(text: "Guests"),
-                  Tab(text: "Contact Users"),
-                ],
-              ),
-            ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () {},
-              backgroundColor: appTheme.accentColor,
-              icon: Icon(Icons.person_add_alt_1, color: Colors.white),
-              label: const Text(
-                "Add User",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            body: Column(
-              children: [
-                // Summary Header
-                Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: appTheme.cardColor,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: appTheme.subTextColor.withOpacity(0.1),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: appTheme.accentColor.withOpacity(0.1),
-                        radius: 25,
-                        child: Icon(
-                          Icons.people_alt_outlined,
-                          color: appTheme.accentColor,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Directory Overview",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: appTheme.textColor,
-                            ),
-                          ),
-                          Text(
-                            "Manage all system accounts",
-                            style: TextStyle(
-                              color: appTheme.subTextColor,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextField(
-                    controller: _searchController,
-                    style: TextStyle(color: appTheme.textColor),
-                    decoration: InputDecoration(
-                      hintText: "Search by name or email...",
-                      hintStyle: TextStyle(color: appTheme.subTextColor),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: appTheme.subTextColor,
-                      ),
-                      filled: true,
-                      fillColor: appTheme.cardColor,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                          color: appTheme.subTextColor.withOpacity(0.3),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: appTheme.accentColor),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Tab Content
-                _isLoading
-                    ? Expanded(
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: appTheme.accentColor,
-                          ),
-                        ),
-                      )
-                    : Expanded(
-                        child: TabBarView(
-                          children: [
-                            _buildUserList(appTheme, "Users"),
-                            _buildUserList(appTheme, "Guests"),
-                            _buildUserList(appTheme, "Contact Users"),
-                          ],
-                        ),
-                      ),
+            elevation: 0,
+            iconTheme: IconThemeData(color: appTheme.textColor),
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: appTheme.accentColor,
+              unselectedLabelColor: appTheme.subTextColor,
+              indicatorColor: appTheme.accentColor,
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(text: "Users"),
+                Tab(text: "Guests"),
+                Tab(text: "Contact Users"),
               ],
             ),
           ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () {},
+            backgroundColor: appTheme.accentColor,
+            icon: Icon(Icons.person_add_alt_1, color: Colors.white),
+            label: const Text(
+              "Add User",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          body: Column(
+            children: [
+              // Search Bar
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) => setState(() {}),
+                  style: TextStyle(color: appTheme.textColor),
+                  decoration: InputDecoration(
+                    hintText: "Search by name or email...",
+                    hintStyle: TextStyle(color: appTheme.subTextColor),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: appTheme.subTextColor,
+                    ),
+                    filled: true,
+                    fillColor: appTheme.cardColor,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(
+                        color: appTheme.subTextColor.withOpacity(0.3),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(color: appTheme.accentColor),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (_tabController.index != 2) ...[
+                _buildStatusFilterBar(appTheme),
+                const SizedBox(height: 12),
+                const Divider(height: 1, thickness: 0.5, color: Colors.white10),
+                const SizedBox(height: 12),
+              ],
+
+              // Tab Content
+              _isLoading
+                  ? Expanded(
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: appTheme.accentColor,
+                        ),
+                      ),
+                    )
+                  : Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildUserList(appTheme, "Users"),
+                          _buildUserList(appTheme, "Guests"),
+                          _buildUserList(appTheme, "Contact Users"),
+                        ],
+                      ),
+                    ),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildStatusFilterBar(AppThemeModel appTheme) {
+    final List<String> statuses = ["Active", "Progress", "Deactive"];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: statuses.map((status) {
+          final bool isSelected = _selectedStatus == status;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(status),
+              selected: isSelected,
+              onSelected: (bool selected) {
+                if (selected) {
+                  setState(() => _selectedStatus = status);
+                }
+              },
+              selectedColor: appTheme.accentColor,
+              backgroundColor: appTheme.cardColor,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : appTheme.subTextColor,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected
+                      ? appTheme.accentColor
+                      : appTheme.subTextColor.withOpacity(0.2),
+                ),
+              ),
+              showCheckmark: false,
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -192,9 +210,11 @@ class _UserManagementPageState extends State<UserManagementPage> {
     final filteredUsers = _allUsers.where((user) {
       final role = user['role']?.toString() ?? "";
       final searchTerm = _searchController.text.toLowerCase();
-      final name = "${user['firstname']} ${user['lastname']}".toLowerCase();
+      final name = "${user['firstname'] ?? ''} ${user['lastname'] ?? ''}"
+          .toLowerCase();
       final email = (user['email'] ?? "").toString().toLowerCase();
 
+      // 1. Filter by Tab Category
       bool matchesCategory = false;
       if (category == "Users") {
         matchesCategory = role != "Guest" && role != "Recipient";
@@ -204,7 +224,27 @@ class _UserManagementPageState extends State<UserManagementPage> {
         matchesCategory = role == "Recipient";
       }
 
-      return matchesCategory &&
+      if (!matchesCategory) return false;
+
+      // 2. Filter by Status chip
+      bool matchesStatus = false;
+      if (category == "Contact Users") {
+        matchesStatus = true;
+      } else {
+        final bool isActive = user['is_active'] == 1;
+        final String otp = user['email_otp']?.toString() ?? "";
+
+        if (_selectedStatus == "Active") {
+          matchesStatus = isActive && otp.isEmpty;
+        } else if (_selectedStatus == "Progress") {
+          matchesStatus = otp.isNotEmpty;
+        } else if (_selectedStatus == "Deactive") {
+          matchesStatus = !isActive;
+        }
+      }
+
+      // 3. Filter by Search term
+      return matchesStatus &&
           (name.contains(searchTerm) || email.contains(searchTerm));
     }).toList();
 
@@ -215,7 +255,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
         final user = filteredUsers[index];
         return UserCard(
           appTheme: appTheme,
-          name: "${user['firstname']} ${user['lastname']}",
+          name: "${user['firstname'] ?? ''} ${user['lastname'] ?? ''}",
           email: user['email'] ?? "",
           role: user['role'] ?? "Member",
           isActive: user['is_active'] == 1,
