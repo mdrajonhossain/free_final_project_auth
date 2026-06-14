@@ -135,746 +135,787 @@ class _FileHubPageState extends State<FileHubPage> {
 
         /// FILTER CATEGORY
         List<dynamic> filteredFiles = allFiles.where((file) {
-      final String category = (file['file_category'] ?? "")
-          .toString()
-          .toLowerCase();
+          final String category = (file['file_category'] ?? "")
+              .toString()
+              .toLowerCase();
 
-      switch (selectedCategory) {
-        case 1:
+          switch (selectedCategory) {
+            case 1:
+              return category == "docs" || category == "other";
+
+            case 2:
+              return category == "image";
+
+            case 3:
+              return category == "voice";
+
+            case 4:
+              return category == "audio";
+
+            case 5:
+              return category == "video";
+
+            default:
+              return true;
+          }
+        }).toList();
+
+        /// SEARCH FILTER
+        if (searchText.isNotEmpty) {
+          filteredFiles = filteredFiles.where((file) {
+            final String name =
+                (file['originalname'] ??
+                        file['original_name'] ??
+                        file['name'] ??
+                        "")
+                    .toString()
+                    .toLowerCase();
+
+            return name.contains(searchText.toLowerCase());
+          }).toList();
+        }
+
+        /// COUNTS
+        final int allCount = allFiles.length;
+
+        final int docsCount = allFiles.where((file) {
+          final String category = (file['file_category'] ?? "")
+              .toString()
+              .toLowerCase();
+
           return category == "docs" || category == "other";
+        }).length;
 
-        case 2:
-          return category == "image";
+        final int imageCount = allFiles.where((file) {
+          return (file['file_category'] ?? "").toString().toLowerCase() ==
+              "image";
+        }).length;
 
-        case 3:
-          return category == "voice";
+        final int voiceCount = allFiles.where((file) {
+          return (file['file_category'] ?? "").toString().toLowerCase() ==
+              "voice";
+        }).length;
 
-        case 4:
-          return category == "audio";
+        final int audioCount = allFiles.where((file) {
+          return (file['file_category'] ?? "").toString().toLowerCase() ==
+              "audio";
+        }).length;
 
-        case 5:
-          return category == "video";
-
-        default:
-          return true;
-      }
-    }).toList();
-
-    /// SEARCH FILTER
-    if (searchText.isNotEmpty) {
-      filteredFiles = filteredFiles.where((file) {
-        final String name =
-            (file['originalname'] ??
-                    file['original_name'] ??
-                    file['name'] ??
-                    "")
-                .toString()
-                .toLowerCase();
-
-        return name.contains(searchText.toLowerCase());
-      }).toList();
-    }
-
-    /// COUNTS
-    final int allCount = allFiles.length;
-
-    final int docsCount = allFiles.where((file) {
-      final String category = (file['file_category'] ?? "")
-          .toString()
-          .toLowerCase();
-
-      return category == "docs" || category == "other";
-    }).length;
-
-    final int imageCount = allFiles.where((file) {
-      return (file['file_category'] ?? "").toString().toLowerCase() == "image";
-    }).length;
-
-    final int voiceCount = allFiles.where((file) {
-      return (file['file_category'] ?? "").toString().toLowerCase() == "voice";
-    }).length;
-
-    final int audioCount = allFiles.where((file) {
-      return (file['file_category'] ?? "").toString().toLowerCase() == "audio";
-    }).length;
-
-    final int videoCount = allFiles.where((file) {
-      return (file['file_category'] ?? "").toString().toLowerCase() == "video";
-    }).length;
+        final int videoCount = allFiles.where((file) {
+          return (file['file_category'] ?? "").toString().toLowerCase() ==
+              "video";
+        }).length;
 
         /// FILE ITEM BUILDER (Professional View)
         Widget buildFileItem(dynamic file) {
-      final String originalName =
-          file['originalname'] ??
-          file['original_name'] ??
-          file['name'] ??
-          "Unknown File";
-      final String location = file['location'] ?? "";
-      final String fileSize = formatFileSize(
-        file['file_size'] ?? file['filesize'] ?? 0,
-      );
-      final String createdAt = file['created_at'] ?? "";
-      final String date = createdAt.isNotEmpty && createdAt.contains("T")
-          ? createdAt.split("T").first
-          : "N/A";
+          final String originalName =
+              file['originalname'] ??
+              file['original_name'] ??
+              file['name'] ??
+              "Unknown File";
+          final String location = file['location'] ?? "";
+          final String fileSize = formatFileSize(
+            file['file_size'] ?? file['filesize'] ?? 0,
+          );
+          final String createdAt = file['created_at'] ?? "";
+          final String date = createdAt.isNotEmpty && createdAt.contains("T")
+              ? createdAt.split("T").first
+              : "N/A";
 
-      final String rawUrl = location.startsWith("http")
-          ? location
-          : "https://wfss001.freeli.io/$location";
-      final String fullUrl = rawUrl.replaceAll(' ', '%20');
+          final String rawUrl = location.startsWith("http")
+              ? location
+              : "https://wfss001.freeli.io/$location";
+          final String fullUrl = rawUrl.replaceAll(' ', '%20');
 
-      final String extension = location.contains(".")
-          ? location.split('.').last.split('?').first.toLowerCase()
-          : "";
+          final String extension = location.contains(".")
+              ? location.split('.').last.split('?').first.toLowerCase()
+              : "";
 
-      final bool isImage = [
-        "jpg",
-        "jpeg",
-        "png",
-        "gif",
-        "webp",
-      ].contains(extension);
+          final bool isImage = [
+            "jpg",
+            "jpeg",
+            "png",
+            "gif",
+            "webp",
+          ].contains(extension);
 
-      final String? myId = widget.userData?['id']?.toString();
-      final bool isStarred =
-          myId != null &&
-          (file['star'] is List &&
-              (file['star'] as List).any((id) => id.toString() == myId));
+          final String? myId = widget.userData?['id']?.toString();
+          final bool isStarred =
+              myId != null &&
+              (file['star'] is List &&
+                  (file['star'] as List).any((id) => id.toString() == myId));
 
-      final List<dynamic> tagDetails = (file['tag_list_details'] is List)
-          ? file['tag_list_details']
-          : (file['tag_details'] is List ? file['tag_details'] : []);
+          final List<dynamic> tagDetails = (file['tag_list_details'] is List)
+              ? file['tag_list_details']
+              : (file['tag_details'] is List ? file['tag_details'] : []);
 
-      return GestureDetector(
-        onLongPress: () {
-          showModalBottomSheet(
-            context: context,
-            backgroundColor: appTheme.backgroundColor,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            builder: (context) {
-              final itemColor = textColor;
-              return SafeArea(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ListTile(
-                      leading: Icon(
-                        Icons.open_in_new_rounded,
-                        color: itemColor,
-                      ),
-                      title: Text("Open", style: TextStyle(color: itemColor)),
-                      onTap: () async {
-                        Navigator.pop(context);
-                        final Uri? uri = Uri.tryParse(fullUrl);
-                        if (uri != null) {
-                          try {
-                            await launchUrl(
-                              uri,
-                              mode: LaunchMode.externalApplication,
-                            );
-                          } catch (e) {
-                            debugPrint('Error opening file: $e');
-                          }
-                        }
-                      },
-                    ),
-                    ListTile(
-                      leading: Icon(
-                        isStarred
-                            ? Icons.star_rounded
-                            : Icons.star_outline_rounded,
-                        color: isStarred ? Colors.yellow : itemColor,
-                      ),
-                      title: Text(
-                        isStarred ? "Unstar" : "Star",
-                        style: TextStyle(
-                          color: isStarred ? Colors.yellow : itemColor,
-                        ),
-                      ),
-                      onTap: () async {
-                        Navigator.pop(context);
-                        try {
-                          await ApiServer().toggleFileStar(
-                            fileId: (file['id'] ?? file['file_id']).toString(),
-                          );
-                          if (widget.onRefresh != null)
-                            await widget.onRefresh!();
-                        } catch (e) {
-                          debugPrint("Star error: $e");
-                        }
-                      },
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.share_rounded, color: itemColor),
-                      title: Text("Share", style: TextStyle(color: itemColor)),
-                      onTap: () => Navigator.pop(context),
-                    ),
-                    ListTile(
-                      leading: Icon(
-                        Icons.local_offer_rounded,
-                        color: itemColor,
-                      ),
-                      title: Text(
-                        "Add a tag", // Fix: Changed itemColor to color
-                        style: TextStyle(color: itemColor),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: appTheme.backgroundColor,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(24),
-                            ),
-                          ),
-                          builder: (ctx) => PublicTag(
-                            tagList: {
-                              'company_id': file['company_id'],
-                              'tagList': file['tag_list'] ?? tagDetails,
-                              'conversation_id': file['conversation_id'],
-                              'file_id':
-                                  (file['file_id'] ??
-                                          file['id'] ??
-                                          file['_id'] ??
-                                          "")
-                                      .toString(),
-                              'msg_id': (file['msg_id'] ?? "").toString(),
-                              'is_reply':
-                                  (file['is_reply_msg'] == true ||
-                                      file['is_reply_msg'] == 'yes')
-                                  ? 'yes'
-                                  : 'no',
-                              'participants': (file['participants'] is List)
-                                  ? file['participants']
-                                  : (file['participants'] != null
-                                        ? [file['participants']]
-                                        : []),
-                            },
-                            isDark: isDark,
-                          ),
-                        ).then((_) {
-                          if (widget.onRefresh != null) widget.onRefresh!();
-                        });
-                      },
-                    ),
-                    ListTile(
-                      leading: Icon(Icons.forward_rounded, color: itemColor),
-                      title: Text(
-                        "Forward",
-                        style: TextStyle(color: itemColor),
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: appTheme.backgroundColor,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(24),
-                            ),
-                          ),
-                          builder: (ctx) => ForwardMessageScreen(
-                            isDark: isDark,
-                            messageToForward: {
-                              ...file,
-                              'msg_id':
-                                  file['msg_id'] ??
-                                  file['id'] ??
-                                  file['file_id'],
-                              'user_id': myId,
-                              'conversation_id': file['conversation_id'],
-                              'is_reply_msg': file['is_reply_msg'] ?? 'no',
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Colors.redAccent,
-                      ),
-                      title: const Text(
-                        "Delete",
-                        style: TextStyle(color: Colors.redAccent),
-                      ),
-                      onTap: () {
-                        fileDelete(
-                          file['id'] ?? file['file_id'],
-                          file['participants'],
-                        );
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ],
+          return GestureDetector(
+            onLongPress: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: appTheme.backgroundColor,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
+                builder: (context) {
+                  final itemColor = textColor;
+                  return SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: Icon(
+                            Icons.open_in_new_rounded,
+                            color: itemColor,
+                          ),
+                          title: Text(
+                            "Open",
+                            style: TextStyle(color: itemColor),
+                          ),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            final Uri? uri = Uri.tryParse(fullUrl);
+                            if (uri != null) {
+                              try {
+                                await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } catch (e) {
+                                debugPrint('Error opening file: $e');
+                              }
+                            }
+                          },
+                        ),
+                        ListTile(
+                          leading: Icon(
+                            isStarred
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            color: isStarred ? Colors.yellow : itemColor,
+                          ),
+                          title: Text(
+                            isStarred ? "Unstar" : "Star",
+                            style: TextStyle(
+                              color: isStarred ? Colors.yellow : itemColor,
+                            ),
+                          ),
+                          onTap: () async {
+                            Navigator.pop(context);
+                            try {
+                              await ApiServer().toggleFileStar(
+                                fileId: (file['id'] ?? file['file_id'])
+                                    .toString(),
+                              );
+                              if (widget.onRefresh != null)
+                                await widget.onRefresh!();
+                            } catch (e) {
+                              debugPrint("Star error: $e");
+                            }
+                          },
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.share_rounded, color: itemColor),
+                          title: Text(
+                            "Share",
+                            style: TextStyle(color: itemColor),
+                          ),
+                          onTap: () => Navigator.pop(context),
+                        ),
+                        ListTile(
+                          leading: Icon(
+                            Icons.local_offer_rounded,
+                            color: itemColor,
+                          ),
+                          title: Text(
+                            "Add a tag", // Fix: Changed itemColor to color
+                            style: TextStyle(color: itemColor),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: appTheme.backgroundColor,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(24),
+                                ),
+                              ),
+                              builder: (ctx) => PublicTag(
+                                tagList: {
+                                  'company_id': file['company_id'],
+                                  'tagList': file['tag_list'] ?? tagDetails,
+                                  'conversation_id': file['conversation_id'],
+                                  'file_id':
+                                      (file['file_id'] ??
+                                              file['id'] ??
+                                              file['_id'] ??
+                                              "")
+                                          .toString(),
+                                  'msg_id': (file['msg_id'] ?? "").toString(),
+                                  'is_reply':
+                                      (file['is_reply_msg'] == true ||
+                                          file['is_reply_msg'] == 'yes')
+                                      ? 'yes'
+                                      : 'no',
+                                  'participants': (file['participants'] is List)
+                                      ? file['participants']
+                                      : (file['participants'] != null
+                                            ? [file['participants']]
+                                            : []),
+                                },
+                                isDark: isDark,
+                              ),
+                            ).then((_) {
+                              if (widget.onRefresh != null) widget.onRefresh!();
+                            });
+                          },
+                        ),
+                        ListTile(
+                          leading: Icon(
+                            Icons.forward_rounded,
+                            color: itemColor,
+                          ),
+                          title: Text(
+                            "Forward",
+                            style: TextStyle(color: itemColor),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: appTheme.backgroundColor,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(24),
+                                ),
+                              ),
+                              builder: (ctx) => ForwardMessageScreen(
+                                isDark: isDark,
+                                messageToForward: {
+                                  ...file,
+                                  'msg_id':
+                                      file['msg_id'] ??
+                                      file['id'] ??
+                                      file['file_id'],
+                                  'user_id': myId,
+                                  'conversation_id': file['conversation_id'],
+                                  'is_reply_msg': file['is_reply_msg'] ?? 'no',
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.redAccent,
+                          ),
+                          title: const Text(
+                            "Delete",
+                            style: TextStyle(color: Colors.redAccent),
+                          ),
+                          onTap: () {
+                            fileDelete(
+                              file['id'] ?? file['file_id'],
+                              file['participants'],
+                            );
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
               );
             },
-          );
-        },
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.08),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
-                blurRadius: 15,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: isImage
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FullImageViewer(imageUrl: fullUrl),
-                          ),
-                        );
-                      }
-                    : null,
-                child: Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.08)
-                      : appTheme.accentColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: isImage
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: Image.network(
-                            fullUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Icon(
-                              Icons.broken_image_rounded,
-                              color: subTextColor,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          FileUtils.getFileIcon(location),
-                        color: isDark ? Colors.white70 : appTheme.accentColor,
-                          size: 24,
-                        ),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.grey.withOpacity(0.08),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      originalName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "$fileSize • $date",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: subTextColor, fontSize: 12),
-                    ),
-                    Text(
-                      file['uploaded_by'] ?? "Unknown",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: subTextColor, fontSize: 12),
-                    ),
-                    Text(
-                      file['conversation_title'] ?? "Unknown",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: subTextColor, fontSize: 12),
-                    ),
-                    if (tagDetails.isNotEmpty)
-                      GestureDetector(
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: appTheme.backgroundColor,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(24),
-                              ),
-                            ),
-                            builder: (ctx) => PublicTag(
-                              tagList: {
-                                'company_id': file['company_id'],
-                                'tagList': file['tag_list'] ?? tagDetails,
-                                'conversation_id': file['conversation_id'],
-                                'file_id':
-                                    (file['file_id'] ??
-                                            file['id'] ??
-                                            file['_id'] ??
-                                            "")
-                                        .toString(),
-                                'msg_id': (file['msg_id'] ?? "").toString(),
-                                'is_reply':
-                                    (file['is_reply_msg'] == true ||
-                                        file['is_reply_msg'] == 'yes')
-                                    ? 'yes'
-                                    : 'no',
-                                'participants': (file['participants'] is List)
-                                    ? file['participants']
-                                    : (file['participants'] != null
-                                          ? [file['participants']]
-                                          : []),
-                              },
-                              isDark: isDark,
-                            ),
-                          ).then((_) {
-                            if (widget.onRefresh != null) widget.onRefresh!();
-                          });
-                        },
-                        child: Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            ...tagDetails
-                                .take(2)
-                                .map(
-                                  (data) => Container(
-                                    margin: const EdgeInsets.only(
-                                      right: 6,
-                                      top: 4,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: appTheme.accentColor.withOpacity(0.12),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: appTheme.accentColor.withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      data['title'] ?? "",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: isDark ? Colors.white : appTheme.accentColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            if (tagDetails.length > 2)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  "+${tagDetails.length - 2}",
-                                  style: TextStyle(
-                                    color: subTextColor,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () async {
-                      try {
-                        await ApiServer().toggleFileStar(
-                          fileId: (file['id'] ?? file['file_id']).toString(),
-                        );
-                        if (widget.onRefresh != null) await widget.onRefresh!();
-                      } catch (e) {
-                        debugPrint("Star error: $e");
-                      }
-                    },
-                    child: Icon(
-                      isStarred
-                          ? Icons.star_rounded
-                          : Icons.star_outline_rounded,
-                      color: isStarred
-                          ? Colors.yellow
-                          : subTextColor.withOpacity(0.8),
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () async {
-                      final Uri? uri = Uri.tryParse(fullUrl);
-                      if (uri != null) {
-                        try {
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        } catch (e) {
-                          debugPrint('Download error: $e');
-                        }
-                      }
-                    },
-                    child: Icon(
-                      Icons.download_rounded,
-                      color: subTextColor.withOpacity(0.8),
-                      size: 22,
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                    blurRadius: 15,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    Widget buildCategoryChip(String label, int index, int count) {
-      final bool isSelected = selectedCategory == index;
-
-      return GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedCategory = index;
-          });
-        },
-
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-
-          margin: const EdgeInsets.only(right: 10),
-
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-
-          decoration: BoxDecoration(
-            color: isSelected
-                ? appTheme.accentColor
-                : backgroundColor.withOpacity(0.5),
-
-            borderRadius: BorderRadius.circular(22),
-
-            border: Border.all(
-              color: isSelected
-                  ? appTheme.accentColor
-                  : isDark
-                  ? Colors.white.withOpacity(.1)
-                  : Colors.black.withOpacity(.04),
-            ),
-          ),
-
-          child: Text(
-            "$label ($count)",
-            style: TextStyle(
-              color: isSelected ? Colors.white : textColor,
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-
-      body: SafeArea(
-        child: widget.files.isEmpty && searchText.isEmpty
-            ? Center(
-                child: Text(
-                  "No files available",
-                  style: TextStyle(color: subTextColor),
-                ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  /// HEADER
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                  GestureDetector(
+                    onTap: isImage
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    FullImageViewer(imageUrl: fullUrl),
+                              ),
+                            );
+                          }
+                        : null,
+                    child: Container(
+                      height: 48,
+                      width: 48,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : appTheme.accentColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: isImage
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: Image.network(
+                                fullUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(
+                                      Icons.broken_image_rounded,
+                                      color: subTextColor,
+                                    ),
+                              ),
+                            )
+                          : Icon(
+                              FileUtils.getFileIcon(location),
+                              color: isDark
+                                  ? Colors.white70
+                                  : appTheme.accentColor,
+                              size: 24,
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "FileHub",
+                          originalName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: textColor,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.6,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
                           ),
                         ),
-
-                        const SizedBox(height: 4),
-
+                        const SizedBox(height: 6),
                         Text(
-                          "Access and manage your cloud files professionally",
-                          style: TextStyle(color: subTextColor, fontSize: 13),
+                          "$fileSize • $date",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: subTextColor, fontSize: 12),
                         ),
-                      ],
-                    ),
-                  ),
-
-                  /// CATEGORY
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
-
-                    child: Row(
-                      children: [
-                        buildCategoryChip("All file(s)", 0, allCount),
-
-                        buildCategoryChip("Doc(s)", 1, docsCount),
-
-                        buildCategoryChip("Image(s)", 2, imageCount),
-
-                        buildCategoryChip("Voice(s)", 3, voiceCount),
-
-                        buildCategoryChip("Audio(s)", 4, audioCount),
-
-                        buildCategoryChip("Video(s)", 5, videoCount),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  /// SEARCH
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 4,
-                    ),
-
-                    child: Container(
-                      constraints: const BoxConstraints(minHeight: 58),
-                      decoration: BoxDecoration(
-                        color: backgroundColor,
-                        borderRadius: BorderRadius.circular(18),
-
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withOpacity(.05)
-                              : Colors.black.withOpacity(.04),
+                        Text(
+                          file['uploaded_by'] ?? "Unknown",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: subTextColor, fontSize: 12),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(
-                              isDark ? 0.15 : 0.05,
-                            ),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-
-                      child: TextField(
-                        controller: _searchController,
-
-                        onChanged: (value) {
-                          setState(() {
-                            searchText = value;
-                          });
-                        },
-
-                        style: TextStyle(color: textColor, fontSize: 15),
-
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-
-                          hintText: "Search files...",
-                          isDense: true,
-
-                          hintStyle: TextStyle(color: subTextColor),
-
-                          prefixIcon: Icon(
-                            Icons.search_rounded,
-                            color: subTextColor,
-                          ),
-
-                          suffixIcon: searchText.isNotEmpty
-                              ? IconButton(
-                                  onPressed: () {
-                                    _searchController.clear();
-
-                                    setState(() {
-                                      searchText = "";
-                                    });
-                                  },
-                                  icon: Icon(
-                                    Icons.close_rounded,
-                                    color: subTextColor,
+                        Text(
+                          file['conversation_title'] ?? "Unknown",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: subTextColor, fontSize: 12),
+                        ),
+                        if (tagDetails.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: appTheme.backgroundColor,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(24),
                                   ),
-                                )
-                              : Icon(
-                                  Icons.filter_list_rounded,
-                                  color: subTextColor,
                                 ),
-
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  /// FILE LIST
-                  filteredFiles.isEmpty
-                      ? Center(
-                          child: Text(
-                            "No items found",
-                            style: TextStyle(color: subTextColor, fontSize: 14),
-                          ),
-                        )
-                      : Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                            child: ListView.builder(
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: filteredFiles.length,
-                              itemBuilder: (context, index) {
-                                return buildFileItem(filteredFiles[index]);
-                              },
+                                builder: (ctx) => PublicTag(
+                                  tagList: {
+                                    'company_id': file['company_id'],
+                                    'tagList': file['tag_list'] ?? tagDetails,
+                                    'conversation_id': file['conversation_id'],
+                                    'file_id':
+                                        (file['file_id'] ??
+                                                file['id'] ??
+                                                file['_id'] ??
+                                                "")
+                                            .toString(),
+                                    'msg_id': (file['msg_id'] ?? "").toString(),
+                                    'is_reply':
+                                        (file['is_reply_msg'] == true ||
+                                            file['is_reply_msg'] == 'yes')
+                                        ? 'yes'
+                                        : 'no',
+                                    'participants':
+                                        (file['participants'] is List)
+                                        ? file['participants']
+                                        : (file['participants'] != null
+                                              ? [file['participants']]
+                                              : []),
+                                  },
+                                  isDark: isDark,
+                                ),
+                              ).then((_) {
+                                if (widget.onRefresh != null)
+                                  widget.onRefresh!();
+                              });
+                            },
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                ...tagDetails
+                                    .take(2)
+                                    .map(
+                                      (data) => Container(
+                                        margin: const EdgeInsets.only(
+                                          right: 6,
+                                          top: 4,
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: appTheme.accentColor
+                                              .withOpacity(0.12),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: appTheme.accentColor
+                                                .withOpacity(0.3),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          data['title'] ?? "",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: isDark
+                                                ? Colors.white
+                                                : appTheme.accentColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                if (tagDetails.length > 2)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      "+${tagDetails.length - 2}",
+                                      style: TextStyle(
+                                        color: subTextColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          try {
+                            await ApiServer().toggleFileStar(
+                              fileId: (file['id'] ?? file['file_id'])
+                                  .toString(),
+                            );
+                            if (widget.onRefresh != null)
+                              await widget.onRefresh!();
+                          } catch (e) {
+                            debugPrint("Star error: $e");
+                          }
+                        },
+                        child: Icon(
+                          isStarred
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: isStarred
+                              ? Colors.yellow
+                              : subTextColor.withOpacity(0.8),
+                          size: 22,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final Uri? uri = Uri.tryParse(fullUrl);
+                          if (uri != null) {
+                            try {
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            } catch (e) {
+                              debugPrint('Download error: $e');
+                            }
+                          }
+                        },
+                        child: Icon(
+                          Icons.download_rounded,
+                          color: subTextColor.withOpacity(0.8),
+                          size: 22,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-      ),
+            ),
+          );
+        }
+
+        Widget buildCategoryChip(String label, int index, int count) {
+          final bool isSelected = selectedCategory == index;
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                selectedCategory = index;
+              });
+            },
+
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+
+              margin: const EdgeInsets.only(right: 10),
+
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? appTheme.accentColor
+                    : backgroundColor.withOpacity(0.5),
+
+                borderRadius: BorderRadius.circular(22),
+
+                border: Border.all(
+                  color: isSelected
+                      ? appTheme.accentColor
+                      : isDark
+                      ? Colors.white.withOpacity(.1)
+                      : Colors.black.withOpacity(.04),
+                ),
+              ),
+
+              child: Text(
+                "$label ($count)",
+                style: TextStyle(
+                  color: isSelected ? Colors.white : textColor,
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: backgroundColor,
+
+          body: SafeArea(
+            child: widget.files.isEmpty && searchText.isEmpty
+                ? Center(
+                    child: Text(
+                      "No files available",
+                      style: TextStyle(color: subTextColor),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// HEADER
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "FileHub",
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.6,
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            Text(
+                              "Access and manage your cloud files professionally",
+                              style: TextStyle(
+                                color: subTextColor,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      /// CATEGORY
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+
+                        child: Row(
+                          children: [
+                            buildCategoryChip("All file(s)", 0, allCount),
+
+                            buildCategoryChip("Doc(s)", 1, docsCount),
+
+                            buildCategoryChip("Image(s)", 2, imageCount),
+
+                            buildCategoryChip("Voice(s)", 3, voiceCount),
+
+                            buildCategoryChip("Audio(s)", 4, audioCount),
+
+                            buildCategoryChip("Video(s)", 5, videoCount),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      /// SEARCH
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 4,
+                        ),
+
+                        child: Container(
+                          constraints: const BoxConstraints(minHeight: 58),
+                          decoration: BoxDecoration(
+                            color: backgroundColor,
+                            borderRadius: BorderRadius.circular(18),
+
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(.05)
+                                  : Colors.black.withOpacity(.04),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(
+                                  isDark ? 0.15 : 0.05,
+                                ),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+
+                          child: TextField(
+                            controller: _searchController,
+
+                            onChanged: (value) {
+                              setState(() {
+                                searchText = value;
+                              });
+                            },
+
+                            style: TextStyle(color: textColor, fontSize: 15),
+
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+
+                              hintText: "Search files...",
+                              isDense: true,
+
+                              hintStyle: TextStyle(color: subTextColor),
+
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: subTextColor,
+                              ),
+
+                              suffixIcon: searchText.isNotEmpty
+                                  ? IconButton(
+                                      onPressed: () {
+                                        _searchController.clear();
+
+                                        setState(() {
+                                          searchText = "";
+                                        });
+                                      },
+                                      icon: Icon(
+                                        Icons.close_rounded,
+                                        color: subTextColor,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.filter_list_rounded,
+                                      color: subTextColor,
+                                    ),
+
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 18,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      /// FILE LIST
+                      filteredFiles.isEmpty
+                          ? Center(
+                              child: Text(
+                                "No items found",
+                                style: TextStyle(
+                                  color: subTextColor,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )
+                          : Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  0,
+                                  20,
+                                  20,
+                                ),
+                                child: ListView.builder(
+                                  physics: const BouncingScrollPhysics(),
+                                  itemCount: filteredFiles.length,
+                                  itemBuilder: (context, index) {
+                                    return buildFileItem(filteredFiles[index]);
+                                  },
+                                ),
+                              ),
+                            ),
+                    ],
+                  ),
+          ),
+        );
+      },
     );
   }
 }
