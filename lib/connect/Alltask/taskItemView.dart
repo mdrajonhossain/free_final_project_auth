@@ -303,20 +303,36 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
   }
 
   Future<void> _selectDate(bool isStartDate) async {
+    // Get the existing date string from the task data
+    final String? existingDateStr = isStartDate
+        ? (_taskData?['start_date'] as String?)
+        : (_taskData?['end_date'] as String?);
+
+    // Determine the initial date for the picker
+    DateTime initialDate = DateTime.now();
+    if (existingDateStr != null && existingDateStr.isNotEmpty) {
+      try {
+        initialDate = DateTime.parse(existingDateStr).toLocal();
+      } catch (e) {
+        debugPrint("Error parsing existing date for picker: $e");
+      }
+    }
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: initialDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
     if (picked != null) {
-      // Use noon (12:00) to ensure UTC conversion stays on the same calendar day
-      final String formattedDate = DateTime(
+      // Use UTC noon to ensure consistency across timezones and stable display logic
+      final String formattedDate = DateTime.utc(
         picked.year,
         picked.month,
         picked.day,
         12,
-      ).toUtc().toIso8601String();
+      ).toIso8601String();
+
       try {
         setState(() => _isLoading = true);
         final result = await ApiServer().updateSingleTask(
