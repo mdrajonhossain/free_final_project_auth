@@ -13,6 +13,34 @@ class UserManagementPage extends StatefulWidget {
 
 class _UserManagementPageState extends State<UserManagementPage> {
   final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _allUsers = [];
+  bool _isLoading = true;
+  String? _companyId;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInitialData();
+  }
+
+  Future<void> _fetchInitialData() async {
+    try {
+      final me = await ApiServer().fetchMe();
+      _companyId = me['company_id']?.toString();
+      if (_companyId != null) {
+        final users = await ApiServer().fetchAllUsers(_companyId!);
+        if (mounted) {
+          setState(() {
+            _allUsers = users;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching users: $e");
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,15 +163,23 @@ class _UserManagementPageState extends State<UserManagementPage> {
                 const SizedBox(height: 12),
 
                 // Tab Content
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _buildUserList(appTheme, "Users"),
-                      _buildUserList(appTheme, "Guests"),
-                      _buildUserList(appTheme, "Contact Users"),
-                    ],
-                  ),
-                ),
+                _isLoading
+                    ? Expanded(
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: appTheme.accentColor,
+                          ),
+                        ),
+                      )
+                    : Expanded(
+                        child: TabBarView(
+                          children: [
+                            _buildUserList(appTheme, "Users"),
+                            _buildUserList(appTheme, "Guests"),
+                            _buildUserList(appTheme, "Contact Users"),
+                          ],
+                        ),
+                      ),
               ],
             ),
           ),
@@ -153,53 +189,37 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
 
   Widget _buildUserList(AppThemeModel appTheme, String category) {
-    // This is where you would call your API via FutureBuilder or Bloc
-    // Example: ApiServer().getUsers(type: category)
-    return FutureBuilder(
-      future: Future.delayed(
-        const Duration(milliseconds: 500),
-      ), // Simulating API
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: CircularProgressIndicator(color: appTheme.accentColor),
-          );
-        }
+    final filteredUsers = _allUsers.where((user) {
+      final role = user['role']?.toString() ?? "";
+      final searchTerm = _searchController.text.toLowerCase();
+      final name = "${user['firstname']} ${user['lastname']}".toLowerCase();
+      final email = (user['email'] ?? "").toString().toLowerCase();
 
-        return ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          children: [
-            if (category == "Users") ...[
-              UserCard(
-                appTheme: appTheme,
-                name: "John Smith",
-                email: "john@example.com",
-                role: "Admin",
-                isActive: true,
-              ),
-              UserCard(
-                appTheme: appTheme,
-                name: "Sarah Johnson",
-                email: "sarah@example.com",
-                role: "Manager",
-                isActive: true,
-              ),
-              UserCard(
-                appTheme: appTheme,
-                name: "Michael Brown",
-                email: "michael@example.com",
-                role: "Staff",
-                isActive: false,
-              ),
-              UserCard(
-                appTheme: appTheme,
-                name: "Emma Wilson",
-                email: "emma@example.com",
-                role: "Staff",
-                isActive: true,
-              ),
-            ],
-          ],
+      bool matchesCategory = false;
+      if (category == "Users") {
+        matchesCategory = role != "Guest" && role != "Recipient";
+      } else if (category == "Guests") {
+        matchesCategory = role == "Guest";
+      } else if (category == "Contact Users") {
+        matchesCategory = role == "Recipient";
+      }
+
+      return matchesCategory &&
+          (name.contains(searchTerm) || email.contains(searchTerm));
+    }).toList();
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: filteredUsers.length,
+      itemBuilder: (context, index) {
+        final user = filteredUsers[index];
+        return UserCard(
+          appTheme: appTheme,
+          name: "${user['firstname']} ${user['lastname']}",
+          email: user['email'] ?? "",
+          role: user['role'] ?? "Member",
+          isActive: user['is_active'] == 1,
+          imageUrl: user['img'],
         );
       },
     );
@@ -212,6 +232,7 @@ class UserCard extends StatelessWidget {
   final String email;
   final String role;
   final bool isActive;
+  final String? imageUrl;
 
   const UserCard({
     super.key,
@@ -220,6 +241,7 @@ class UserCard extends StatelessWidget {
     required this.email,
     required this.role,
     required this.isActive,
+    this.imageUrl,
   });
 
   @override
@@ -237,13 +259,18 @@ class UserCard extends StatelessWidget {
         leading: CircleAvatar(
           radius: 26,
           backgroundColor: appTheme.accentColor.withOpacity(0.1),
-          child: Text(
-            name[0],
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: appTheme.accentColor,
-            ),
-          ),
+          backgroundImage: (imageUrl != null && imageUrl!.isNotEmpty)
+              ? NetworkImage(imageUrl!)
+              : null,
+          child: (imageUrl == null || imageUrl!.isEmpty)
+              ? Text(
+                  name.isNotEmpty ? name[0] : "?",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: appTheme.accentColor,
+                  ),
+                )
+              : null,
         ),
         title: Text(
           name,
@@ -261,8 +288,10 @@ class UserCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: role == "Admin"
                     ? Colors.red.shade100
-                    : role == "Manager"
+                    : (role == "Manager" || role == "Member")
                     ? Colors.orange.shade100
+                    : (role == "Guest")
+                    ? Colors.purple.shade100
                     : Colors.blue.shade100,
                 borderRadius: BorderRadius.circular(20),
               ),
