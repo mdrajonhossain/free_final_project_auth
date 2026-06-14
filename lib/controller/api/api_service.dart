@@ -1348,14 +1348,16 @@ class ApiServer {
     try {
       final data = await ApiServer.call(
         r'''
-        mutation delete_task($_id: ID!) {
-          delete_task(_id: $_id) {
+        mutation Delete_task($input: deleteTaskInput!) {
+          delete_task(input: $input) {
             status
             message
           }
         }
         ''',
-        variables: {"_id": taskId},
+        variables: {
+          "input": {"task_id": taskId},
+        },
       );
       return data['delete_task'];
     } catch (e) {

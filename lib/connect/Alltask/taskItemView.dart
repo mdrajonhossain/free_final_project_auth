@@ -289,6 +289,13 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
         final result = await ApiServer().deleteTask(widget.taskId);
         if (result != null && result['status'] == true) {
           widget.onUpdate?.call();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result['message'] ?? "Task deleted successfully"),
+              ),
+            );
+          }
           Navigator.pop(context);
         }
       } catch (e) {
