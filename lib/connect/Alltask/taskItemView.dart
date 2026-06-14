@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freeli/theme/themeList.dart';
+import 'package:freeli/controller/api/api_service.dart';
 import 'package:intl/intl.dart';
 
 class TaskDetailsPage extends StatefulWidget {
@@ -15,12 +16,32 @@ class TaskDetailsPage extends StatefulWidget {
 class _TaskDetailsPageState extends State<TaskDetailsPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isLoading = true;
+  Map<String, dynamic>? _taskData;
   final TextEditingController _msgController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 6, vsync: this);
+    _fetchTaskDetails();
+  }
+
+  Future<void> _fetchTaskDetails() async {
+    try {
+      setState(() => _isLoading = true);
+      // Assuming ApiServer has a method to fetch a single task by ID
+      // based on the GraphQL structure provided.
+      final response = await ApiServer().fetchSingleTask(widget.taskId);
+      if (mounted) {
+        setState(() {
+          _taskData = response;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -32,8 +53,17 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
 
   @override
   Widget build(BuildContext context) {
-    final AppThemeModel appTheme = widget.appTheme;
+    final appTheme = widget.appTheme;
     final bool isDark = appTheme.backgroundColor.computeLuminance() < 0.5;
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: appTheme.backgroundColor,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final data = _taskData ?? {};
 
     return Scaffold(
       backgroundColor: appTheme.backgroundColor,
@@ -91,7 +121,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            "Room: General Discussion",
+                            "Room: ${data['conversation_name'] ?? 'General'}",
                             style: TextStyle(
                               fontWeight: FontWeight.w500,
                               color: appTheme.subTextColor,
@@ -103,7 +133,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "dfgsdfgasdf (Copy)",
+                      data['task_title'] ?? "Untitled Task",
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -113,7 +143,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      "Created by Md. Mamun Or Rashid Rajon, dated Jun 14, 2026",
+                      "Created at ${data['created_at'] != null ? DateFormat('MMM d, yyyy').format(DateTime.parse(data['created_at'])) : 'N/A'}",
                       style: TextStyle(
                         color: appTheme.subTextColor,
                         fontSize: 12,
@@ -138,7 +168,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                           ),
                         ),
                         Text(
-                          "Not Defined",
+                          data['project_title'] ?? "Not Defined",
                           style: TextStyle(
                             color: appTheme.textColor,
                             fontWeight: FontWeight.w600,
@@ -161,12 +191,14 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         Wrap(
                           spacing: 8,
                           children: [
-                            _buildTag(appTheme, "Internal", isDark),
+                            ...(data['key_words'] as List? ?? []).map(
+                              (word) => _buildTag(appTheme, word, isDark),
+                            ),
                             _buildTag(
                               appTheme,
-                              "Priority",
+                              data['priority'] ?? "Medium",
                               isDark,
-                              color: Colors.orange,
+                              color: _getPriorityColor(data['priority']),
                             ),
                             _buildMiniAction(appTheme, "+ Add"),
                           ],
@@ -181,7 +213,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         Expanded(
                           child: _box(
                             "Status",
-                            "Not Started",
+                            data['status'] ?? "Not Started",
                             Icons.radio_button_unchecked,
                           ),
                         ),
@@ -189,7 +221,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         Expanded(
                           child: _box(
                             "Progress",
-                            "Not Defined",
+                            "${data['progress'] ?? 0}%",
                             Icons.trending_up,
                           ),
                         ),
@@ -199,10 +231,26 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     Row(
                       children: [
                         Expanded(
-                          child: _inputBox("Start date", Icons.calendar_today),
+                          child: _inputBox(
+                            data['start_date'] != null
+                                ? DateFormat(
+                                    'MMM d, y',
+                                  ).format(DateTime.parse(data['start_date']))
+                                : "Start date",
+                            Icons.calendar_today,
+                          ),
                         ),
                         const SizedBox(width: 10),
-                        Expanded(child: _inputBox("Due date", Icons.event)),
+                        Expanded(
+                          child: _inputBox(
+                            data['end_date'] != null
+                                ? DateFormat(
+                                    'MMM d, y',
+                                  ).format(DateTime.parse(data['end_date']))
+                                : "Due date",
+                            Icons.event,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -214,7 +262,9 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         _buildPersonRow(
                           appTheme,
                           "Assigned to",
-                          "Md. Mamun Or Rashid",
+                          data['assign_to']?.isNotEmpty == true
+                              ? "Assigned"
+                              : "Unassigned",
                           "MR",
                         ),
                         _buildMiniAction(appTheme, "Edit"),
@@ -227,7 +277,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         _buildPersonRow(
                           appTheme,
                           "Observers",
-                          "No observers yet",
+                          "${(data['observers'] as List? ?? []).length} observers",
                           null,
                         ),
                         _buildMiniAction(appTheme, "Add"),
@@ -273,12 +323,21 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                             dividerColor: isDark
                                 ? Colors.white12
                                 : Colors.black12,
-                            tabs: const [
+                            tabs: [
                               Tab(text: "Description"),
                               Tab(text: "Notes"),
-                              Tab(text: "Files (0)"),
-                              Tab(text: "Checklists"),
-                              Tab(text: "Discussion"),
+                              Tab(
+                                text:
+                                    "Files (${(data['files'] as List? ?? []).length})",
+                              ),
+                              Tab(
+                                text:
+                                    "Checklists (${(data['checklists'] as List? ?? []).length})",
+                              ),
+                              Tab(
+                                text:
+                                    "Discussion (${(data['discussion'] as List? ?? []).length})",
+                              ),
                               Tab(text: "Notifications"),
                             ],
                           ),
@@ -289,7 +348,10 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                               children: [
                                 _buildTabEmptyState(
                                   appTheme,
-                                  "No description provided for this task.",
+                                  data['description']?.toString().isNotEmpty ==
+                                          true
+                                      ? data['description']
+                                      : "No description provided.",
                                 ),
                                 _buildTabEmptyState(
                                   appTheme,
@@ -502,6 +564,13 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
         ),
       ),
     );
+  }
+
+  Color _getPriorityColor(String? priority) {
+    final p = priority?.toLowerCase() ?? '';
+    if (p == 'high' || p == 'urgent') return Colors.redAccent;
+    if (p == 'medium') return Colors.orangeAccent;
+    return Colors.blueAccent;
   }
 
   Widget _box(String title, String value, IconData icon) {
