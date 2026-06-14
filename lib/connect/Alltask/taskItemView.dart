@@ -481,8 +481,6 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                         );
                       },
                     ),
-                    const SizedBox(height: 24),
-                    _buildSectionHeader(appTheme, "Overview"),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -515,8 +513,8 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     Row(
                       children: [
                         Icon(
-                          Icons.label_outline,
-                          size: 16,
+                          Icons.flag_outlined,
+                          size: 22,
                           color: appTheme.subTextColor,
                         ),
                         const SizedBox(width: 8),
@@ -526,13 +524,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                             ...(data['key_words'] as List? ?? []).map(
                               (word) => _buildTag(appTheme, word, isDark),
                             ),
-                            _buildTag(
-                              appTheme,
-                              data['priority'] ?? "Medium",
-                              isDark,
-                              color: _getPriorityColor(data['priority']),
-                            ),
-                            _buildMiniAction(appTheme, "+ Add"),
+                            _buildMiniAction(appTheme, "+ Add a Keyword"),
                           ],
                         ),
                       ],
