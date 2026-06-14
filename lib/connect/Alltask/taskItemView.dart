@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:freeli/theme/themeList.dart';
 import 'package:freeli/controller/api/api_service.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class TaskDetailsPage extends StatefulWidget {
   final String taskId;
   final dynamic appTheme;
+  final VoidCallback? onUpdate;
 
-  const TaskDetailsPage(this.taskId, this.appTheme, {super.key});
+  const TaskDetailsPage(this.taskId, this.appTheme, {super.key, this.onUpdate});
 
   @override
   State<TaskDetailsPage> createState() => _TaskDetailsPageState();
@@ -181,6 +183,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
 
   Future<void> _updateTaskRoom(Map<String, dynamic> room) async {
     try {
+      setState(() => _isLoading = true);
       final updatedTask = await ApiServer().updateSingleTask(
         taskId: widget.taskId,
         conversationId: room['conversation_id'],
@@ -195,6 +198,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
           _taskData?['conversation_name'] = updatedTask['conversation_name'];
           _taskData?['conversation_img'] = updatedTask['conversation_img'];
         });
+        widget.onUpdate?.call();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Task moved successfully")),
         );
@@ -205,6 +209,8 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
           SnackBar(content: Text("Error moving task: ${e.toString()}")),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -219,6 +225,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
     }
 
     try {
+      setState(() => _isLoading = true);
       final updated = await ApiServer().updateSingleTask(
         taskId: widget.taskId,
         title: newTitle,
@@ -228,12 +235,68 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
           _taskData?['task_title'] = updated['task_title'];
           _isEditingTitle = false;
         });
+        widget.onUpdate?.call();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Error updating title: $e")));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteTask() async {
+    final appTheme = widget.appTheme;
+    final bool confirm =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: appTheme.backgroundColor,
+            title: Text(
+              "Delete Task",
+              style: TextStyle(color: appTheme.textColor),
+            ),
+            content: Text(
+              "Are you sure you want to delete this task?",
+              style: TextStyle(color: appTheme.subTextColor),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(color: appTheme.subTextColor),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text(
+                  "Delete",
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (confirm && mounted) {
+      try {
+        setState(() => _isLoading = true);
+        final result = await ApiServer().deleteTask(widget.taskId);
+        if (result != null && result['status'] == true) {
+          widget.onUpdate?.call();
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -254,7 +317,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
     if (_isLoading) {
       return Scaffold(
         backgroundColor: appTheme.backgroundColor,
-        body: const Center(child: CircularProgressIndicator()),
+        body: _buildSkeleton(appTheme, isDark),
       );
     }
 
@@ -267,10 +330,6 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
         elevation: 0.5,
         shadowColor: isDark ? Colors.black54 : Colors.black12,
         centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.close, size: 22),
-        ),
         title: Text(
           "Task Details",
           style: TextStyle(
@@ -281,8 +340,23 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
         ),
         iconTheme: IconThemeData(color: appTheme.textColor),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.more_horiz)),
-          const SizedBox(width: 8),
+          IconButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: data['task_title'] ?? ""));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Task title copied")),
+              );
+            },
+            icon: const Icon(Icons.copy_outlined, size: 20),
+          ),
+          IconButton(
+            onPressed: _deleteTask,
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 20,
+              color: Colors.redAccent,
+            ),
+          ),
         ],
       ),
       body: Column(
@@ -685,6 +759,210 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSkeleton(AppThemeModel appTheme, bool isDark) {
+    final Color skeletonColor = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.black.withOpacity(0.04);
+
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        Center(
+          child: Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white24 : Colors.black12,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Room row skeleton
+                Row(
+                  children: [
+                    Container(
+                      width: 18,
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: skeletonColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      width: 140,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: skeletonColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Title skeleton
+                Container(
+                  height: 28,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: skeletonColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Created at skeleton
+                Container(
+                  height: 12,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: skeletonColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // Overview header
+                Container(
+                  height: 10,
+                  width: 70,
+                  decoration: BoxDecoration(
+                    color: skeletonColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Project row skeleton
+                Row(
+                  children: [
+                    Container(width: 16, height: 16, color: skeletonColor),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 100,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: skeletonColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Schedule header
+                Container(
+                  height: 10,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: skeletonColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Status/Progress boxes
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 55,
+                        decoration: BoxDecoration(
+                          color: skeletonColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        height: 55,
+                        decoration: BoxDecoration(
+                          color: skeletonColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Date boxes
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: skeletonColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: skeletonColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                // People header
+                Container(
+                  height: 10,
+                  width: 60,
+                  decoration: BoxDecoration(
+                    color: skeletonColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Assignee row
+                Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: skeletonColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 150,
+                      height: 25,
+                      decoration: BoxDecoration(
+                        color: skeletonColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // TabBar skeleton
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: skeletonColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

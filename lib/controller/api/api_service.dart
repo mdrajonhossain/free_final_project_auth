@@ -1342,4 +1342,24 @@ class ApiServer {
       return null;
     }
   }
+
+  /// Deletes a single task by its ID.
+  Future<Map<String, dynamic>?> deleteTask(String taskId) async {
+    try {
+      final data = await ApiServer.call(
+        r'''
+        mutation delete_task($_id: ID!) {
+          delete_task(_id: $_id) {
+            status
+            message
+          }
+        }
+        ''',
+        variables: {"_id": taskId},
+      );
+      return data['delete_task'];
+    } catch (e) {
+      throw GqlException("Failed to delete task: ${e.toString()}");
+    }
+  }
 }

@@ -529,6 +529,7 @@ class _TaskScreenState extends State<TaskScreen> {
                                     builder: (context) => TaskDetailsPage(
                                       task['id'].toString(),
                                       appTheme,
+                                      onUpdate: _fetchTasks,
                                     ),
                                   );
                                 },
