@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:freeli/connect/AdminSetting/adminSetting.dart';
+import 'package:freeli/connect/AdminSetting/userManagement.dart';
 import 'package:freeli/connect/AllFlagged/AllFlaggedMessage.dart';
 import 'package:freeli/connect/All_Notification/All_Notification.dart';
 import 'package:freeli/connect/ChangePassword/ChangePassword.dart';
@@ -110,6 +111,7 @@ class _MyAppState extends State<MyApp> {
               '/allnotification': (context) =>
                   AllNotificationPage(isDark: true, onThemeChange: (val) {}),
               '/adminSetting': (context) => const AdminSettingsPage(),
+              '/usermanagement': (context) => const UserManagementPage(),
             },
           );
         },

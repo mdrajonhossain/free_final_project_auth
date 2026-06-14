@@ -32,7 +32,9 @@ class AdminSettingsPage extends StatelessWidget {
                 title: "User Management",
                 subtitle: "Manage users and permissions",
                 icon: Icons.supervisor_account_outlined,
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(context, '/usermanagement');
+                },
               ),
               _buildMenuTile(
                 context,
