@@ -1290,6 +1290,10 @@ class ApiServer {
             conversation_name
             conversation_img
             participants
+            assign_to
+            observers
+            priority
+            description
             last_updated_at
           }
         }

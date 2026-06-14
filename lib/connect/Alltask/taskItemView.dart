@@ -215,6 +215,324 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
     }
   }
 
+  void _showUserSelectionSheet(AppThemeModel appTheme, bool isDark) {
+    String searchQuery = "";
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: appTheme.backgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setInternalState) {
+            final filteredUsers = _users.where((user) {
+              final name =
+                  "${user['firstname'] ?? ''} ${user['lastname'] ?? ''}"
+                      .toLowerCase();
+              return name.contains(searchQuery.toLowerCase());
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  Text(
+                    "Assign Task to User",
+                    style: TextStyle(
+                      color: appTheme.textColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    style: TextStyle(color: appTheme.textColor),
+                    onChanged: (v) => setInternalState(() => searchQuery = v),
+                    decoration: InputDecoration(
+                      hintText: "Search User...",
+                      hintStyle: TextStyle(color: appTheme.subTextColor),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: appTheme.subTextColor,
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.03),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: filteredUsers.isEmpty
+                        ? Center(
+                            child: Text(
+                              "No users found",
+                              style: TextStyle(color: appTheme.subTextColor),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              final user = filteredUsers[index];
+                              final String userId = (user['id'] ?? user['_id'])
+                                  .toString();
+                              final bool isSelected =
+                                  (_taskData?['assign_to'] as List? ?? [])
+                                      .contains(userId);
+                              final String fullName =
+                                  "${user['firstname'] ?? ''} ${user['lastname'] ?? ''}"
+                                      .trim();
+                              final String? img = user['img'] ?? user['image'];
+
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  backgroundImage: img != null && img.isNotEmpty
+                                      ? NetworkImage(img)
+                                      : null,
+                                  child: (img == null || img.isEmpty)
+                                      ? Text(
+                                          fullName.isNotEmpty
+                                              ? fullName[0].toUpperCase()
+                                              : "?",
+                                        )
+                                      : null,
+                                ),
+                                title: Text(
+                                  fullName,
+                                  style: TextStyle(
+                                    color: appTheme.textColor,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                                trailing: isSelected
+                                    ? Icon(
+                                        Icons.check_circle,
+                                        color: appTheme.accentColor,
+                                      )
+                                    : null,
+                                onTap: () {
+                                  _updateTaskAssignee(userId);
+                                  Navigator.pop(context);
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _updateTaskAssignee(String userId) async {
+    try {
+      setState(() => _isLoading = true);
+      final result = await ApiServer().updateSingleTask(
+        taskId: widget.taskId,
+        assignTo: [userId],
+        saveType: "assignee",
+      );
+      if (result != null && mounted) {
+        setState(() => _taskData?['assign_to'] = [userId]);
+        widget.onUpdate?.call();
+      }
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error updating assignee: $e")));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showObserversSelectionSheet(AppThemeModel appTheme, bool isDark) {
+    String searchQuery = "";
+    List<String> selectedObservers = List<String>.from(
+      _taskData?['observers'] as List? ?? [],
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: appTheme.backgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setInternalState) {
+            final filteredUsers = _users.where((user) {
+              final name =
+                  "${user['firstname'] ?? ''} ${user['lastname'] ?? ''}"
+                      .toLowerCase();
+              return name.contains(searchQuery.toLowerCase());
+            }).toList();
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.8,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Manage Observers",
+                        style: TextStyle(
+                          color: appTheme.textColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          _updateTaskObservers(selectedObservers);
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          "Done",
+                          style: TextStyle(
+                            color: appTheme.accentColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    style: TextStyle(color: appTheme.textColor),
+                    onChanged: (v) => setInternalState(() => searchQuery = v),
+                    decoration: InputDecoration(
+                      hintText: "Search User...",
+                      hintStyle: TextStyle(color: appTheme.subTextColor),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: appTheme.subTextColor,
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.03),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filteredUsers.length,
+                      itemBuilder: (context, index) {
+                        final user = filteredUsers[index];
+                        final String userId = (user['id'] ?? user['_id'])
+                            .toString();
+                        final bool isSelected = selectedObservers.contains(
+                          userId,
+                        );
+                        final String fullName =
+                            "${user['firstname'] ?? ''} ${user['lastname'] ?? ''}"
+                                .trim();
+                        final String? img = user['img'] ?? user['image'];
+
+                        return CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: appTheme.accentColor,
+                          checkColor: Colors.white,
+                          secondary: CircleAvatar(
+                            backgroundImage: img != null && img.isNotEmpty
+                                ? NetworkImage(img)
+                                : null,
+                            child: (img == null || img.isEmpty)
+                                ? Text(
+                                    fullName.isNotEmpty
+                                        ? fullName[0].toUpperCase()
+                                        : "?",
+                                  )
+                                : null,
+                          ),
+                          title: Text(
+                            fullName,
+                            style: TextStyle(color: appTheme.textColor),
+                          ),
+                          value: isSelected,
+                          onChanged: (val) {
+                            setInternalState(() {
+                              if (val == true) {
+                                selectedObservers.add(userId);
+                              } else {
+                                selectedObservers.remove(userId);
+                              }
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _updateTaskObservers(List<String> observerIds) async {
+    try {
+      setState(() => _isLoading = true);
+      final result = await ApiServer().updateSingleTask(
+        taskId: widget.taskId,
+        observers: observerIds,
+        saveType: "observers",
+      );
+      if (result != null && mounted) {
+        setState(() => _taskData?['observers'] = observerIds);
+        widget.onUpdate?.call();
+      }
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error updating observers: $e")));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _updateTaskTitle() async {
     final newTitle = _titleController.text.trim();
     if (newTitle.isEmpty) {
@@ -833,15 +1151,50 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildPersonRow(
-                          appTheme,
-                          "Assigned to",
-                          data['assign_to']?.isNotEmpty == true
-                              ? "Assigned"
-                              : "Unassigned",
-                          "MR",
+                        Builder(
+                          builder: (context) {
+                            final List assignToIds =
+                                data['assign_to'] as List? ?? [];
+                            Map<String, dynamic>? assignedUser;
+                            if (assignToIds.isNotEmpty) {
+                              final targetId = assignToIds.first.toString();
+                              assignedUser = _users.firstWhere(
+                                (u) =>
+                                    (u['id'] ?? u['_id']).toString() ==
+                                    targetId,
+                                orElse: () => {},
+                              );
+                            }
+                            final bool hasUser =
+                                assignedUser != null && assignedUser.isNotEmpty;
+                            return _buildPersonRow(
+                              appTheme,
+                              "Assigned to",
+                              hasUser
+                                  ? "${assignedUser!['firstname'] ?? ''} ${assignedUser['lastname'] ?? ''}"
+                                        .trim()
+                                  : "Unassigned",
+                              hasUser
+                                  ? (assignedUser!['firstname']?[0] ??
+                                            assignedUser['name']?[0] ??
+                                            "?")
+                                        .toUpperCase()
+                                  : "?",
+                              imageUrl: hasUser
+                                  ? (assignedUser!['img'] ??
+                                        assignedUser['image'])
+                                  : null,
+                            );
+                          },
                         ),
-                        _buildMiniAction(appTheme, "Add assignee"),
+                        _buildMiniAction(
+                          appTheme,
+                          data['assign_to']?.isNotEmpty == true
+                              ? "Change"
+                              : "Add",
+                          onTap: () =>
+                              _showUserSelectionSheet(appTheme, isDark),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -854,7 +1207,14 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
                           "${(data['observers'] as List? ?? []).length} observers",
                           null,
                         ),
-                        _buildMiniAction(appTheme, "Add observers"),
+                        _buildMiniAction(
+                          appTheme,
+                          (data['observers'] as List? ?? []).isNotEmpty
+                              ? "Edit"
+                              : "Add",
+                          onTap: () =>
+                              _showObserversSelectionSheet(appTheme, isDark),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -1246,9 +1606,13 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
     );
   }
 
-  Widget _buildMiniAction(AppThemeModel appTheme, String label) {
+  Widget _buildMiniAction(
+    AppThemeModel appTheme,
+    String label, {
+    VoidCallback? onTap,
+  }) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(4),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -1291,8 +1655,9 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
     AppThemeModel appTheme,
     String label,
     String name,
-    String? initials,
-  ) {
+    String? initials, {
+    String? imageUrl,
+  }) {
     return Row(
       children: [
         CircleAvatar(
@@ -1300,14 +1665,19 @@ class _TaskDetailsPageState extends State<TaskDetailsPage>
           backgroundColor: initials != null
               ? appTheme.accentColor.withOpacity(0.2)
               : Colors.grey.withOpacity(0.1),
-          child: Text(
-            initials ?? "?",
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: appTheme.accentColor,
-            ),
-          ),
+          backgroundImage: imageUrl != null && imageUrl.isNotEmpty
+              ? NetworkImage(imageUrl)
+              : null,
+          child: (imageUrl == null || imageUrl.isEmpty)
+              ? Text(
+                  initials ?? "?",
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: appTheme.accentColor,
+                  ),
+                )
+              : null,
         ),
         const SizedBox(width: 10),
         Column(
